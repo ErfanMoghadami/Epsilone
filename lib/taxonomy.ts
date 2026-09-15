@@ -1,325 +1,564 @@
 // ============================================================
-// Epsilone Music Tagging System
+// Epsilone Canonical Taxonomy
+// Single source of truth for:
+// - AI Beat Analysis
+// - User Query Understanding
+// - Search
+// - Matching / Recommendation
 // ============================================================
 
-// ============================================================
-// MOODS
-// Overall emotional character of the beat
-// ============================================================
+// ------------------------------------------------------------
+// Types
+// ------------------------------------------------------------
 
-export const MOODS = [
-  "happy",
-  "joyful",
-  "uplifting",
-  "hopeful",
-  "peaceful",
-  "calm",
-  "playful",
+export type Mood =
+  | "Calm"
+  | "Chill"
+  | "Relaxed"
+  | "Peaceful"
+  | "Dreamy"
+  | "Ethereal"
+  | "Nostalgic"
+  | "Reflective"
+  | "Melancholic"
+  | "Sad"
+  | "Emotional"
+  | "Lonely"
+  | "Romantic"
+  | "Sensual"
+  | "Hopeful"
+  | "Warm"
+  | "Happy"
+  | "Joyful"
+  | "Playful"
+  | "Carefree"
+  | "Confident"
+  | "Bold"
+  | "Motivational"
+  | "Triumphant"
+  | "Mysterious"
+  | "Dark"
+  | "Eerie"
+  | "Tense"
+  | "Aggressive"
+  | "Angry"
+  | "Rebellious"
+  | "Cold"
+  | "Serious"
+  | "Focused"
+  | "Hypnotic"
+  | "Trippy"
+  | "Futuristic"
+  | "Energetic"
+  | "Excited"
+  | "Chaotic";
 
-  "confident",
-  "romantic",
-  "passionate",
-  "sensual",
+export type Atmosphere =
+  | "Atmospheric"
+  | "Hazy"
+  | "Dreamy"
+  | "Nocturnal"
+  | "Urban"
+  | "Gritty"
+  | "Raw"
+  | "Cinematic"
+  | "Minimal"
+  | "Spacious"
+  | "Intimate"
+  | "Warm"
+  | "Cold"
+  | "Dark"
+  | "Moody"
+  | "Smoky"
+  | "Dusty"
+  | "Vintage"
+  | "Retro"
+  | "Futuristic"
+  | "Neon"
+  | "Industrial"
+  | "Organic"
+  | "Lush"
+  | "Airy"
+  | "Ethereal"
+  | "Surreal"
+  | "Mystical"
+  | "Glitchy"
+  | "Hypnotic"
+  | "Underground"
+  | "Polished"
+  | "Smooth"
+  | "Textured"
+  | "Lo-fi"
+  | "Ambient"
+  | "Live"
+  | "Acoustic"
+  | "Dense"
+  | "Sparse";
 
-  "sad",
-  "melancholic",
-  "lonely",
-  "heartbroken",
-  "angry",
-  "aggressive",
-  "anxious",
-  "tense",
-
-  "dark",
-  "haunting",
-  "dreamy",
-  "nostalgic",
-  "emotional",
-  "intimate",
-  "mysterious",
-  "hypnotic",
-  "ethereal",
-
-  "chill",
-  "moody",
-  "reflective",
-  "serious",
-  "rebellious",
-  "euphoric",
-  "powerful",
-] as const;
-
-// ============================================================
-// ATMOSPHERES
-// Sonic, spatial, and environmental qualities of the beat
-// ============================================================
-
-export const ATMOSPHERE = [
-  "dark",
-  "bright",
-  "cinematic",
-  "dreamy",
-  "ethereal",
-  "cold",
-  "warm",
-
-  "spacious",
-  "minimal",
-  "dense",
-  "intimate",
-
-  "mysterious",
-  "eerie",
-  "haunting",
-  "surreal",
-  "hypnotic",
-
-  "peaceful",
-  "chaotic",
-  "melancholic",
-  "nostalgic",
-
-  "gritty",
-  "raw",
-  "urban",
-  "luxurious",
-
-  "underground",
-  "industrial",
-  "organic",
-  "airy",
-  "dark_ambient",
-  "atmospheric",
-] as const;
-
-// ============================================================
-// SCENES
-// Situations, places, memories, or visual moments evoked
-// by the music
-// ============================================================
-
-export const SCENES = [
-  // Night
-  "late_night_driving",
-  "empty_city",
-  "rainy_night",
-  "alone_at_night",
-  "neon_city",
-  "city_at_midnight",
-  "night_walk",
-
-  // Day
-  "sunrise",
-  "sunset",
-  "summer_day",
-  "morning",
-  "golden_hour",
-
-  // Nature
-  "ocean",
-  "beach",
-  "forest",
-  "mountains",
-  "rain",
-  "storm",
-  "desert",
-
-  // Transportation
-  "car_ride",
-  "road_trip",
-  "highway",
-  "train_ride",
-  "night_drive",
-
-  // Social
-  "party",
-  "club",
-  "concert",
-  "hanging_out",
-  "celebration",
-
-  // Romance
-  "falling_in_love",
-  "date",
-  "intimate_moment",
-  "missing_someone",
-  "breakup",
-
-  // Isolation
-  "being_alone",
-  "late_night_thoughts",
-  "empty_room",
-  "walking_alone",
-  "lost_in_thought",
-
-  // Memory
-  "childhood_memory",
-  "old_memories",
-  "flashback",
-  "reminiscence",
-
-  // Cinematic
-  "crime_scene",
-  "chase",
-  "victory",
-  "loss",
-  "dream_sequence",
-  "introspection",
-  "final_scene",
-  "opening_scene",
-] as const;
-
-// ============================================================
-// INSTRUMENTS
-// Instruments and important sonic elements present in the beat
-// ============================================================
-
-export const INSTRUMENTS = [
-  // Keys
-  "piano",
-  "electric_piano",
-  "organ",
-  "synth",
-  "keys",
-
-  // Guitar
-  "guitar",
-  "acoustic_guitar",
-  "electric_guitar",
+export type Instrument =
+  // Drums
+  | "Kick"
+  | "Snare"
+  | "Clap"
+  | "Rimshot"
+  | "Hi-hat"
+  | "Open Hat"
+  | "Percussion"
+  | "Tom"
+  | "Drum Kit"
+  | "Trap Drums"
+  | "Live Drums"
 
   // Bass
-  "bass",
-  "sub_bass",
-  "808",
-  "synth_bass",
+  | "808 Bass"
+  | "Sub Bass"
+  | "Synth Bass"
+  | "Electric Bass"
+  | "Bass Guitar"
 
-  // Synth
-  "lead_synth",
-  "pad",
-  "pluck",
-  "arp",
+  // Keys / Synth
+  | "Piano"
+  | "Electric Piano"
+  | "Rhodes"
+  | "Organ"
+  | "Pad"
+  | "Synth"
+  | "Arpeggiated Synth"
+  | "Lead Synth"
+  | "Pluck"
+  | "Bell"
 
   // Strings
-  "strings",
-  "violin",
-  "cello",
+  | "Acoustic Guitar"
+  | "Electric Guitar"
+  | "Nylon Guitar"
+  | "Strings"
+  | "Violin"
+  | "Cello"
 
-  // Melodic
-  "bells",
-  "mallet",
-  "flute",
-  "brass",
+  // Vocals
+  | "Vocal Chops"
+  | "Vocal Sample"
+  | "Vocal Texture"
+  | "Background Vocals"
 
-  // Drums
-  "drums",
-  "percussion",
-  "kick",
-  "snare",
-  "claps",
-  "hi_hats",
-  "open_hats",
-  "cymbals",
+  // Other
+  | "FX"
+  | "Texture"
+  | "Field Recording"
+  | "Choir"
+  | "Brass"
+  | "Saxophone"
+  | "Flute";
 
-  // Vocal
-  "vocal",
-  "vocal_chops",
-  "choir",
+export type Scene =
+  | "Late Night Drive"
+  | "Night Drive"
+  | "Road Trip"
+  | "Walking Alone"
+  | "City Walk"
+  | "Studying"
+  | "Coding"
+  | "Working"
+  | "Reading"
+  | "Relaxing"
+  | "Sleeping"
+  | "Late Night Thinking"
+  | "Hanging Out"
+  | "Chill Kickback"
+  | "Party"
+  | "Club"
+  | "Pre-Game"
+  | "Workout"
+  | "Gaming"
+  | "Streaming"
+  | "Content Creation"
+  | "Vlog"
+  | "Travel"
+  | "Beach Day"
+  | "Summer Day"
+  | "Rainy Day"
+  | "Coffee Shop"
+  | "Creative Session"
+  | "Writing"
+  | "Freestyle"
+  | "Recording"
+  | "Rap Session"
+  | "Music Video"
+  | "Fashion Video"
+  | "Streetwear Promo"
+  | "Background Music"
+  | "Focus Session"
+  | "Meditation";
+
+export type EnergyLevel =
+  | "Very Low"
+  | "Low"
+  | "Low-Medium"
+  | "Medium"
+  | "Medium-High"
+  | "High"
+  | "Very High";
+
+
+// ------------------------------------------------------------
+// Canonical Arrays
+// ------------------------------------------------------------
+
+export const MOODS: readonly Mood[] = [
+  "Calm",
+  "Chill",
+  "Relaxed",
+  "Peaceful",
+  "Dreamy",
+  "Ethereal",
+  "Nostalgic",
+  "Reflective",
+  "Melancholic",
+  "Sad",
+  "Emotional",
+  "Lonely",
+  "Romantic",
+  "Sensual",
+  "Hopeful",
+  "Warm",
+  "Happy",
+  "Joyful",
+  "Playful",
+  "Carefree",
+  "Confident",
+  "Bold",
+  "Motivational",
+  "Triumphant",
+  "Mysterious",
+  "Dark",
+  "Eerie",
+  "Tense",
+  "Aggressive",
+  "Angry",
+  "Rebellious",
+  "Cold",
+  "Serious",
+  "Focused",
+  "Hypnotic",
+  "Trippy",
+  "Futuristic",
+  "Energetic",
+  "Excited",
+  "Chaotic",
+];
+
+export const ATMOSPHERES: readonly Atmosphere[] = [
+  "Atmospheric",
+  "Hazy",
+  "Dreamy",
+  "Nocturnal",
+  "Urban",
+  "Gritty",
+  "Raw",
+  "Cinematic",
+  "Minimal",
+  "Spacious",
+  "Intimate",
+  "Warm",
+  "Cold",
+  "Dark",
+  "Moody",
+  "Smoky",
+  "Dusty",
+  "Vintage",
+  "Retro",
+  "Futuristic",
+  "Neon",
+  "Industrial",
+  "Organic",
+  "Lush",
+  "Airy",
+  "Ethereal",
+  "Surreal",
+  "Mystical",
+  "Glitchy",
+  "Hypnotic",
+  "Underground",
+  "Polished",
+  "Smooth",
+  "Textured",
+  "Lo-fi",
+  "Ambient",
+  "Live",
+  "Acoustic",
+  "Dense",
+  "Sparse",
+];
+
+export const INSTRUMENTS: readonly Instrument[] = [
+  "Kick",
+  "Snare",
+  "Clap",
+  "Rimshot",
+  "Hi-hat",
+  "Open Hat",
+  "Percussion",
+  "Tom",
+  "Drum Kit",
+  "Trap Drums",
+  "Live Drums",
+
+  "808 Bass",
+  "Sub Bass",
+  "Synth Bass",
+  "Electric Bass",
+  "Bass Guitar",
+
+  "Piano",
+  "Electric Piano",
+  "Rhodes",
+  "Organ",
+  "Pad",
+  "Synth",
+  "Arpeggiated Synth",
+  "Lead Synth",
+  "Pluck",
+  "Bell",
+
+  "Acoustic Guitar",
+  "Electric Guitar",
+  "Nylon Guitar",
+  "Strings",
+  "Violin",
+  "Cello",
+
+  "Vocal Chops",
+  "Vocal Sample",
+  "Vocal Texture",
+  "Background Vocals",
+
+  "FX",
+  "Texture",
+  "Field Recording",
+  "Choir",
+  "Brass",
+  "Saxophone",
+  "Flute",
+];
+
+export const SCENES: readonly Scene[] = [
+  "Late Night Drive",
+  "Night Drive",
+  "Road Trip",
+  "Walking Alone",
+  "City Walk",
+  "Studying",
+  "Coding",
+  "Working",
+  "Reading",
+  "Relaxing",
+  "Sleeping",
+  "Late Night Thinking",
+  "Hanging Out",
+  "Chill Kickback",
+  "Party",
+  "Club",
+  "Pre-Game",
+  "Workout",
+  "Gaming",
+  "Streaming",
+  "Content Creation",
+  "Vlog",
+  "Travel",
+  "Beach Day",
+  "Summer Day",
+  "Rainy Day",
+  "Coffee Shop",
+  "Creative Session",
+  "Writing",
+  "Freestyle",
+  "Recording",
+  "Rap Session",
+  "Music Video",
+  "Fashion Video",
+  "Streetwear Promo",
+  "Background Music",
+  "Focus Session",
+  "Meditation",
+];
+
+export const ENERGY_LEVELS: readonly EnergyLevel[] = [
+  "Very Low",
+  "Low",
+  "Low-Medium",
+  "Medium",
+  "Medium-High",
+  "High",
+  "Very High",
+];
+
+
+// ------------------------------------------------------------
+// Energy helpers
+// ------------------------------------------------------------
+
+export const ENERGY_RANGE = {
+  min: 0,
+  max: 1,
+} as const;
+
+export const ENERGY_BUCKETS = [
+  {
+    label: "Very Low",
+    min: 0.0,
+    max: 0.15,
+  },
+  {
+    label: "Low",
+    min: 0.16,
+    max: 0.3,
+  },
+  {
+    label: "Low-Medium",
+    min: 0.31,
+    max: 0.45,
+  },
+  {
+    label: "Medium",
+    min: 0.46,
+    max: 0.6,
+  },
+  {
+    label: "Medium-High",
+    min: 0.61,
+    max: 0.75,
+  },
+  {
+    label: "High",
+    min: 0.76,
+    max: 0.9,
+  },
+  {
+    label: "Very High",
+    min: 0.91,
+    max: 1.0,
+  },
 ] as const;
 
-// ============================================================
-// VOCAL TYPES
-// Type or treatment of vocals present in the beat
-// ============================================================
 
-export const VOCAL_TYPES = [
-  "none",
-  "male",
-  "female",
-  "choir",
-  "vocal_chops",
-  "vocal_sample",
-  "spoken",
-  "whispered",
-  "processed",
+// ------------------------------------------------------------
+// Limits for Gemini output
+// ------------------------------------------------------------
+
+export const TAXONOMY_LIMITS = {
+  moods: {
+    min: 3,
+    max: 6,
+  },
+
+  atmosphere: {
+    min: 3,
+    max: 6,
+  },
+
+  instruments: {
+    min: 0,
+    max: 10,
+  },
+
+  scenes: {
+    min: 3,
+    max: 6,
+  },
+
+  semanticTags: {
+    min: 6,
+    max: 10,
+  },
+} as const;
+
+
+// ------------------------------------------------------------
+// Semantic Tag Guidelines
+// ------------------------------------------------------------
+
+export const SEMANTIC_TAG_CATEGORIES = [
+  "genre",
+  "subgenre",
+  "style",
+  "vibe",
+  "production",
+  "use-case",
+  "search-intent",
 ] as const;
 
-// ============================================================
-// GENRES
-// AI-generated primary genre classification
-// ============================================================
+export type SemanticTagCategory =
+  (typeof SEMANTIC_TAG_CATEGORIES)[number];
 
-export const GENRES = [
-  "hip_hop",
-  "trap",
-  "melodic_trap",
-  "ambient_trap",
-  "rnb",
-  "alternative_rnb",
-  "lofi",
-  "drill",
-  "boom_bap",
-  "pop",
-  "electronic",
-  "ambient",
-  "cinematic",
-  "experimental",
-] as const;
 
-// ============================================================
-// SUBGENRES
-// AI-generated more specific genre classification
-// ============================================================
+// ------------------------------------------------------------
+// AI Analysis Output
+// ------------------------------------------------------------
 
-export const SUBGENRES = [
-  "dark_trap",
-  "rage",
-  "pluggnb",
-  "cloud_rap",
-  "trap_soul",
-  "melodic_rap",
-  "emo_rap",
-  "west_coast",
-  "underground",
-] as const;
-
-// ============================================================
-// TYPES
-// ============================================================
-
-export type Mood = (typeof MOODS)[number];
-export type Atmosphere = (typeof ATMOSPHERE)[number];
-export type Scene = (typeof SCENES)[number];
-export type Instrument = (typeof INSTRUMENTS)[number];
-export type VocalType = (typeof VOCAL_TYPES)[number];
-export type Genre = (typeof GENRES)[number];
-export type Subgenre = (typeof SUBGENRES)[number];
-
-// ============================================================
-// COMPLETE AI BEAT TAG STRUCTURE
-// ============================================================
-
-export interface BeatTags {
+export interface BeatAIAnalysis {
   moods: Mood[];
-  atmospheres: Atmosphere[];
-
-  // Numeric value between 0 and 1
-  // 0 = very low energy, 1 = very high energy
-  energy: number;
-
-  scenes: Scene[];
+  atmosphere: Atmosphere[];
   instruments: Instrument[];
-  vocals: VocalType[];
-
-  // AI-generated genre classification
-  ai_genres: Genre[];
-  ai_subgenres: Subgenre[];
-
-  // Free-form tags outside the fixed taxonomy
+  scenes: Scene[];
+  energy: number;
   semantic_tags: string[];
+}
 
-  // Short text summary of the beat's vibe
-  description: string;
 
-  // AI's confidence in this analysis, 0 to 1
-  confidence: number;
+// ------------------------------------------------------------
+// User Query Interpretation
+// ------------------------------------------------------------
+
+export interface EpsiloneQuery {
+  moods: Mood[];
+  atmosphere: Atmosphere[];
+  scenes: Scene[];
+  energy: number | null;
+  genres: string[];
+  semantic_tags: string[];
+  raw_text: string;
+}
+
+
+// ------------------------------------------------------------
+// Utility functions
+// ------------------------------------------------------------
+
+export function isValidMood(value: string): value is Mood {
+  return MOODS.includes(value as Mood);
+}
+
+export function isValidAtmosphere(
+  value: string,
+): value is Atmosphere {
+  return ATMOSPHERES.includes(value as Atmosphere);
+}
+
+export function isValidInstrument(
+  value: string,
+): value is Instrument {
+  return INSTRUMENTS.includes(value as Instrument);
+}
+
+export function isValidScene(value: string): value is Scene {
+  return SCENES.includes(value as Scene);
+}
+
+export function clampEnergy(value: number): number {
+  return Math.min(1, Math.max(0, value));
+}
+
+export function getEnergyBucket(
+  energy: number,
+): EnergyLevel {
+  const normalized = clampEnergy(energy);
+
+  const bucket = ENERGY_BUCKETS.find(
+    (item) =>
+      normalized >= item.min &&
+      normalized <= item.max,
+  );
+
+  return bucket?.label ?? "Medium";
 }
