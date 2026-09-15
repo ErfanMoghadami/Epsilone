@@ -1,176 +1,3 @@
-// "use client";
-// import { createClient } from "@/lib/supabase/client";
-// import React from "react";
-// import { useState } from "react";
-// import {
-//   initialState,
-//   validate,
-//   UploadFormState,
-//   musicalKey,
-// } from "@/lib/uploadConfig";
-
-// export default function Page() {
-//   const [form, setForm] = useState<UploadFormState>(initialState);
-//   const [error, setError] = useState<string | null>(null);
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [success, setSuccess] = useState(false);
-
-//   const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
-//   const [showCropModal, setShowCropModal] = useState(false);
-//   const [crop, setCrop] = useState({ x: 0, y: 0 });
-//   const [zoom, setZoom] = useState(1);
-//   const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
-//     x: number;
-//     y: number;
-//     width: number;
-//     height: number;
-//   } | null>(null);
-
-//   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-//     e.preventDefault();
-
-//     const errorMessage = validate(form);
-//     if (errorMessage !== null) {
-//       setError(errorMessage);
-//       return;
-//     }
-
-//     const supabase = createClient();
-//     setIsLoading(true);
-
-//     const { data, error: authError } = await supabase.auth.getUser();
-//     if (authError) {
-//       setError(authError.message);
-//       setIsLoading(false);
-//       return;
-//     }
-//     if (data.user === null) {
-//       setError("User not authenticated");
-//       setIsLoading(false);
-//       return;
-//     }
-
-//     const userId = data.user.id;
-//     const randomId = crypto.randomUUID();
-//     const fileId = form.audioFile!.name;
-//     const pathFile = `${userId}/${randomId}-${fileId}`;
-
-//     const { error: uploadError } = await supabase.storage
-//       .from("BeatAudio")
-//       .upload(pathFile, form.audioFile!);
-
-//     if (uploadError) {
-//       setError(uploadError.message);
-//       setIsLoading(false);
-//       return;
-//     }
-
-//     const {
-//       data: { publicUrl },
-//     } = supabase.storage.from("BeatAudio").getPublicUrl(pathFile);
-
-//     const { error: insertError } = await supabase.from("beats").insert({
-//       title: form.title.trim(),
-//       bpm: Number(form.bpm),
-//       key: form.key,
-//       genre: form.genre,
-//       audio_url: publicUrl,
-//       producer_id: userId,
-//       analysis_status: "pending",
-//     });
-
-//     if (insertError) {
-//       // rollback: file already uploaded but DB insert failed
-//       await supabase.storage.from("BeatAudio").remove([pathFile]);
-//       setError(insertError.message);
-//       setIsLoading(false);
-//       return;
-//     }
-
-//     setSuccess(true);
-//     setIsLoading(false);
-//     setForm(initialState);
-//   }
-
-//   return (
-//     <>
-//       {error && (
-//         <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">
-//           {error}
-//         </p>
-//       )}
-//       {success && (
-//         <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-//           Success!
-//         </p>
-//       )}
-//       <form
-//         onSubmit={handleSubmit}
-//         className="mx-auto flex max-w-md flex-col gap-4 p-6"
-//       >
-//         <input
-//           value={form.title}
-//           onChange={(e) => setForm({ ...form, title: e.target.value })}
-//           className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-//         />
-//         <input
-//           type="number"
-//           value={form.bpm}
-//           onChange={(e) => setForm({ ...form, bpm: e.target.value })}
-//           className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-//         />
-//         <select
-//           value={form.key}
-//           onChange={(e) => setForm({ ...form, key: e.target.value })}
-//           className="..."
-//         >
-//           {musicalKey.map((k) => (
-//             <option key={k} value={k}>
-//               {k}
-//             </option>
-//           ))}
-//         </select>
-//         <input
-//           value={form.genre}
-//           onChange={(e) => setForm({ ...form, genre: e.target.value })}
-//           className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 placeholder-zinc-500 outline-none transition focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-//         />
-//         <input
-//           type="file"
-//           accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac"
-//           onChange={(e) =>
-//             setForm({ ...form, audioFile: e.target.files?.[0] ?? null })
-//           }
-//           className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400 file:mr-4 file:rounded-md file:border-0 file:bg-violet-600 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-violet-500"
-//         />
-//         <label
-//           htmlFor="coverFile"
-//           className="..."
-//         >
-//           <input
-//             type="file"
-//             accept="image/*"
-//             id="coverFile"
-//             onChange={(e) =>
-//               setForm({ ...form, coverFile: e.target.files?.[0] ?? null })
-//             }
-//             className="..."
-//           />
-//         </label>
-//         <button
-//           type="submit"
-//           disabled={isLoading}
-//           className="mt-2 rounded-lg bg-violet-600 px-4 py-2.5 font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-//         >
-//           {isLoading ? "uploading..." : "Upload"}
-//         </button>
-//       </form>
-//     </>
-//   );
-// }
-
-
-
 "use client";
 import { createClient } from "@/lib/supabase/client";
 import React, { useState, useCallback } from "react";
@@ -216,7 +43,11 @@ export default function Page() {
 
   async function handleConfirmCrop() {
     if (!rawImageSrc || !croppedAreaPixels) return;
-    const croppedFile = await getCroppedImg(rawImageSrc, croppedAreaPixels, "cover.jpg");
+    const croppedFile = await getCroppedImg(
+      rawImageSrc,
+      croppedAreaPixels,
+      "cover.jpg",
+    );
 
     setForm((prev) => ({ ...prev, coverFile: croppedFile }));
     setCoverPreviewUrl(URL.createObjectURL(croppedFile));
@@ -269,9 +100,9 @@ export default function Page() {
       return;
     }
 
-    const { data: { publicUrl: audioPublicUrl } } = supabase.storage
-      .from("BeatAudio")
-      .getPublicUrl(audioPath);
+    const {
+      data: { publicUrl: audioPublicUrl },
+    } = supabase.storage.from("BeatAudio").getPublicUrl(audioPath);
 
     const coverPath = `covers/${userId}/${randomId}-cover.jpg`;
     const { error: coverUploadError } = await supabase.storage
@@ -284,28 +115,54 @@ export default function Page() {
       return;
     }
 
-    const { data: { publicUrl: coverPublicUrl } } = supabase.storage
-      .from("BeatAudio")
-      .getPublicUrl(coverPath);
+    const {
+      data: { publicUrl: coverPublicUrl },
+    } = supabase.storage.from("BeatAudio").getPublicUrl(coverPath);
 
-    const { error: insertError } = await supabase.from("beats").insert({
-      title: form.title.trim(),
-      bpm: Number(form.bpm),
-      key: form.key,
-      genre: form.genre,
-      audio_url: audioPublicUrl,
-      cover_url: coverPublicUrl,
-      producer_id: userId,
-      analysis_status: "pending",
-    });
+    const { data: beat, error: insertError } = await supabase
+      .from("beats")
+      .insert({
+        title: form.title.trim(),
+        bpm: Number(form.bpm),
+        key: form.key,
+        genre: form.genre,
+        audio_url: audioPublicUrl,
+        cover_url: coverPublicUrl,
+        producer_id: userId,
+        analysis_status: "pending",
+      })
+      .select("id")
+      .single();
 
-    if (insertError) {
+    if (insertError || !beat) {
       await supabase.storage.from("BeatAudio").remove([audioPath, coverPath]);
-      setError(insertError.message);
+
+      setError(insertError?.message || "Failed to create beat record");
+
       setIsLoading(false);
       return;
     }
+    try {
+      const response = await fetch("/api/analyze-beat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          beatId: beat.id,
+        }),
+      });
 
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        console.error("AI analysis failed:", result);
+      } else {
+        console.log("AI analysis completed:", result);
+      }
+    } catch (error) {
+      console.error("Could not start AI analysis:", error);
+    }
     setSuccess(true);
     setIsLoading(false);
     setForm(initialState);
@@ -325,7 +182,10 @@ export default function Page() {
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="mx-auto flex max-w-md flex-col gap-4 p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="mx-auto flex max-w-md flex-col gap-4 p-6"
+      >
         <input
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -342,7 +202,9 @@ export default function Page() {
           onChange={(e) => setForm({ ...form, key: e.target.value })}
         >
           {musicalKey.map((k) => (
-            <option key={k} value={k}>{k}</option>
+            <option key={k} value={k}>
+              {k}
+            </option>
           ))}
         </select>
         <input
@@ -353,7 +215,9 @@ export default function Page() {
         <input
           type="file"
           accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac"
-          onChange={(e) => setForm({ ...form, audioFile: e.target.files?.[0] ?? null })}
+          onChange={(e) =>
+            setForm({ ...form, audioFile: e.target.files?.[0] ?? null })
+          }
           className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400"
         />
 
@@ -369,7 +233,11 @@ export default function Page() {
         </label>
 
         {coverPreviewUrl && (
-          <img src={coverPreviewUrl} alt="Cover preview" className="h-32 w-32 rounded-lg object-cover" />
+          <img
+            src={coverPreviewUrl}
+            alt="Cover preview"
+            className="h-32 w-32 rounded-lg object-cover"
+          />
         )}
 
         <button
@@ -406,10 +274,18 @@ export default function Page() {
           />
 
           <div className="mt-4 flex gap-3">
-            <button type="button" onClick={handleCancelCrop} className="rounded-lg border border-zinc-600 px-4 py-2 text-zinc-300">
+            <button
+              type="button"
+              onClick={handleCancelCrop}
+              className="rounded-lg border border-zinc-600 px-4 py-2 text-zinc-300"
+            >
               Cancel
             </button>
-            <button type="button" onClick={handleConfirmCrop} className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white">
+            <button
+              type="button"
+              onClick={handleConfirmCrop}
+              className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white"
+            >
               Confirm Crop
             </button>
           </div>
