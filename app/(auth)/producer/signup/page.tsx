@@ -1,9 +1,9 @@
 "use client";
-
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function SignupPage() {
+export default function ProducerSignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,26 +22,31 @@ export default function SignupPage() {
     setMessage("");
 
     try {
-      const { createClient } = await import(
-        "@/lib/supabase/client"
+      const response = await fetch(
+        "/api/auth/producer-signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
       );
 
-      const supabase = createClient();
+      const data = await response.json();
 
-      const { error: signupError } =
-        await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-        });
-
-      if (signupError) {
-        setError(signupError.message);
-        setLoading(false);
-        return;
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error ||
+            "Producer signup failed."
+        );
       }
 
       setMessage(
-        "حساب کاربری ساخته شد. حالا وارد حسابت شو."
+        "اکانت Producer ساخته شد. حالا وارد حساب شو."
       );
 
       setTimeout(() => {
@@ -53,6 +58,7 @@ export default function SignupPage() {
           ? error.message
           : "Something went wrong."
       );
+    } finally {
       setLoading(false);
     }
   }
@@ -64,7 +70,7 @@ export default function SignupPage() {
         className="w-full max-w-sm space-y-5 rounded-2xl border border-zinc-800 bg-zinc-900 p-8"
       >
         <h1 className="text-center text-xl font-semibold text-white">
-          ساخت حساب کاربری
+          ثبت‌نام Producer
         </h1>
 
         <div className="space-y-2">
@@ -111,28 +117,17 @@ export default function SignupPage() {
         >
           {loading
             ? "در حال ساخت..."
-            : "ساخت حساب"}
+            : "ساخت حساب Producer"}
         </button>
-
-        <div className="text-center text-sm text-zinc-500">
-          قبلاً حساب داری؟{" "}
-          <a
-            href="/login"
-            className="text-emerald-400 hover:text-emerald-300"
-          >
-            وارد شو
-          </a>
-        </div>
-
-        <div className="text-center text-sm text-zinc-500">
-          Producer هستی؟{" "}
-          <a
-            href="/producer/signup"
-            className="text-emerald-400 hover:text-emerald-300"
-          >
-            ثبت‌نام Producer
-          </a>
-        </div>
+<div className="text-center text-sm text-zinc-500">
+  قبلاً Producer هستی؟{" "}
+  <Link
+    href="/login"
+    className="text-emerald-400 hover:text-emerald-300"
+  >
+    وارد شو
+  </Link>
+</div>
       </form>
     </div>
   );

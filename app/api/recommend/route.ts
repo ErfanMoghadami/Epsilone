@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 type RateLimitEntry = {
   count: number;
@@ -8,16 +9,21 @@ type RateLimitEntry = {
 const RATE_LIMIT = 10;
 const WINDOW_MS = 60_000;
 
-const rateLimitStore = new Map<string, RateLimitEntry>();
+const rateLimitStore = new Map<
+  string,
+  RateLimitEntry
+>();
 
 function getClientIp(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
+  const forwardedFor =
+    request.headers.get("x-forwarded-for");
 
   if (forwardedFor) {
     return forwardedFor.split(",")[0].trim();
   }
 
-  const realIp = request.headers.get("x-real-ip");
+  const realIp =
+    request.headers.get("x-real-ip");
 
   if (realIp) {
     return realIp;
@@ -58,7 +64,8 @@ function checkRateLimit(ip: string) {
 
   return {
     allowed: true,
-    remaining: RATE_LIMIT - existing.count,
+    remaining:
+      RATE_LIMIT - existing.count,
     resetAt: existing.resetAt,
   };
 }
@@ -70,11 +77,13 @@ export async function POST(request: Request) {
     // --------------------------------------------------------
 
     const clientIp = getClientIp(request);
-    const rateLimit = checkRateLimit(clientIp);
+    const rateLimit =
+      checkRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
       const retryAfter = Math.ceil(
-        (rateLimit.resetAt - Date.now()) / 1000
+        (rateLimit.resetAt - Date.now()) /
+          1000
       );
 
       return NextResponse.json(
@@ -86,14 +95,35 @@ export async function POST(request: Request) {
         {
           status: 429,
           headers: {
-            "Retry-After": String(retryAfter),
+            "Retry-After":
+              String(retryAfter),
           },
         }
       );
     }
 
     // --------------------------------------------------------
-    // 2. Read request body
+    // 2. Get current Supabase user
+    // --------------------------------------------------------
+
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError) {
+      console.error(
+        "Could not get Supabase user:",
+        userError.message
+      );
+    }
+
+    const userId = user?.id ?? null;
+
+    // --------------------------------------------------------
+    // 3. Read request body
     // --------------------------------------------------------
 
     const body = await request.json();
@@ -106,13 +136,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "query must be a non-empty string",
+          error:
+            "query must be a non-empty string",
         },
         { status: 400 }
       );
     }
 
-    // Prevent extremely large prompts.
     if (query.trim().length > 500) {
       return NextResponse.json(
         {
@@ -125,10 +155,12 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------------
-    // 3. Worker configuration
+    // 4. Worker configuration
     // --------------------------------------------------------
 
-    const workerUrl = process.env.VPS_WORKER_URL;
+    const workerUrl =
+      process.env.VPS_WORKER_URL;
+
     const workerSecret =
       process.env.VPS_WORKER_SECRET;
 
@@ -155,7 +187,7 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------------
-    // 4. Send request to Worker
+    // 5. Send query + user_id to Worker
     // --------------------------------------------------------
 
     const response = await fetch(
@@ -163,11 +195,14 @@ export async function POST(request: Request) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${workerSecret}`,
-          "Content-Type": "application/json",
+          Authorization:
+            `Bearer ${workerSecret}`,
+          "Content-Type":
+            "application/json",
         },
         body: JSON.stringify({
           query: query.trim(),
+          user_id: userId,
         }),
         cache: "no-store",
       }

@@ -1,20 +1,21 @@
 "use client";
-
 import React from "react";
 
-import { FormEvent, useState } from "react";
-
+import { FormEvent, useEffect, useState } from "react";
+import WaveformTracker from "@arraypress/waveform-tracker";
 import { WaveformPlayer } from "@arraypress/waveform-player-react";
+import FavoriteButton from "@/components/FavoriteButton";
 
 type Beat = {
   id: string;
-  title: string | null;
+  title: string;
   audio_url: string | null;
+  preview_url: string | null;
   cover_url: string | null;
   bpm: number | null;
   key: string | null;
   genre: string | null;
-  match_score: number;
+  match_score: number | null;
 };
 
 type RecommendResponse = {
@@ -39,6 +40,14 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    WaveformTracker.init({
+      endpoint: "/api/analytics/play",
+      events: {
+        play: 3,
+      },
+    });
+  }, []);
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -140,6 +149,7 @@ export default function Page() {
                     <span className="text-sm text-zinc-400">
                       {Number(beat.match_score).toFixed(1)}%
                     </span>
+                    <FavoriteButton beatId={beat.id} />
                   </div>
 
                   <p className="mb-2 text-sm text-zinc-500">
@@ -150,7 +160,7 @@ export default function Page() {
 
                   {beat.audio_url && (
                     <WaveformPlayer
-                      url={beat.audio_url ?? ""}
+                      url={beat.preview_url ?? beat.audio_url ?? ""}
                       title={beat.title ?? "Untitled Beat"}
                       waveformStyle="line"
                     />
