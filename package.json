@@ -9,6 +9,8 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@arraypress/waveform-player": "^1.27.0",
+    "@arraypress/waveform-player-react": "^0.8.0",
     "@google/genai": "^2.19.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.4",
