@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-
 import { FormEvent, useEffect, useState } from "react";
 import WaveformTracker from "@arraypress/waveform-tracker";
 import { WaveformPlayer } from "@arraypress/waveform-player-react";
 import FavoriteButton from "@/components/FavoriteButton";
+import AddToCartButton from "@/components/AddToCartButton";
 
 type Beat = {
   id: string;
@@ -158,13 +158,17 @@ export default function Page() {
                     {beat.key ? ` • ${beat.key}` : ""}
                   </p>
 
-                  {beat.audio_url && (
+                  {(beat.preview_url || beat.audio_url) && (
                     <WaveformPlayer
                       url={beat.preview_url ?? beat.audio_url ?? ""}
                       title={beat.title ?? "Untitled Beat"}
                       waveformStyle="line"
                     />
                   )}
+                  <AddToCartButton
+                    beatId={beat.id}
+                    title={beat.title ?? "Untitled Beat"}
+                  />
                 </div>
               </div>
             ))}

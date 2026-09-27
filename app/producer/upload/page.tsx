@@ -67,108 +67,158 @@ export default function Page() {
     e.preventDefault();
 
     const errorMessage = validate(form);
+
     if (errorMessage !== null) {
       setError(errorMessage);
       return;
     }
 
     const supabase = createClient();
+
     setIsLoading(true);
+    setError(null);
+    setSuccess(false);
 
-    const { data, error: authError } = await supabase.auth.getUser();
-    if (authError) {
-      setError(authError.message);
+    try {
+      // ------------------------------------------------------
+      // 1. Check authentication
+      // ------------------------------------------------------
+
+      const { data, error: authError } = await supabase.auth.getUser();
+
+      if (authError) {
+        throw new Error(authError.message);
+      }
+
+      if (!data.user) {
+        throw new Error("User not authenticated");
+      }
+
+      const userId = data.user.id;
+
+      const audioFile = form.audioFile!;
+
+      const coverFile = form.coverFile!;
+
+      // ------------------------------------------------------
+      // 2. Ask server for R2 presigned URLs
+      // ------------------------------------------------------
+
+      const presignResponse = await fetch("/api/r2/presign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          audioFileName: audioFile.name,
+
+          audioContentType: audioFile.type,
+
+          coverContentType: coverFile.type || "image/jpeg",
+        }),
+      });
+
+      const presignData = await presignResponse.json();
+
+      if (!presignResponse.ok || !presignData.success) {
+        throw new Error(presignData?.error || "Failed to prepare R2 upload.");
+      }
+
+      // ------------------------------------------------------
+      // 3. Upload master audio directly to R2
+      // ------------------------------------------------------
+
+      const audioUploadResponse = await fetch(presignData.audio.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": audioFile.type,
+        },
+        body: audioFile,
+      });
+
+      if (!audioUploadResponse.ok) {
+        throw new Error(`Audio upload failed: ${audioUploadResponse.status}`);
+      }
+
+      // ------------------------------------------------------
+      // 4. Upload cover directly to R2
+      // ------------------------------------------------------
+
+      const coverUploadResponse = await fetch(presignData.cover.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": coverFile.type || "image/jpeg",
+        },
+        body: coverFile,
+      });
+
+      if (!coverUploadResponse.ok) {
+        throw new Error(`Cover upload failed: ${coverUploadResponse.status}`);
+      }
+
+      // ------------------------------------------------------
+      // 5. Create Beat database record
+      // ------------------------------------------------------
+
+      const { data: beat, error: insertError } = await supabase
+        .from("beats")
+        .insert({
+          title: form.title.trim(),
+
+          bpm: Number(form.bpm),
+
+          key: form.key,
+
+          genre: form.genre,
+
+          audio_url: null,
+
+          cover_url: null,
+
+          audio_key: presignData.audio.key,
+
+          cover_key: presignData.cover.key,
+
+          producer_id: userId,
+
+          analysis_status: "pending",
+        })
+        .select("id")
+        .single();
+
+      if (insertError || !beat) {
+        throw new Error(
+          insertError?.message || "Failed to create beat record.",
+        );
+      }
+
+      // ------------------------------------------------------
+      // 6. Success
+      // ------------------------------------------------------
+
+      console.log("Beat uploaded to R2:", {
+        beatId: beat.id,
+        audioKey: presignData.audio.key,
+        coverKey: presignData.cover.key,
+      });
+
+      setSuccess(true);
+
+      setForm(initialState);
+
+      setCoverPreviewUrl(null);
+    } catch (error) {
+      console.error("Beat upload error:", error);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong during upload.",
+      );
+    } finally {
       setIsLoading(false);
-      return;
     }
-    if (data.user === null) {
-      setError("User not authenticated");
-      setIsLoading(false);
-      return;
-    }
-
-    const userId = data.user.id;
-    const randomId = crypto.randomUUID();
-    const audioPath = `${userId}/${randomId}-${form.audioFile!.name}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("BeatAudio")
-      .upload(audioPath, form.audioFile!);
-    if (uploadError) {
-      setError(uploadError.message);
-      setIsLoading(false);
-      return;
-    }
-
-    const {
-      data: { publicUrl: audioPublicUrl },
-    } = supabase.storage.from("BeatAudio").getPublicUrl(audioPath);
-
-    const coverPath = `covers/${userId}/${randomId}-cover.jpg`;
-    const { error: coverUploadError } = await supabase.storage
-      .from("BeatAudio")
-      .upload(coverPath, form.coverFile!);
-    if (coverUploadError) {
-      await supabase.storage.from("BeatAudio").remove([audioPath]);
-      setError(coverUploadError.message);
-      setIsLoading(false);
-      return;
-    }
-
-    const {
-      data: { publicUrl: coverPublicUrl },
-    } = supabase.storage.from("BeatAudio").getPublicUrl(coverPath);
-
-    const { data: beat, error: insertError } = await supabase
-      .from("beats")
-      .insert({
-        title: form.title.trim(),
-        bpm: Number(form.bpm),
-        key: form.key,
-        genre: form.genre,
-        audio_url: audioPublicUrl,
-        cover_url: coverPublicUrl,
-        producer_id: userId,
-        analysis_status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (insertError || !beat) {
-      await supabase.storage.from("BeatAudio").remove([audioPath, coverPath]);
-
-      setError(insertError?.message || "Failed to create beat record");
-
-      setIsLoading(false);
-      return;
-    }
-    // try {
-    //   const response = await fetch("/api/analyze-beat", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       beatId: beat.id,
-    //     }),
-    //   });
-
-    //   const result = await response.json();
-
-    //   if (!response.ok || !result.success) {
-    //     console.error("AI analysis failed:", result);
-    //   } else {
-    //     console.log("AI analysis completed:", result);
-    //   }
-    // } catch (error) {
-    //   console.error("Could not start AI analysis:", error);
-    // }
-    setSuccess(true);
-    setIsLoading(false);
-    setForm(initialState);
-    setCoverPreviewUrl(null);
   }
-
   // return (
   //   <>
   //     {error && (
@@ -326,7 +376,7 @@ export default function Page() {
           onChange={(e) => setForm({ ...form, bpm: e.target.value })}
           className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100"
         />
-        
+
         <label className="text-zinc-100">Key</label>
         <select
           value={form.key}

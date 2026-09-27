@@ -9,21 +9,16 @@ type RateLimitEntry = {
 const RATE_LIMIT = 10;
 const WINDOW_MS = 60_000;
 
-const rateLimitStore = new Map<
-  string,
-  RateLimitEntry
->();
+const rateLimitStore = new Map<string, RateLimitEntry>();
 
 function getClientIp(request: Request): string {
-  const forwardedFor =
-    request.headers.get("x-forwarded-for");
+  const forwardedFor = request.headers.get("x-forwarded-for");
 
   if (forwardedFor) {
     return forwardedFor.split(",")[0].trim();
   }
 
-  const realIp =
-    request.headers.get("x-real-ip");
+  const realIp = request.headers.get("x-real-ip");
 
   if (realIp) {
     return realIp;
@@ -64,8 +59,7 @@ function checkRateLimit(ip: string) {
 
   return {
     allowed: true,
-    remaining:
-      RATE_LIMIT - existing.count,
+    remaining: RATE_LIMIT - existing.count,
     resetAt: existing.resetAt,
   };
 }
@@ -77,28 +71,22 @@ export async function POST(request: Request) {
     // --------------------------------------------------------
 
     const clientIp = getClientIp(request);
-    const rateLimit =
-      checkRateLimit(clientIp);
+    const rateLimit = checkRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
-      const retryAfter = Math.ceil(
-        (rateLimit.resetAt - Date.now()) /
-          1000
-      );
+      const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
 
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Too many recommendation requests. Please try again later.",
+          error: "Too many recommendation requests. Please try again later.",
         },
         {
           status: 429,
           headers: {
-            "Retry-After":
-              String(retryAfter),
+            "Retry-After": String(retryAfter),
           },
-        }
+        },
       );
     }
 
@@ -114,10 +102,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (userError) {
-      console.error(
-        "Could not get Supabase user:",
-        userError.message
-      );
+      console.error("Could not get Supabase user:", userError.message);
     }
 
     const userId = user?.id ?? null;
@@ -129,17 +114,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const query = body?.query;
 
-    if (
-      typeof query !== "string" ||
-      !query.trim()
-    ) {
+    if (typeof query !== "string" || !query.trim()) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "query must be a non-empty string",
+          error: "query must be a non-empty string",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -147,10 +128,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "query must be 500 characters or less",
+          error: "query must be 500 characters or less",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -158,20 +138,17 @@ export async function POST(request: Request) {
     // 4. Worker configuration
     // --------------------------------------------------------
 
-    const workerUrl =
-      process.env.VPS_WORKER_URL;
+    const workerUrl = process.env.VPS_WORKER_URL;
 
-    const workerSecret =
-      process.env.VPS_WORKER_SECRET;
+    const workerSecret = process.env.VPS_WORKER_SECRET;
 
     if (!workerUrl) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "VPS_WORKER_URL is not configured",
+          error: "VPS_WORKER_URL is not configured",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -179,10 +156,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "VPS_WORKER_SECRET is not configured",
+          error: "VPS_WORKER_SECRET is not configured",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -190,23 +166,18 @@ export async function POST(request: Request) {
     // 5. Send query + user_id to Worker
     // --------------------------------------------------------
 
-    const response = await fetch(
-      `${workerUrl}/recommend`,
-      {
-        method: "POST",
-        headers: {
-          Authorization:
-            `Bearer ${workerSecret}`,
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify({
-          query: query.trim(),
-          user_id: userId,
-        }),
-        cache: "no-store",
-      }
-    );
+    const response = await fetch(`${workerUrl}/recommend`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${workerSecret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        query: query.trim(),
+        user_id: userId,
+      }),
+      cache: "no-store",
+    });
 
     const data = await response.json();
 
@@ -214,32 +185,86 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            data?.error ||
-            "Worker recommendation failed",
+          error: data?.error || "Worker recommendation failed",
         },
         {
           status: response.status,
-        }
+        },
       );
     }
 
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error(
-      "Recommendation API error:",
-      error
+    const results = Array.isArray(data?.results) ? data.results : [];
+
+    const beatIds = results
+      .map((beat: { id?: unknown }) => beat.id)
+      .filter((id: unknown): id is string => typeof id === "string");
+
+    let storageRows: {
+      id: string;
+      preview_key: string | null;
+      cover_key: string | null;
+    }[] = [];
+
+    if (beatIds.length > 0) {
+      const { data: rows, error: storageError } = await supabase
+        .from("beats")
+        .select("id, preview_key, cover_key")
+        .in("id", beatIds);
+
+      if (storageError) {
+        console.error("Failed to load R2 keys:", storageError.message);
+      } else {
+        storageRows = rows ?? [];
+      }
+    }
+
+    const storageMap = new Map(storageRows.map((row) => [row.id, row]));
+
+    const r2PublicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
+
+    function buildR2Url(key: string | null): string | null {
+      if (!r2PublicUrl || !key) {
+        return null;
+      }
+
+      return `${r2PublicUrl}/${key
+        .split("/")
+        .map(encodeURIComponent)
+        .join("/")}`;
+    }
+
+    const enrichedResults = results.map(
+      (beat: {
+        id: string;
+        preview_url?: string | null;
+        cover_url?: string | null;
+      }) => {
+        const storage = storageMap.get(beat.id);
+
+        return {
+          ...beat,
+
+          preview_url:
+            beat.preview_url ?? buildR2Url(storage?.preview_key ?? null),
+
+          cover_url: beat.cover_url ?? buildR2Url(storage?.cover_key ?? null),
+        };
+      },
     );
+
+    return NextResponse.json({
+      ...data,
+      results: enrichedResults,
+    });
+  } catch (error) {
+    console.error("Recommendation API error:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unknown server error",
+        error: error instanceof Error ? error.message : "Unknown server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

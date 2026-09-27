@@ -8,6 +8,7 @@ type Beat = {
   title: string | null;
   cover_url: string | null;
   audio_url: string | null;
+  preview_url: string | null;
   bpm: number | null;
   key: string | null;
   genre: string | null;
