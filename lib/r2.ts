@@ -71,12 +71,20 @@ export async function getR2Object(key: string) {
   );
 }
 
-export async function getR2SignedUrl(key: string, expiresIn = 600) {
+export async function getR2SignedUrl(
+  key: string,
+  expiresIn = 600,
+  filename?: string,
+) {
   return await getSignedUrl(
     r2,
     new GetObjectCommand({
       Bucket: bucketName,
       Key: key,
+      ResponseContentDisposition: filename
+        ? `attachment; filename="${filename}"`
+        : undefined,
+      ResponseContentType: filename ? "audio/mpeg" : undefined,
     }),
     {
       expiresIn,

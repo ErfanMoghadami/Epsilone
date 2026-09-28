@@ -18,6 +18,7 @@ type Beat = {
   key: string | null;
   genre: string | null;
 };
+
 export default async function FavoritesPage() {
   const supabase = await createClient();
 
@@ -42,7 +43,9 @@ export default async function FavoritesPage() {
       <div>
         <h1 className="mb-2 text-2xl font-semibold">Favorites</h1>
 
-        <p className="text-sm text-red-400">Could not load your favorites.</p>
+        <p className="text-sm text-red-400">
+          Could not load your favorites.
+        </p>
       </div>
     );
   }
@@ -66,7 +69,9 @@ export default async function FavoritesPage() {
         <div>
           <h1 className="mb-2 text-2xl font-semibold">Favorites</h1>
 
-          <p className="text-sm text-red-400">Could not load favorite beats.</p>
+          <p className="text-sm text-red-400">
+            Could not load favorite beats.
+          </p>
         </div>
       );
     }
@@ -75,20 +80,22 @@ export default async function FavoritesPage() {
 
     beats = (data ?? []).map((beat) => {
       const previewUrl =
-        (beat.preview_url ?? (r2PublicUrl && beat.preview_key))
-          ? `${r2PublicUrl}/${beat
-              .preview_key!.split("/")
+        beat.preview_url ??
+        (r2PublicUrl && beat.preview_key
+          ? `${r2PublicUrl}/${beat.preview_key
+              .split("/")
               .map(encodeURIComponent)
               .join("/")}`
-          : null;
+          : null);
 
       const coverUrl =
-        (beat.cover_url ?? (r2PublicUrl && beat.cover_key))
-          ? `${r2PublicUrl}/${beat
-              .cover_key!.split("/")
+        beat.cover_url ??
+        (r2PublicUrl && beat.cover_key
+          ? `${r2PublicUrl}/${beat.cover_key
+              .split("/")
               .map(encodeURIComponent)
               .join("/")}`
-          : null;
+          : null);
 
       return {
         ...beat,
@@ -97,19 +104,27 @@ export default async function FavoritesPage() {
       };
     }) as Beat[];
 
-    const beatOrder = new Map(beatIds.map((id, index) => [id, index]));
+    const beatOrder = new Map(
+      beatIds.map((id, index) => [id, index]),
+    );
 
     beats.sort(
-      (a, b) => (beatOrder.get(a.id) ?? 0) - (beatOrder.get(b.id) ?? 0),
+      (a, b) =>
+        (beatOrder.get(a.id) ?? 0) -
+        (beatOrder.get(b.id) ?? 0),
     );
   }
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="mb-2 text-2xl font-semibold">Favorites</h1>
+        <h1 className="mb-2 text-2xl font-semibold">
+          Favorites
+        </h1>
 
-        <p className="text-sm text-zinc-500">Beats you saved.</p>
+        <p className="text-sm text-zinc-500">
+          Beats you saved.
+        </p>
       </div>
 
       <FavoriteBeatsList beats={beats} />

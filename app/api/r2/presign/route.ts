@@ -1,17 +1,47 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { randomUUID } from "node:crypto";
-import path from "node:path";
-
 import { createClient } from "@/lib/supabase/server";
-import { getR2UploadUrl } from "@/lib/r2";
+import { createR2PresignedPutUrl } from "@/lib/r2-upload-server";
+
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024; // 100 MB
+const MAX_COVER_SIZE = 10 * 1024 * 1024; // 10 MB
+
+const AUDIO_TYPES = new Map([
+  [".mp3", "audio/mpeg"],
+  [".wav", "audio/wav"],
+  [".flac", "audio/flac"],
+]);
+
+function getExtension(fileName: string): string {
+  const dotIndex = fileName.lastIndexOf(".");
+
+  if (dotIndex === -1) {
+    return "";
+  }
+
+  return fileName.slice(dotIndex).toLowerCase();
+}
+
+function getNumber(value: unknown): number | null {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
 
 export async function POST(request: Request) {
   try {
-    // --------------------------------------------------------
-    // 1. Check authentication
-    // --------------------------------------------------------
-
     const supabase = await createClient();
+
+    // --------------------------------------------------
+    // AUTH
+    // --------------------------------------------------
 
     const {
       data: { user },
@@ -24,191 +54,189 @@ export async function POST(request: Request) {
           success: false,
           error: "You must be logged in.",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
-    // --------------------------------------------------------
-    // 2. Check producer role
-    // --------------------------------------------------------
+    // --------------------------------------------------
+    // PRODUCER ROLE CHECK
+    // --------------------------------------------------
 
-    const {
-      data: profile,
-      error: profileError,
-    } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
-    if (
-      profileError ||
-      !profile ||
-      profile.role !== "producer"
-    ) {
+    if (profileError) {
+      console.error("Producer profile lookup error:", profileError);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Could not verify your account.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!profile || profile.role !== "producer") {
       return NextResponse.json(
         {
           success: false,
           error: "Only producers can upload beats.",
         },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
-    // --------------------------------------------------------
-    // 3. Read request data
-    // --------------------------------------------------------
+    // --------------------------------------------------
+    // REQUEST BODY
+    // --------------------------------------------------
 
     const body = await request.json();
 
-    const audioFileName = body?.audioFileName;
-    const audioContentType = body?.audioContentType;
-    const coverContentType = body?.coverContentType;
+    const audioFileName =
+      typeof body.audioFileName === "string"
+        ? body.audioFileName.trim()
+        : "";
 
-    if (
-      typeof audioFileName !== "string" ||
-      !audioFileName.trim()
-    ) {
+    const audioContentType =
+      typeof body.audioContentType === "string"
+        ? body.audioContentType.trim().toLowerCase()
+        : "";
+
+    const coverContentType =
+      typeof body.coverContentType === "string"
+        ? body.coverContentType.trim().toLowerCase()
+        : "";
+
+    const audioSize = getNumber(body.audioSize);
+    const coverSize = getNumber(body.coverSize);
+
+    // --------------------------------------------------
+    // AUDIO VALIDATION
+    // --------------------------------------------------
+
+    if (!audioFileName) {
       return NextResponse.json(
         {
           success: false,
-          error: "audioFileName is required.",
+          error: "Audio file name is required.",
         },
-        { status: 400 }
+        { status: 400 },
+      );
+    }
+
+    const audioExtension = getExtension(audioFileName);
+    const expectedAudioType = AUDIO_TYPES.get(audioExtension);
+
+    if (!expectedAudioType) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Only MP3, WAV, and FLAC audio files are supported.",
+        },
+        { status: 400 },
       );
     }
 
     if (
-      typeof audioContentType !== "string" ||
-      !audioContentType.trim()
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "audioContentType is required.",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (
-      typeof coverContentType !== "string" ||
-      !coverContentType.trim()
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "coverContentType is required.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // --------------------------------------------------------
-    // 4. Validate file types
-    // --------------------------------------------------------
-
-    const allowedAudioTypes = [
-      "audio/mpeg",
-      "audio/wav",
-      "audio/x-wav",
-      "audio/flac",
-      "audio/x-flac",
-    ];
-
-    const allowedCoverTypes = [
-      "image/jpeg",
-      "image/png",
-    ];
-
-    if (
-      !allowedAudioTypes.includes(
-        audioContentType
+      audioContentType &&
+      audioContentType !== expectedAudioType &&
+      !(
+        expectedAudioType === "audio/wav" &&
+        audioContentType === "audio/x-wav"
       )
     ) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Unsupported audio format. Use MP3, WAV, or FLAC.",
+          error: "Audio file type does not match its extension.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
+    if (audioSize === null || audioSize < 1 || audioSize > MAX_AUDIO_SIZE) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Audio file must be between 1 byte and 100 MB.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // --------------------------------------------------
+    // COVER VALIDATION
+    // --------------------------------------------------
+
     if (
-      !allowedCoverTypes.includes(
-        coverContentType
-      )
+      coverContentType !== "image/jpeg" &&
+      coverContentType !== "image/png"
     ) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            "Unsupported cover format. Use JPG or PNG.",
+          error: "Cover must be a JPEG or PNG image.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // --------------------------------------------------------
-    // 5. Generate unique upload ID
-    // --------------------------------------------------------
+    if (coverSize === null || coverSize < 1 || coverSize > MAX_COVER_SIZE) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Cover file must be between 1 byte and 10 MB.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // --------------------------------------------------
+    // CREATE UPLOAD ID
+    // --------------------------------------------------
 
     const uploadId = randomUUID();
-
-    const audioExtension =
-      path.extname(audioFileName) || ".mp3";
 
     const audioKey =
       `masters/${user.id}/${uploadId}/master${audioExtension}`;
 
-    const coverExtension =
-      coverContentType === "image/png"
-        ? ".png"
-        : ".jpg";
-
     const coverKey =
-      `covers/${user.id}/${uploadId}/cover${coverExtension}`;
+      `covers/${user.id}/${uploadId}/cover.jpg`;
 
-    // --------------------------------------------------------
-    // 6. Generate presigned URLs
-    // --------------------------------------------------------
+    // --------------------------------------------------
+    // PRESIGNED URLS
+    // --------------------------------------------------
 
-    const audioUploadUrl =
-      await getR2UploadUrl(
-        audioKey,
-        audioContentType,
-        900
-      );
+    const audioUploadUrl = await createR2PresignedPutUrl(
+      audioKey,
+      expectedAudioType,
+    );
 
-    const coverUploadUrl =
-      await getR2UploadUrl(
-        coverKey,
-        coverContentType,
-        900
-      );
+    const coverUploadUrl = await createR2PresignedPutUrl(
+      coverKey,
+      "image/jpeg",
+    );
 
     return NextResponse.json({
       success: true,
-
       uploadId,
-
       audio: {
         key: audioKey,
         uploadUrl: audioUploadUrl,
+        contentType: expectedAudioType,
       },
-
       cover: {
         key: coverKey,
         uploadUrl: coverUploadUrl,
+        contentType: "image/jpeg",
       },
     });
   } catch (error) {
-    console.error(
-      "R2 presign error:",
-      error
-    );
+    console.error("R2 presign error:", error);
 
     return NextResponse.json(
       {
@@ -216,9 +244,9 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Failed to generate R2 upload URLs.",
+            : "Failed to prepare R2 upload.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

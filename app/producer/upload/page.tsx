@@ -1,349 +1,561 @@
 "use client";
+
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import Cropper, { type Area } from "react-easy-crop";
 import { createClient } from "@/lib/supabase/client";
-import React, { useState, useCallback } from "react";
-import Cropper from "react-easy-crop";
 import {
   initialState,
   validate,
-  UploadFormState,
+  type UploadFormState,
   musicalKey,
 } from "@/lib/uploadConfig";
 import { getCroppedImg } from "@/lib/cropImage";
 
-export default function Page() {
-  const [form, setForm] = useState<UploadFormState>(initialState);
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+function getAudioContentType(file: File): string {
+  const extension = file.name
+    .slice(file.name.lastIndexOf("."))
+    .toLowerCase();
 
-  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
-  const [showCropModal, setShowCropModal] = useState(false);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
-  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  switch (extension) {
+    case ".mp3":
+      return "audio/mpeg";
 
-  const onCropComplete = useCallback((_: unknown, pixels: any) => {
-    setCroppedAreaPixels(pixels);
-  }, []);
+    case ".wav":
+      return file.type || "audio/wav";
 
-  function handleCoverFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setRawImageSrc(URL.createObjectURL(file));
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setShowCropModal(true);
+    case ".flac":
+      return file.type || "audio/flac";
+
+    default:
+      return file.type;
   }
+}
 
-  async function handleConfirmCrop() {
-    if (!rawImageSrc || !croppedAreaPixels) return;
-    const croppedFile = await getCroppedImg(
-      rawImageSrc,
-      croppedAreaPixels,
-      "cover.jpg",
+function uploadWithProgress(
+  url: string,
+  file: File,
+  contentType: string,
+  onProgress: (value: number) => void,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open("PUT", url);
+
+    xhr.setRequestHeader(
+      "Content-Type",
+      contentType,
     );
 
-    setForm((prev) => ({ ...prev, coverFile: croppedFile }));
-    setCoverPreviewUrl(URL.createObjectURL(croppedFile));
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) {
+        return;
+      }
 
-    URL.revokeObjectURL(rawImageSrc);
-    setRawImageSrc(null);
-    setShowCropModal(false);
+      const progress = Math.round(
+        (event.loaded / event.total) * 100,
+      );
+
+      onProgress(progress);
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100);
+        resolve();
+        return;
+      }
+
+      reject(
+        new Error(
+          `Upload failed with status ${xhr.status}.`,
+        ),
+      );
+    };
+
+    xhr.onerror = () => {
+      reject(
+        new Error("Network error during upload."),
+      );
+    };
+
+    xhr.onabort = () => {
+      reject(
+        new Error("Upload was cancelled."),
+      );
+    };
+
+    xhr.send(file);
+  });
+}
+
+export default function Page() {
+  const [form, setForm] =
+    useState<UploadFormState>({
+      ...initialState,
+    });
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [success, setSuccess] =
+    useState(false);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const [uploadProgress, setUploadProgress] =
+    useState(0);
+
+  const [statusMessage, setStatusMessage] =
+    useState("");
+
+  const [rawImageSrc, setRawImageSrc] =
+    useState<string | null>(null);
+
+  const [showCropModal, setShowCropModal] =
+    useState(false);
+
+  const [crop, setCrop] =
+    useState({ x: 0, y: 0 });
+
+  const [zoom, setZoom] =
+    useState(1);
+
+  const [croppedAreaPixels, setCroppedAreaPixels] =
+    useState<Area | null>(null);
+
+  const [coverPreviewUrl, setCoverPreviewUrl] =
+    useState<string | null>(null);
+
+  const [uploadId, setUploadId] =
+    useState<string | null>(null);
+
+  const audioInputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  const coverInputRef =
+    useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (rawImageSrc) {
+        URL.revokeObjectURL(rawImageSrc);
+      }
+
+      if (coverPreviewUrl) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
+    };
+  }, [rawImageSrc, coverPreviewUrl]);
+
+  const onCropComplete = useCallback(
+    (_area: Area, pixels: Area) => {
+      setCroppedAreaPixels(pixels);
+    },
+    [],
+  );
+
+  function handleAudioFileSelect(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file =
+      event.target.files?.[0] ?? null;
+
+    setForm((previous) => ({
+      ...previous,
+      audioFile: file,
+    }));
+
+    setError(null);
+    setSuccess(false);
   }
 
-  function handleCancelCrop() {
-    if (rawImageSrc) URL.revokeObjectURL(rawImageSrc);
-    setRawImageSrc(null);
-    setShowCropModal(false);
-  }
+  function handleCoverFileSelect(
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file =
+      event.target.files?.[0];
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    const errorMessage = validate(form);
-
-    if (errorMessage !== null) {
-      setError(errorMessage);
+    if (!file) {
       return;
     }
 
-    const supabase = createClient();
+    if (rawImageSrc) {
+      URL.revokeObjectURL(rawImageSrc);
+    }
 
-    setIsLoading(true);
+    setRawImageSrc(
+      URL.createObjectURL(file),
+    );
+
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+    setShowCropModal(true);
     setError(null);
-    setSuccess(false);
+  }
+
+  async function handleConfirmCrop() {
+    if (
+      !rawImageSrc ||
+      !croppedAreaPixels
+    ) {
+      return;
+    }
 
     try {
-      // ------------------------------------------------------
-      // 1. Check authentication
-      // ------------------------------------------------------
+      setError(null);
 
-      const { data, error: authError } = await supabase.auth.getUser();
+      const croppedFile =
+        await getCroppedImg(
+          rawImageSrc,
+          croppedAreaPixels,
+          "cover.jpg",
+        );
 
-      if (authError) {
-        throw new Error(authError.message);
-      }
+      const previewUrl =
+        URL.createObjectURL(croppedFile);
 
-      if (!data.user) {
-        throw new Error("User not authenticated");
-      }
+      setCoverPreviewUrl((previous) => {
+        if (previous) {
+          URL.revokeObjectURL(previous);
+        }
 
-      const userId = data.user.id;
+        return previewUrl;
+      });
 
-      const audioFile = form.audioFile!;
+      setForm((previous) => ({
+        ...previous,
+        coverFile: croppedFile,
+      }));
 
-      const coverFile = form.coverFile!;
+      URL.revokeObjectURL(
+        rawImageSrc,
+      );
 
-      // ------------------------------------------------------
-      // 2. Ask server for R2 presigned URLs
-      // ------------------------------------------------------
+      setRawImageSrc(null);
+      setShowCropModal(false);
+    } catch (cropError) {
+      console.error(
+        "Cover crop error:",
+        cropError,
+      );
 
-      const presignResponse = await fetch("/api/r2/presign", {
+      setError(
+        "Failed to process the cover image. Please try another image.",
+      );
+    }
+  }
+
+  function handleCancelCrop() {
+    if (rawImageSrc) {
+      URL.revokeObjectURL(
+        rawImageSrc,
+      );
+    }
+
+    setRawImageSrc(null);
+    setCroppedAreaPixels(null);
+    setShowCropModal(false);
+  }
+
+  async function cleanupUpload(
+    currentUploadId: string,
+  ) {
+    try {
+      await fetch("/api/r2/cleanup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          audioFileName: audioFile.name,
-
-          audioContentType: audioFile.type,
-
-          coverContentType: coverFile.type || "image/jpeg",
+          uploadId: currentUploadId,
         }),
+        keepalive: true,
       });
+    } catch (cleanupError) {
+      console.error(
+        "R2 cleanup request failed:",
+        cleanupError,
+      );
+    }
+  }
 
-      const presignData = await presignResponse.json();
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
 
-      if (!presignResponse.ok || !presignData.success) {
-        throw new Error(presignData?.error || "Failed to prepare R2 upload.");
-      }
+    if (isLoading) {
+      return;
+    }
 
-      // ------------------------------------------------------
-      // 3. Upload master audio directly to R2
-      // ------------------------------------------------------
+    const validationError =
+      validate(form);
 
-      const audioUploadResponse = await fetch(presignData.audio.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": audioFile.type,
-        },
-        body: audioFile,
-      });
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
 
-      if (!audioUploadResponse.ok) {
-        throw new Error(`Audio upload failed: ${audioUploadResponse.status}`);
-      }
+    const audioFile = form.audioFile;
+    const coverFile = form.coverFile;
 
-      // ------------------------------------------------------
-      // 4. Upload cover directly to R2
-      // ------------------------------------------------------
+    if (!audioFile || !coverFile) {
+      setError(
+        "Audio and cover are required.",
+      );
+      return;
+    }
 
-      const coverUploadResponse = await fetch(presignData.cover.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": coverFile.type || "image/jpeg",
-        },
-        body: coverFile,
-      });
+    setError(null);
+    setSuccess(false);
+    setIsLoading(true);
+    setUploadProgress(0);
+    setStatusMessage("Preparing upload...");
 
-      if (!coverUploadResponse.ok) {
-        throw new Error(`Cover upload failed: ${coverUploadResponse.status}`);
-      }
+    let currentUploadId: string | null =
+      null;
 
-      // ------------------------------------------------------
-      // 5. Create Beat database record
-      // ------------------------------------------------------
+    try {
+      const supabase = createClient();
 
-      const { data: beat, error: insertError } = await supabase
-        .from("beats")
-        .insert({
-          title: form.title.trim(),
+      // --------------------------------------------------
+      // 1. Authenticate
+      // --------------------------------------------------
 
-          bpm: Number(form.bpm),
+      const {
+        data: authData,
+        error: authError,
+      } = await supabase.auth.getUser();
 
-          key: form.key,
-
-          genre: form.genre,
-
-          audio_url: null,
-
-          cover_url: null,
-
-          audio_key: presignData.audio.key,
-
-          cover_key: presignData.cover.key,
-
-          producer_id: userId,
-
-          analysis_status: "pending",
-        })
-        .select("id")
-        .single();
-
-      if (insertError || !beat) {
+      if (authError) {
         throw new Error(
-          insertError?.message || "Failed to create beat record.",
+          authError.message,
         );
       }
 
-      // ------------------------------------------------------
-      // 6. Success
-      // ------------------------------------------------------
+      if (!authData.user) {
+        throw new Error(
+          "User not authenticated.",
+        );
+      }
 
-      console.log("Beat uploaded to R2:", {
-        beatId: beat.id,
-        audioKey: presignData.audio.key,
-        coverKey: presignData.cover.key,
-      });
+      // --------------------------------------------------
+      // 2. Get presigned URLs
+      // --------------------------------------------------
+
+      setStatusMessage(
+        "Preparing secure upload...",
+      );
+
+      const audioContentType =
+        getAudioContentType(audioFile);
+
+      const presignResponse =
+        await fetch(
+          "/api/r2/presign",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              audioFileName:
+                audioFile.name,
+              audioContentType,
+              audioSize:
+                audioFile.size,
+              coverContentType:
+                "image/jpeg",
+              coverSize:
+                coverFile.size,
+            }),
+          },
+        );
+
+      const presignData =
+        await presignResponse.json();
+
+      if (
+        !presignResponse.ok ||
+        !presignData.success
+      ) {
+        throw new Error(
+          presignData?.error ||
+            "Failed to prepare R2 upload.",
+        );
+      }
+
+      currentUploadId =
+        presignData.uploadId;
+
+      setUploadId(
+        currentUploadId,
+      );
+
+      // --------------------------------------------------
+      // 3. Upload audio
+      // --------------------------------------------------
+
+      setStatusMessage(
+        "Uploading audio...",
+      );
+
+      await uploadWithProgress(
+        presignData.audio.uploadUrl,
+        audioFile,
+        presignData.audio.contentType,
+        setUploadProgress,
+      );
+
+      // --------------------------------------------------
+      // 4. Upload cover
+      // --------------------------------------------------
+
+      setStatusMessage(
+        "Uploading cover...",
+      );
+
+      await uploadWithProgress(
+        presignData.cover.uploadUrl,
+        coverFile,
+        "image/jpeg",
+        () => {},
+      );
+
+      setUploadProgress(100);
+
+      // --------------------------------------------------
+      // 5. Finalize server-side
+      // --------------------------------------------------
+
+      setStatusMessage(
+        "Creating beat...",
+      );
+
+      const finalizeResponse =
+        await fetch(
+          "/api/r2/finalize",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              uploadId:
+                currentUploadId,
+
+              title:
+                form.title.trim(),
+
+              bpm:
+                Number(form.bpm),
+
+              key:
+                form.key,
+
+              genre:
+                form.genre,
+
+              audioKey:
+                presignData.audio.key,
+
+              coverKey:
+                presignData.cover.key,
+            }),
+          },
+        );
+
+      const finalizeData =
+        await finalizeResponse.json();
+
+      if (
+        !finalizeResponse.ok ||
+        !finalizeData.success
+      ) {
+        throw new Error(
+          finalizeData?.error ||
+            "Failed to finalize beat.",
+        );
+      }
+
+      // --------------------------------------------------
+      // 6. Success
+      // --------------------------------------------------
 
       setSuccess(true);
 
-      setForm(initialState);
+      setStatusMessage(
+        "Beat uploaded successfully.",
+      );
 
-      setCoverPreviewUrl(null);
-    } catch (error) {
-      console.error("Beat upload error:", error);
+      setForm({
+        ...initialState,
+      });
+
+      setUploadId(null);
+
+      setUploadProgress(100);
+
+      if (
+        audioInputRef.current
+      ) {
+        audioInputRef.current.value =
+          "";
+      }
+
+      if (
+        coverInputRef.current
+      ) {
+        coverInputRef.current.value =
+          "";
+      }
+
+      setCoverPreviewUrl(
+        (previous) => {
+          if (previous) {
+            URL.revokeObjectURL(
+              previous,
+            );
+          }
+
+          return null;
+        },
+      );
+    } catch (uploadError) {
+      console.error(
+        "Beat upload error:",
+        uploadError,
+      );
 
       setError(
-        error instanceof Error
-          ? error.message
+        uploadError instanceof Error
+          ? uploadError.message
           : "Something went wrong during upload.",
       );
+
+      setStatusMessage("");
+
+      if (currentUploadId) {
+        await cleanupUpload(
+          currentUploadId,
+        );
+      }
+
+      setUploadId(null);
     } finally {
       setIsLoading(false);
     }
   }
-  // return (
-  //   <>
-  //     {error && (
-  //       <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400">
-  //         {error}
-  //       </p>
-  //     )}
-  //     {success && (
-  //       <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-  //         Success!
-  //       </p>
-  //     )}
-
-  //     <form
-  //       onSubmit={handleSubmit}
-  //       className="mx-auto flex max-w-md flex-col gap-4 p-6"
-  //     >
-  //       <input
-  //         value={form.title}
-  //         onChange={(e) => setForm({ ...form, title: e.target.value })}
-  //         className="rounded-lg border border-stone-700 bg-stone-900 px-4 py-2.5 text-stone-100"
-  //       />
-  //       <input
-  //         type="number"
-  //         value={form.bpm}
-  //         onChange={(e) => setForm({ ...form, bpm: e.target.value })}
-  //         className="rounded-lg border border-stone-700 bg-stone-900 px-4 py-2.5 text-stone-100"
-  //       />
-  //       <select
-  //         value={form.key}
-  //         onChange={(e) => setForm({ ...form, key: e.target.value })}
-  //       >
-  //         {musicalKey.map((k) => (
-  //           <option key={k} value={k}>
-  //             {k}
-  //           </option>
-  //         ))}
-  //       </select>
-  //       <input
-  //         value={form.genre}
-  //         onChange={(e) => setForm({ ...form, genre: e.target.value })}
-  //         className="rounded-lg border border-stone-700 bg-stone-900 px-4 py-2.5 text-stone-100"
-  //       />
-  //       <input
-  //         type="file"
-  //         accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac"
-  //         onChange={(e) =>
-  //           setForm({ ...form, audioFile: e.target.files?.[0] ?? null })
-  //         }
-  //         className="rounded-lg border border-dashed border-stone-700 bg-stone-900 px-4 py-2.5 text-sm text-stone-400"
-  //       />
-
-  //       <label htmlFor="coverFile" className="text-sm text-stone-400">
-  //         Cover (crops to 1:1)
-  //         <input
-  //           type="file"
-  //           id="coverFile"
-  //           accept="image/jpeg,image/png"
-  //           onChange={handleCoverFileSelect}
-  //           className="mt-1 block rounded-lg border border-dashed border-stone-700 bg-stone-900 px-4 py-2.5 text-sm text-stone-400"
-  //         />
-  //       </label>
-
-  //       {coverPreviewUrl && (
-  //         <img
-  //           src={coverPreviewUrl}
-  //           alt="Cover preview"
-  //           className="h-32 w-32 rounded-lg object-cover"
-  //         />
-  //       )}
-
-  //       <button
-  //         type="submit"
-  //         disabled={isLoading}
-  //         className="mt-2 rounded-lg bg-amber-500 px-4 py-2.5 font-medium text-stone-950 hover:bg-amber-400 disabled:opacity-50"
-  //       >
-  //         {isLoading ? "uploading..." : "Upload"}
-  //       </button>
-  //     </form>
-
-  //     {showCropModal && rawImageSrc && (
-  //       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4">
-  //         <div className="relative h-80 w-80 max-w-full">
-  //           <Cropper
-  //             image={rawImageSrc}
-  //             crop={crop}
-  //             zoom={zoom}
-  //             aspect={1}
-  //             onCropChange={setCrop}
-  //             onZoomChange={setZoom}
-  //             onCropComplete={onCropComplete}
-  //           />
-  //         </div>
-
-  //         <input
-  //           type="range"
-  //           min={1}
-  //           max={3}
-  //           step={0.1}
-  //           value={zoom}
-  //           onChange={(e) => setZoom(Number(e.target.value))}
-  //           className="mt-4 w-64"
-  //         />
-
-  //         <div className="mt-4 flex gap-3">
-  //           <button
-  //             type="button"
-  //             onClick={handleCancelCrop}
-  //             className="rounded-lg border border-stone-600 px-4 py-2 text-stone-300"
-  //           >
-  //             Cancel
-  //           </button>
-  //           <button
-  //             type="button"
-  //             onClick={handleConfirmCrop}
-  //             className="rounded-lg bg-amber-500 px-4 py-2 font-medium text-stone-950 hover:bg-amber-400"
-  //           >
-  //             Confirm Crop
-  //           </button>
-  //         </div>
-  //       </div>
-  //     )}
-  //   </>
-  // );
-  // }//
 
   return (
     <>
@@ -352,66 +564,148 @@ export default function Page() {
           {error}
         </p>
       )}
+
       {success && (
         <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-          Success!
+          Beat uploaded successfully.
         </p>
+      )}
+
+      {statusMessage && (
+        <div className="mb-4 rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-sm text-zinc-300">
+              {statusMessage}
+            </span>
+
+            {isLoading && (
+              <span className="text-xs text-zinc-500">
+                {uploadProgress}%
+              </span>
+            )}
+          </div>
+
+          {isLoading && (
+            <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full rounded-full bg-violet-600 transition-all"
+                style={{
+                  width: `${uploadProgress}%`,
+                }}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       <form
         onSubmit={handleSubmit}
         className="mx-auto flex max-w-md flex-col gap-4 p-6"
       >
-        <label className="text-zinc-100">Title </label>
+        <label className="text-zinc-100">
+          Title
+        </label>
+
         <input
           value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100"
+          onChange={(event) =>
+            setForm((previous) => ({
+              ...previous,
+              title:
+                event.target.value,
+            }))
+          }
+          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
         />
 
-        <label className="text-zinc-100">BPM</label>
+        <label className="text-zinc-100">
+          BPM
+        </label>
+
         <input
           type="number"
+          min={50}
+          max={250}
+          step={1}
           value={form.bpm}
-          onChange={(e) => setForm({ ...form, bpm: e.target.value })}
-          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100"
+          onChange={(event) =>
+            setForm((previous) => ({
+              ...previous,
+              bpm: event.target.value,
+            }))
+          }
+          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
         />
 
-        <label className="text-zinc-100">Key</label>
+        <label className="text-zinc-100">
+          Key
+        </label>
+
         <select
           value={form.key}
-          onChange={(e) => setForm({ ...form, key: e.target.value })}
+          onChange={(event) =>
+            setForm((previous) => ({
+              ...previous,
+              key:
+                event.target.value,
+            }))
+          }
+          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
         >
-          {musicalKey.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
+          {musicalKey.map(
+            (item) => (
+              <option
+                key={item}
+                value={item}
+              >
+                {item}
+              </option>
+            ),
+          )}
         </select>
 
-        <label className="text-zinc-100">Genre</label>
+        <label className="text-zinc-100">
+          Genre
+        </label>
+
         <input
           value={form.genre}
-          onChange={(e) => setForm({ ...form, genre: e.target.value })}
-          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100"
+          onChange={(event) =>
+            setForm((previous) => ({
+              ...previous,
+              genre:
+                event.target.value,
+            }))
+          }
+          className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
         />
 
-        <label className="text-zinc-100">Audio File</label>
+        <label className="text-zinc-100">
+          Audio File
+        </label>
+
         <input
+          ref={audioInputRef}
           type="file"
           accept=".mp3,.wav,.flac,audio/mpeg,audio/wav,audio/flac"
-          onChange={(e) =>
-            setForm({ ...form, audioFile: e.target.files?.[0] ?? null })
+          onChange={
+            handleAudioFileSelect
           }
           className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400"
         />
 
-        <label className="text-zinc-100">Cover File</label>
+        <label className="text-zinc-100">
+          Cover File
+        </label>
+
         <input
+          ref={coverInputRef}
           type="file"
           id="coverFile"
           accept="image/jpeg,image/png"
-          onChange={handleCoverFileSelect}
+          onChange={
+            handleCoverFileSelect
+          }
           className="mt-1 block rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400"
         />
 
@@ -426,54 +720,71 @@ export default function Page() {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-2 rounded-lg bg-violet-600 px-4 py-2.5 font-medium text-white disabled:opacity-50"
+          className="mt-2 rounded-lg bg-violet-600 px-4 py-2.5 font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isLoading ? "uploading..." : "Upload"}
+          {isLoading
+            ? "Uploading..."
+            : "Upload"}
         </button>
       </form>
 
-      {showCropModal && rawImageSrc && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4">
-          <div className="relative h-80 w-80 max-w-full">
-            <Cropper
-              image={rawImageSrc}
-              crop={crop}
-              zoom={zoom}
-              aspect={1}
-              onCropChange={setCrop}
-              onZoomChange={setZoom}
-              onCropComplete={onCropComplete}
+      {showCropModal &&
+        rawImageSrc && (
+          <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4">
+            <div className="relative h-80 w-80 max-w-full">
+              <Cropper
+                image={rawImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={
+                  onCropComplete
+                }
+              />
+            </div>
+
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(event) =>
+                setZoom(
+                  Number(
+                    event.target
+                      .value,
+                  ),
+                )
+              }
+              className="mt-4 w-64"
             />
-          </div>
 
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.1}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="mt-4 w-64"
-          />
+            <div className="mt-4 flex gap-3">
+              <button
+                type="button"
+                onClick={
+                  handleCancelCrop
+                }
+                className="rounded-lg border border-zinc-600 px-4 py-2 text-zinc-300"
+              >
+                Cancel
+              </button>
 
-          <div className="mt-4 flex gap-3">
-            <button
-              type="button"
-              onClick={handleCancelCrop}
-              className="rounded-lg border border-zinc-600 px-4 py-2 text-zinc-300"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmCrop}
-              className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white"
-            >
-              Confirm Crop
-            </button>
+              <button
+                type="button"
+                onClick={
+                  handleConfirmCrop
+                }
+                className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-500"
+              >
+                Confirm Crop
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </>
   );
 }

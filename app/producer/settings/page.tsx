@@ -1,7 +1,10 @@
-import React from 'react'
-
+import React from "react";
+// import ChangeEmailForm from "@/components/auth/change-email-form";
 export default function Page() {
   return (
-    <div>Settings</div>
-  )
+    <div>
+      Settings
+      {/*<ChangeEmailForm redirectPath="/producer/settings" />*/}
+    </div>
+  );
 }

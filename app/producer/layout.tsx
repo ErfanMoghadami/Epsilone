@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import LogoutButton from "./LogoutButton";
-
+import ProducerSignOutButton from "@/components/auth/producer-sign-out-button";
 export default async function ProducerLayout({
   children,
 }: {
@@ -63,7 +62,7 @@ export default async function ProducerLayout({
               Settings
             </Link>
 
-            <LogoutButton />
+            <ProducerSignOutButton />
           </div>
         </aside>
 

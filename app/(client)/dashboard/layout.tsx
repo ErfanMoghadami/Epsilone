@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
-
+import SignOutButton from "@/components/auth/sign-out-button";
 export default function DashboardLayout({
   children,
 }: {
@@ -48,6 +48,7 @@ export default function DashboardLayout({
             >
               Settings
             </Link>
+            <SignOutButton />
           </nav>
         </aside>
 

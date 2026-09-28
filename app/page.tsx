@@ -1,6 +1,8 @@
 "use client";
+
 import React from "react";
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import WaveformTracker from "@arraypress/waveform-tracker";
 import { WaveformPlayer } from "@arraypress/waveform-player-react";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -48,6 +50,7 @@ export default function Page() {
       },
     });
   }, []);
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -149,6 +152,7 @@ export default function Page() {
                     <span className="text-sm text-zinc-400">
                       {Number(beat.match_score).toFixed(1)}%
                     </span>
+
                     <FavoriteButton beatId={beat.id} />
                   </div>
 
@@ -165,10 +169,19 @@ export default function Page() {
                       waveformStyle="line"
                     />
                   )}
+
                   <AddToCartButton
                     beatId={beat.id}
                     title={beat.title ?? "Untitled Beat"}
                   />
+
+                  {/* View Beat */}
+                  <Link
+                    href={`/beat/${beat.id}`}
+                    className="mt-3 flex w-full items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:border-zinc-500 hover:bg-zinc-800"
+                  >
+                    View Beat →
+                  </Link>
                 </div>
               </div>
             ))}

@@ -1,33 +1,61 @@
 import {
-  MOODS, ATMOSPHERE, SCENES, INSTRUMENTS,
-  VOCAL_TYPES, GENRES, SUBGENRES,
+  MOODS,
+  ATMOSPHERES,
+  SCENES,
+  INSTRUMENTS,
 } from "@/lib/taxonomy";
 
-export const analysisText = "Listen to this beat and analyze its mood, atmosphere, energy, and instrumentation.";
+export const analysisText =
+  "Listen to this beat and analyze its mood, atmosphere, energy, scenes, instrumentation, vocal characteristics, genre, subgenre, semantic tags, description, and confidence.";
 
 const enumArray = (values: readonly string[]) => ({
   type: "array",
   items: { type: "string", enum: [...values] },
 });
 
+const stringArray = {
+  type: "array",
+  items: { type: "string" },
+};
+
 export const analysisResponseSchema = {
   type: "object",
   properties: {
     moods: enumArray(MOODS),
-    atmospheres: enumArray(ATMOSPHERE),
-    energy: { type: "number" },
+    atmosphere: enumArray(ATMOSPHERES),
+    energy: {
+      type: "number",
+      minimum: 0,
+      maximum: 1,
+    },
     scenes: enumArray(SCENES),
     instruments: enumArray(INSTRUMENTS),
-    vocals: enumArray(VOCAL_TYPES),
-    ai_genres: enumArray(GENRES),
-    ai_subgenres: enumArray(SUBGENRES),
-    semantic_tags: { type: "array", items: { type: "string" } },
+
+    // The current canonical taxonomy does not define fixed vocabularies
+    // for these fields, so they remain free-form string arrays for now.
+    vocals: stringArray,
+    ai_genres: stringArray,
+    ai_subgenres: stringArray,
+
+    semantic_tags: stringArray,
     description: { type: "string" },
-    confidence: { type: "number" },
+    confidence: {
+      type: "number",
+      minimum: 0,
+      maximum: 1,
+    },
   },
   required: [
-    "moods", "atmospheres", "energy", "scenes", "instruments",
-    "vocals", "ai_genres", "ai_subgenres", "semantic_tags",
-    "description", "confidence",
+    "moods",
+    "atmosphere",
+    "energy",
+    "scenes",
+    "instruments",
+    "vocals",
+    "ai_genres",
+    "ai_subgenres",
+    "semantic_tags",
+    "description",
+    "confidence",
   ],
 };
