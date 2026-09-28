@@ -61,7 +61,7 @@ export default function LoginPage() {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, username")
         .eq("id", data.user.id)
         .maybeSingle();
 
@@ -77,7 +77,13 @@ export default function LoginPage() {
       }
 
       if (profile.role === "producer") {
-        router.push("/producer");
+        if (!profile.username) {
+          router.push("/producer/setup");
+        } else {
+          router.push(
+            `/producer/${encodeURIComponent(profile.username)}`,
+          );
+        }
       } else if (profile.role === "admin") {
         router.push("/admin");
       } else {

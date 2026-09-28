@@ -9,27 +9,119 @@ const serviceRoleKey =
 
 if (!supabaseUrl) {
   throw new Error(
-    "NEXT_PUBLIC_SUPABASE_URL is not configured."
+    "NEXT_PUBLIC_SUPABASE_URL is not configured.",
   );
 }
 
 if (!serviceRoleKey) {
   throw new Error(
-    "SUPABASE_SERVICE_ROLE_KEY is not configured."
+    "SUPABASE_SERVICE_ROLE_KEY is not configured.",
   );
 }
 
 const supabaseAdmin = createClient(
   supabaseUrl,
-  serviceRoleKey
+  serviceRoleKey,
 );
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    const displayName = body?.displayName;
+    const username = body?.username;
+    const bio = body?.bio;
     const email = body?.email;
     const password = body?.password;
+
+    if (
+      typeof displayName !== "string" ||
+      !displayName.trim()
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Display name is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (displayName.trim().length > 50) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Display name must be 50 characters or less.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      typeof username !== "string" ||
+      !username.trim()
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Username is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const cleanUsername =
+      username.trim().toLowerCase();
+
+    if (
+      cleanUsername.length < 3 ||
+      cleanUsername.length > 30
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Username must be between 3 and 30 characters.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!/^[a-z0-9_]+$/.test(cleanUsername)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Username can only contain letters, numbers, and underscores.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (
+      typeof bio !== "string" ||
+      !bio.trim()
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Bio is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (bio.trim().length > 300) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Bio must be 300 characters or less.",
+        },
+        { status: 400 },
+      );
+    }
 
     if (
       typeof email !== "string" ||
@@ -38,9 +130,9 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "email is required",
+          error: "Email is required.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -52,14 +144,38 @@ export async function POST(request: Request) {
         {
           success: false,
           error:
-            "password must be at least 6 characters",
+            "Password must be at least 6 characters.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Create the Auth user.
-    // Role is NOT accepted from the client.
+    // --------------------------------------------------------
+    // Check username
+    // --------------------------------------------------------
+
+    const { data: existingUsername } =
+      await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("username", cleanUsername)
+        .maybeSingle();
+
+    if (existingUsername) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "This username is already taken.",
+        },
+        { status: 409 },
+      );
+    }
+
+    // --------------------------------------------------------
+    // Create Auth user
+    // --------------------------------------------------------
+
     const {
       data: userData,
       error: userError,
@@ -76,15 +192,18 @@ export async function POST(request: Request) {
           success: false,
           error:
             userError?.message ||
-            "Could not create user",
+            "Could not create user.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const userId = userData.user.id;
 
-    // Force this signup to producer.
+    // --------------------------------------------------------
+    // Create Producer profile
+    // --------------------------------------------------------
+
     const { error: profileError } =
       await supabaseAdmin
         .from("profiles")
@@ -92,26 +211,28 @@ export async function POST(request: Request) {
           {
             id: userId,
             role: "producer",
+            display_name: displayName.trim(),
+            username: cleanUsername,
+            bio: bio.trim(),
             updated_at: new Date().toISOString(),
           },
           {
             onConflict: "id",
-          }
+          },
         );
 
     if (profileError) {
-      // Clean up Auth user if profile creation fails.
       await supabaseAdmin.auth.admin.deleteUser(
-        userId
+        userId,
       );
 
       return NextResponse.json(
         {
           success: false,
           error:
-            "Could not create producer profile",
+            "Could not create producer profile.",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -121,12 +242,12 @@ export async function POST(request: Request) {
         message:
           "Producer account created successfully.",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error(
       "Producer signup error:",
-      error
+      error,
     );
 
     return NextResponse.json(
@@ -135,9 +256,9 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Unknown server error",
+            : "Unknown server error.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

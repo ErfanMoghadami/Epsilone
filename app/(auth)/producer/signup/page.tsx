@@ -8,6 +8,10 @@ import { createClient } from "@/lib/supabase/client";
 export default function ProducerSignupPage() {
   const router = useRouter();
 
+  const [displayName, setDisplayName] = useState("");
+  const [username, setUsername] = useState("");
+  const [bio, setBio] = useState("");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -26,7 +30,7 @@ export default function ProducerSignupPage() {
       options: {
         redirectTo:
           `${window.location.origin}/auth/callback` +
-          `?next=/producer&mode=producer-signup`,
+          `?next=/producer/setup&mode=producer-signup`,
       },
     });
 
@@ -37,7 +41,9 @@ export default function ProducerSignupPage() {
     }
   }
 
-  async function handleSignup(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSignup(
+    e: React.FormEvent<HTMLFormElement>,
+  ) {
     e.preventDefault();
 
     setLoading(true);
@@ -45,22 +51,29 @@ export default function ProducerSignupPage() {
     setMessage("");
 
     try {
-      const response = await fetch("/api/auth/producer-signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "/api/auth/producer-signup",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            displayName: displayName.trim(),
+            username: username.trim().toLowerCase(),
+            bio: bio.trim(),
+            email: email.trim(),
+            password,
+          }),
         },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-        }),
-      });
+      );
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error || "Producer signup failed. Please try again.",
+          data.error ||
+            "Producer signup failed. Please try again.",
         );
       }
 
@@ -109,7 +122,96 @@ export default function ProducerSignupPage() {
 
           {/* Card */}
           <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
-            <form onSubmit={handleSignup} className="space-y-5">
+            <form
+              onSubmit={handleSignup}
+              className="space-y-5"
+            >
+              {/* Display Name */}
+              <div>
+                <label
+                  htmlFor="display-name"
+                  className="mb-2 block text-sm font-medium text-neutral-300"
+                >
+                  Display Name
+                </label>
+
+                <input
+                  id="display-name"
+                  type="text"
+                  placeholder="Narciboi"
+                  value={displayName}
+                  onChange={(e) =>
+                    setDisplayName(e.target.value)
+                  }
+                  maxLength={50}
+                  required
+                  disabled={loading}
+                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-white/30 focus:bg-black/60 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
+
+              {/* Username */}
+              <div>
+                <label
+                  htmlFor="username"
+                  className="mb-2 block text-sm font-medium text-neutral-300"
+                >
+                  Username
+                </label>
+
+                <div className="flex items-center rounded-xl border border-white/10 bg-black/40 focus-within:border-white/30">
+                  <span className="pl-4 text-sm text-neutral-500">
+                    @
+                  </span>
+
+                  <input
+                    id="username"
+                    type="text"
+                    placeholder="narciboi"
+                    value={username}
+                    onChange={(e) =>
+                      setUsername(
+                        e.target.value
+                          .toLowerCase()
+                          .replace(/\s/g, ""),
+                      )
+                    }
+                    maxLength={30}
+                    required
+                    disabled={loading}
+                    className="w-full bg-transparent px-2 py-3 text-sm text-white outline-none placeholder:text-neutral-600"
+                  />
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label
+                  htmlFor="bio"
+                  className="mb-2 block text-sm font-medium text-neutral-300"
+                >
+                  Bio
+                </label>
+
+                <textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) =>
+                    setBio(e.target.value)
+                  }
+                  placeholder="Tell artists a little about you..."
+                  maxLength={300}
+                  rows={4}
+                  required
+                  disabled={loading}
+                  className="w-full resize-none rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-white/30 focus:bg-black/60 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+
+                <p className="mt-2 text-right text-xs text-neutral-600">
+                  {bio.length}/300
+                </p>
+              </div>
+
               {/* Email */}
               <div>
                 <label
@@ -124,7 +226,9 @@ export default function ProducerSignupPage() {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) =>
+                    setEmail(e.target.value)
+                  }
                   autoComplete="email"
                   required
                   disabled={loading}
@@ -146,7 +250,9 @@ export default function ProducerSignupPage() {
                   type="password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) =>
+                    setPassword(e.target.value)
+                  }
                   autoComplete="new-password"
                   minLength={6}
                   required
@@ -175,7 +281,9 @@ export default function ProducerSignupPage() {
                 disabled={loading}
                 className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? "Creating account..." : "Create producer account"}
+                {loading
+                  ? "Creating account..."
+                  : "Create producer account"}
               </button>
             </form>
 
@@ -183,7 +291,9 @@ export default function ProducerSignupPage() {
             <div className="my-6 flex items-center gap-3">
               <div className="h-px flex-1 bg-white/10" />
 
-              <span className="text-xs text-neutral-600">OR</span>
+              <span className="text-xs text-neutral-600">
+                OR
+              </span>
 
               <div className="h-px flex-1 bg-white/10" />
             </div>

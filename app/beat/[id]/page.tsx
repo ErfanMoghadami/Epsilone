@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
 
+import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToCartButton from "@/components/AddToCartButton";
 import { createClient } from "@/lib/supabase/server";
 import { getR2SignedUrl } from "@/lib/r2";
+import BackButton from "@/components/BackButton";
 
 type PageProps = {
   params: Promise<{
@@ -24,15 +25,24 @@ type Beat = {
   preview_key: string | null;
   cover_url: string | null;
   cover_key: string | null;
-  analysis_status: string | null;
+  producer_id: string | null;
 };
 
-export default async function BeatDetailPage({
-  params,
-}: PageProps) {
+type Producer = {
+  id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
+export default async function BeatDetailPage({ params }: PageProps) {
   const { id } = await params;
 
   const supabase = await createClient();
+
+  // --------------------------------------------------------
+  // Beat
+  // --------------------------------------------------------
 
   const { data: beatData, error: beatError } = await supabase
     .from("beats")
@@ -48,8 +58,8 @@ export default async function BeatDetailPage({
         preview_key,
         cover_url,
         cover_key,
-        analysis_status
-      `,
+        producer_id
+        `,
     )
     .eq("id", id)
     .single();
@@ -60,30 +70,43 @@ export default async function BeatDetailPage({
 
   const beat = beatData as Beat;
 
-  let previewUrl = beat.preview_url;
-
-  let coverUrl = beat.cover_url;
-
   // --------------------------------------------------------
-  // R2 Preview
+  // Producer
   // --------------------------------------------------------
 
-  if (!previewUrl && beat.preview_key) {
-    previewUrl = await getR2SignedUrl(
-      beat.preview_key,
-      600,
-    );
+  let producer: Producer | null = null;
+
+  if (beat.producer_id) {
+    const { data: producerData, error: producerError } = await supabase
+      .from("profiles")
+      .select("id, display_name, username, avatar_url")
+      .eq("id", beat.producer_id)
+      .eq("role", "producer")
+      .single();
+
+    if (!producerError && producerData) {
+      producer = producerData as Producer;
+    }
   }
 
+  const producerName =
+    producer?.display_name?.trim() || producer?.username?.trim() || "Producer";
+
+  const producerInitial = producerName.charAt(0).toUpperCase();
+
   // --------------------------------------------------------
-  // R2 Cover
+  // R2 Preview / Cover
   // --------------------------------------------------------
 
+  let previewUrl = beat.preview_url;
+  let coverUrl = beat.cover_url;
+
+  if (!previewUrl && beat.preview_key) {
+    previewUrl = await getR2SignedUrl(beat.preview_key, 600);
+  }
+
   if (!coverUrl && beat.cover_key) {
-    coverUrl = await getR2SignedUrl(
-      beat.cover_key,
-      3600,
-    );
+    coverUrl = await getR2SignedUrl(beat.cover_key, 3600);
   }
 
   return (
@@ -93,12 +116,9 @@ export default async function BeatDetailPage({
         {/* Back */}
         {/* ------------------------------------------------ */}
 
-        <Link
-          href="/"
+        <BackButton
           className="mb-8 inline-flex text-sm text-zinc-500 transition hover:text-white"
-        >
-          ← Back
-        </Link>
+        />
 
         {/* ------------------------------------------------ */}
         {/* Main Beat */}
@@ -111,11 +131,7 @@ export default async function BeatDetailPage({
               {coverUrl ? (
                 <img
                   src={coverUrl}
-                  alt={
-                    beat.title
-                      ? `${beat.title} cover`
-                      : "Beat cover"
-                  }
+                  alt={beat.title ? `${beat.title} cover` : "Beat cover"}
                   className="aspect-square w-full object-cover"
                 />
               ) : (
@@ -138,9 +154,29 @@ export default async function BeatDetailPage({
                   {beat.title ?? "Untitled Beat"}
                 </h1>
 
-                <p className="mt-2 text-sm text-zinc-500">
-                  Producer
-                </p>
+                {/* Producer */}
+                {producer ? (
+                  <Link
+                    href={`/producers/${producer.id}`}
+                    className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-400 transition hover:text-white"
+                  >
+                    {producer.avatar_url ? (
+                      <img
+                        src={producer.avatar_url}
+                        alt={producerName}
+                        className="h-7 w-7 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-xs font-semibold text-zinc-400">
+                        {producerInitial}
+                      </div>
+                    )}
+
+                    <span>{producerName}</span>
+                  </Link>
+                ) : (
+                  <p className="mt-3 text-sm text-zinc-500">Producer</p>
+                )}
               </div>
 
               <FavoriteButton beatId={beat.id} />
@@ -152,33 +188,21 @@ export default async function BeatDetailPage({
 
             <div className="mt-8 grid grid-cols-3 gap-3">
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                <p className="text-xs text-zinc-600">
-                  BPM
-                </p>
+                <p className="text-xs text-zinc-600">BPM</p>
 
-                <p className="mt-1 font-semibold">
-                  {beat.bpm ?? "-"}
-                </p>
+                <p className="mt-1 font-semibold">{beat.bpm ?? "-"}</p>
               </div>
 
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                <p className="text-xs text-zinc-600">
-                  Key
-                </p>
+                <p className="text-xs text-zinc-600">Key</p>
 
-                <p className="mt-1 font-semibold">
-                  {beat.key ?? "-"}
-                </p>
+                <p className="mt-1 font-semibold">{beat.key ?? "-"}</p>
               </div>
 
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
-                <p className="text-xs text-zinc-600">
-                  Genre
-                </p>
+                <p className="text-xs text-zinc-600">Genre</p>
 
-                <p className="mt-1 font-semibold">
-                  {beat.genre ?? "-"}
-                </p>
+                <p className="mt-1 font-semibold">{beat.genre ?? "-"}</p>
               </div>
             </div>
 
@@ -188,9 +212,7 @@ export default async function BeatDetailPage({
 
             {beat.moods && beat.moods.length > 0 && (
               <div className="mt-6">
-                <p className="mb-3 text-sm font-medium text-zinc-300">
-                  Vibe
-                </p>
+                <p className="mb-3 text-sm font-medium text-zinc-300">Vibe</p>
 
                 <div className="flex flex-wrap gap-2">
                   {beat.moods.map((mood) => (
@@ -232,9 +254,7 @@ export default async function BeatDetailPage({
 
             <div className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
               <div className="mb-4">
-                <h2 className="font-semibold">
-                  Choose a License
-                </h2>
+                <h2 className="font-semibold">Choose a License</h2>
 
                 <p className="mt-1 text-sm text-zinc-500">
                   Select the license that fits your use.

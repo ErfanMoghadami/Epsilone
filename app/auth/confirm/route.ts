@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, username")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -72,7 +72,11 @@ export async function GET(request: NextRequest) {
   redirectUrl.search = "";
 
   if (profile?.role === "producer") {
-    redirectUrl.pathname = "/producer";
+    if (profile.username) {
+      redirectUrl.pathname = `/producer/${encodeURIComponent(profile.username)}`;
+    } else {
+      redirectUrl.pathname = "/producer/setup";
+    }
   } else if (profile?.role === "admin") {
     redirectUrl.pathname = "/admin";
   } else {

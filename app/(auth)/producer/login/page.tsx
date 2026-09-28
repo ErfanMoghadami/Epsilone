@@ -15,26 +15,6 @@ export default function ProducerLoginPage() {
   const [loading, setLoading] = useState(false);
 
   const supabase = createClient();
-  
-  async function handleGoogleSignup() {
-    setError("");
-    setLoading(true);
-  
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo:
-          `${window.location.origin}/auth/callback` +
-          `?next=/&mode=client-signup`,
-      },
-    });
-  
-    if (error) {
-      console.error("Google signup error:", error);
-      setError(error.message);
-      setLoading(false);
-    }
-  }
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -44,58 +24,143 @@ export default function ProducerLoginPage() {
 
     const supabase = createClient();
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     try {
+      // ------------------------------------------------------
+      // 1. Try normal login
+      // ------------------------------------------------------
+
       const { data, error: loginError } =
         await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: normalizedEmail,
           password,
         });
 
-      if (loginError) {
-        setError(loginError.message);
+      // ------------------------------------------------------
+      // 2. Existing account -> normal login
+      // ------------------------------------------------------
+
+      if (!loginError) {
+        if (!data.user) {
+          setError("User account was not found.");
+          return;
+        }
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("role, username")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error("Profile lookup error:", profileError);
+
+          await supabase.auth.signOut();
+
+          setError("Could not load your account.");
+          return;
+        }
+
+        if (!profile) {
+          await supabase.auth.signOut();
+
+          setError("Your account profile was not found.");
+          return;
+        }
+
+        if (profile.role !== "producer") {
+          await supabase.auth.signOut();
+
+          setError("This account is not registered as a producer.");
+
+          return;
+        }
+
+        // Producer exists but has not chosen username yet.
+        if (!profile.username) {
+          router.push("/producer/setup");
+          router.refresh();
+          return;
+        }
+
+        // Existing producer with username.
+        router.push(`/producer/${encodeURIComponent(profile.username)}`);
+
+        router.refresh();
         return;
       }
 
-      if (!data.user) {
-        setError("User account was not found.");
+      // ------------------------------------------------------
+      // 3. Login failed
+      //
+      // Try creating a producer account using the same
+      // email + password.
+      // ------------------------------------------------------
+
+      const signupResponse = await ", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          password,
+        }),
+      });
+
+      const signupData = await signupResponse.json();
+
+      // ------------------------------------------------------
+      // 4. Account could not be created
+      //
+      // Most likely:
+      // - account already exists
+      // - wrong password
+      // - Google-only account
+      // ------------------------------------------------------
+
+      if (!signupResponse.ok || !signupData.success) {
+        setError("Invalid email or password.");
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .maybeSingle();
+      // ------------------------------------------------------
+      // 5. New producer account created
+      //
+      // Sign in immediately with same credentials.
+      // ------------------------------------------------------
 
-      if (profileError) {
-        console.error("Profile lookup error:", profileError);
-        setError("Could not load your account.");
+      const { data: newLoginData, error: newLoginError } =
+        await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password,
+        });
+
+      if (newLoginError || !newLoginData.user) {
+        console.error("Auto-created producer login error:", newLoginError);
+
+        setError(
+          "Your account was created, but automatic login failed. Please try again.",
+        );
+
         return;
       }
 
-      if (!profile) {
-        setError("Your account profile was not found.");
-        return;
-      }
+      // ------------------------------------------------------
+      // 6. Send new producer to username setup
+      // ------------------------------------------------------
 
-      if (profile.role !== "producer") {
-        await supabase.auth.signOut();
-        setError("This account is not registered as a producer.");
-        return;
-      }
-
-      const next = searchParams.get("next");
-
-      if (next && next.startsWith("/producer")) {
-        router.push(next);
-      } else {
-        router.push("/producer");
-      }
-
+      router.push("/producer/setup");
       router.refresh();
     } catch (error) {
       console.error("Producer login error:", error);
-      setError("Something went wrong. Please try again.");
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -103,19 +168,19 @@ export default function ProducerLoginPage() {
   async function handleGoogleLogin() {
     setError("");
     setLoading(true);
-  
+
     const supabase = createClient();
-  
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo:
           `${window.location.origin}/auth/callback` +
-          `?next=${encodeURIComponent("/producer")}` +
+          `?next=${encodeURIComponent("/producer/setup")}` +
           `&mode=producer-login`,
       },
     });
-  
+
     if (error) {
       console.error("Google producer login error:", error);
       setError(error.message);
@@ -176,8 +241,6 @@ export default function ProducerLoginPage() {
                   >
                     Password
                   </label>
-
-                  
                 </div>
 
                 <input

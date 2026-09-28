@@ -56,7 +56,7 @@ export async function updateSession(request: NextRequest) {
   // --------------------------------------------------------
 
   const isProducerRoute =
-    pathname.startsWith("/producer") && !isProducerAuthRoute;
+    pathname.startsWith("/producer/") && !isProducerAuthRoute;
 
   const isDashboardRoute = pathname.startsWith("/dashboard");
 
@@ -90,7 +90,7 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, username")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -107,6 +107,19 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
 
+    if (!profile.username && pathname !== "/producer/setup") {
+      return NextResponse.redirect(new URL("/producer/setup", request.url));
+    }
+
+    if (profile.username && pathname === "/producer/setup") {
+      return NextResponse.redirect(
+        new URL(
+          `/producer/${encodeURIComponent(profile.username)}`,
+          request.url,
+        ),
+      );
+    }
+
     return response;
   }
 
@@ -116,7 +129,18 @@ export async function updateSession(request: NextRequest) {
 
   if (isDashboardRoute) {
     if (profile.role === "producer") {
-      return NextResponse.redirect(new URL("/producer", request.url));
+      if (!profile.username) {
+        return NextResponse.redirect(
+          new URL("/producer/setup", request.url),
+        );
+      }
+
+      return NextResponse.redirect(
+        new URL(
+          `/producer/${encodeURIComponent(profile.username)}`,
+          request.url,
+        ),
+      );
     }
 
     if (profile.role !== "buyer") {

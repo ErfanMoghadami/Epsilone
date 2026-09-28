@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProducerSignOutButton from "@/components/auth/producer-sign-out-button";
+
 export default async function ProducerLayout({
   children,
 }: {
@@ -14,8 +15,20 @@ export default async function ProducerLayout({
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/producer/login");
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, username")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== "producer") {
+    redirect("/producer/login");
+  }
+
+  const username = profile.username?.trim().toLowerCase() || null;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -26,17 +39,27 @@ export default async function ProducerLayout({
           <div className="mb-10">
             <h1 className="text-2xl font-bold tracking-tight">Epsilone</h1>
 
-            <p className="mt-1 text-xs text-zinc-500">Producer Panel</p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Producer Panel
+            </p>
+
+            {username && (
+              <p className="mt-2 text-xs text-zinc-600">
+                @{username}
+              </p>
+            )}
           </div>
 
           {/* Navigation */}
           <nav className="space-y-2">
-            <Link
-              href="/producer"
-              className="block rounded-lg px-4 py-3 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"
-            >
-              Dashboard
-            </Link>
+            {username && (
+              <Link
+                href={`/producer/${encodeURIComponent(username)}`}
+                className="block rounded-lg px-4 py-3 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"
+              >
+                Dashboard
+              </Link>
+            )}
 
             <Link
               href="/producer/beats"
