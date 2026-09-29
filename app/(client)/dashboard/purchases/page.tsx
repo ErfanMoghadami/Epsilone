@@ -9,6 +9,7 @@ type OrderItem = {
   unit_price: number | string;
   license_type: string;
   beat_id: string;
+  includes_stems: boolean;
 };
 
 type Order = {
@@ -65,7 +66,8 @@ export default async function PurchasesPage() {
           beat_id,
           title_snapshot,
           unit_price,
-          license_type
+          license_type,
+          includes_stems
         `,
       )
       .in("order_id", orderIds);
@@ -92,7 +94,9 @@ export default async function PurchasesPage() {
       <div className="mb-10">
         <h1 className="text-3xl font-bold">Purchases</h1>
 
-        <p className="mt-2 text-zinc-500">Your purchased beats and licenses.</p>
+        <p className="mt-2 text-zinc-500">
+          Your purchased beats and licenses.
+        </p>
       </div>
 
       {orders && orders.length > 0 ? (
@@ -117,7 +121,9 @@ export default async function PurchasesPage() {
                   </div>
 
                   <div className="text-right">
-                    <p className="text-xs text-zinc-600">Purchased</p>
+                    <p className="text-xs text-zinc-600">
+                      Purchased
+                    </p>
 
                     <p className="mt-1 text-sm text-zinc-400">
                       {new Date(
@@ -134,14 +140,28 @@ export default async function PurchasesPage() {
                       className="flex flex-col gap-4 rounded-xl border border-zinc-800 p-4 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div>
-                        <h2 className="font-semibold">{item.title_snapshot}</h2>
+                        <h2 className="font-semibold">
+                          {item.title_snapshot}
+                        </h2>
 
                         <p className="mt-1 text-sm text-zinc-500">
                           {item.license_type} License
                         </p>
+
+                        <p
+                          className={`mt-2 text-xs ${
+                            item.includes_stems
+                              ? "text-zinc-300"
+                              : "text-zinc-600"
+                          }`}
+                        >
+                          {item.includes_stems
+                            ? "✓ Stems included"
+                            : "Beat only · No stems"}
+                        </p>
                       </div>
 
-                      <div className="flex items-center justify-between gap-4 sm:justify-end">
+                      <div className="flex flex-col gap-2 sm:items-end">
                         <span className="font-medium">
                           {order.currency === "USD"
                             ? "$"
@@ -149,22 +169,37 @@ export default async function PurchasesPage() {
                           {Number(item.unit_price).toFixed(2)}
                         </span>
 
-                        <a
-                          href={`/api/download/${item.beat_id}`}
-                          className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-900"
-                        >
-                          Download
-                        </a>
+                        <div className="flex flex-wrap gap-2">
+                          <a
+                            href={`/api/download/${item.beat_id}?type=master`}
+                            className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-900"
+                          >
+                            Download Master
+                          </a>
+
+                          {item.includes_stems && (
+                            <a
+                              href={`/api/download/${item.beat_id}?type=stems`}
+                              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-900"
+                            >
+                              Download Stems
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-5">
-                  <span className="text-zinc-500">Order Total</span>
+                  <span className="text-zinc-500">
+                    Order Total
+                  </span>
 
                   <span className="text-xl font-bold">
-                    {order.currency === "USD" ? "$" : `${order.currency} `}
+                    {order.currency === "USD"
+                      ? "$"
+                      : `${order.currency} `}
                     {Number(order.total).toFixed(2)}
                   </span>
                 </div>
@@ -174,7 +209,9 @@ export default async function PurchasesPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-10 text-center">
-          <h2 className="text-xl font-semibold">No purchases yet</h2>
+          <h2 className="text-xl font-semibold">
+            No purchases yet
+          </h2>
 
           <p className="mt-2 text-zinc-500">
             Your purchased beats will appear here.

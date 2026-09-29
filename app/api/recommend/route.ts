@@ -204,7 +204,10 @@ export async function POST(request: Request) {
       preview_key: string | null;
       cover_key: string | null;
     }[] = [];
-
+    let producerRows: {
+      id: string;
+      username: string | null;
+    }[] = [];
     if (beatIds.length > 0) {
       const { data: rows, error: storageError } = await supabase
         .from("beats")
@@ -220,6 +223,74 @@ export async function POST(request: Request) {
 
     const storageMap = new Map(storageRows.map((row) => [row.id, row]));
 
+    // --------------------------------------------------------
+    // Load producer IDs directly from beats
+    // --------------------------------------------------------
+
+    let beatProducerRows: {
+      id: string;
+      producer_id: string | null;
+    }[] = [];
+
+    if (beatIds.length > 0) {
+      const { data: beatRows, error: beatRowsError } = await supabase
+        .from("beats")
+        .select("id, producer_id")
+        .in("id", beatIds);
+
+      if (beatRowsError) {
+        console.error(
+          "Failed to load beat producer IDs:",
+          beatRowsError.message,
+        );
+      } else {
+        beatProducerRows = beatRows ?? [];
+      }
+    }
+
+    const beatProducerMap = new Map(
+      beatProducerRows.map((row) => [row.id, row.producer_id]),
+    );
+
+    // --------------------------------------------------------
+    // Load producer usernames
+    // --------------------------------------------------------
+
+    const producerIds = [
+      ...new Set(
+        beatProducerRows
+          .map((row) => row.producer_id)
+          .filter((id): id is string => typeof id === "string"),
+      ),
+    ];
+
+    if (producerIds.length > 0) {
+      const { data: producers, error: producerError } = await supabase
+        .from("profiles")
+        .select("id, username")
+        .in("id", producerIds)
+        .eq("role", "producer");
+
+      if (producerError) {
+        console.error(
+          "Failed to load producer usernames:",
+          producerError.message,
+        );
+      } else {
+        producerRows = producers ?? [];
+      }
+    }
+
+    const producerMap = new Map(
+      producerRows.map((producer) => [
+        producer.id,
+        producer,
+      ]),
+    );
+
+    // const producerMap = new Map(
+    //   producerRows.map((producer) => [producer.id, producer]),
+    // );
     const r2PublicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
 
     function buildR2Url(key: string | null): string | null {
@@ -236,10 +307,16 @@ export async function POST(request: Request) {
     const enrichedResults = results.map(
       (beat: {
         id: string;
+        producer_id?: string | null;
         preview_url?: string | null;
         cover_url?: string | null;
       }) => {
         const storage = storageMap.get(beat.id);
+
+        const producerId =
+          beat.producer_id ?? beatProducerMap.get(beat.id) ?? null;
+
+        const producer = producerId ? producerMap.get(producerId) : undefined;
 
         return {
           ...beat,
@@ -248,6 +325,8 @@ export async function POST(request: Request) {
             beat.preview_url ?? buildR2Url(storage?.preview_key ?? null),
 
           cover_url: beat.cover_url ?? buildR2Url(storage?.cover_key ?? null),
+
+          producer_username: producer?.username ?? null,
         };
       },
     );

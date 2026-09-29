@@ -6,7 +6,7 @@ import WaveformTracker from "@arraypress/waveform-tracker";
 import { WaveformPlayer } from "@arraypress/waveform-player-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToCartButton from "@/components/AddToCartButton";
-
+import HomeMenu from "@/components/HomeMenu";
 type Beat = {
   id: string;
   title: string;
@@ -18,6 +18,7 @@ type Beat = {
   genre: string | null;
   match_score: number | null;
   producer_id: string | null;
+  producer_username: string | null;
 };
 
 type RecommendResponse = {
@@ -62,9 +63,7 @@ export default function Page() {
 
   useEffect(() => {
     try {
-      const savedSearch = sessionStorage.getItem(
-        "epsilone-search-state",
-      );
+      const savedSearch = sessionStorage.getItem("epsilone-search-state");
 
       if (!savedSearch) {
         setRestored(true);
@@ -81,10 +80,7 @@ export default function Page() {
         setResults(parsed.results);
       }
     } catch (error) {
-      console.error(
-        "Failed to restore search state:",
-        error,
-      );
+      console.error("Failed to restore search state:", error);
     } finally {
       setRestored(true);
     }
@@ -94,10 +90,7 @@ export default function Page() {
   // Save search state
   // ------------------------------------------------------
 
-  function saveSearchState(
-    nextQuery: string,
-    nextResults: Beat[],
-  ) {
+  function saveSearchState(nextQuery: string, nextResults: Beat[]) {
     try {
       sessionStorage.setItem(
         "epsilone-search-state",
@@ -107,10 +100,7 @@ export default function Page() {
         }),
       );
     } catch (error) {
-      console.error(
-        "Failed to save search state:",
-        error,
-      );
+      console.error("Failed to save search state:", error);
     }
   }
 
@@ -118,9 +108,7 @@ export default function Page() {
   // Search
   // ------------------------------------------------------
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!query.trim()) {
@@ -141,29 +129,19 @@ export default function Page() {
         }),
       });
 
-      const data: RecommendResponse =
-        await response.json();
+      const data: RecommendResponse = await response.json();
 
       if (!response.ok || !data.success) {
-        throw new Error(
-          data.error || "Recommendation failed",
-        );
+        throw new Error(data.error || "Recommendation failed");
       }
 
       const nextResults = data.results ?? [];
 
       setResults(nextResults);
 
-      saveSearchState(
-        query.trim(),
-        nextResults,
-      );
+      saveSearchState(query.trim(), nextResults);
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Something went wrong",
-      );
+      setError(error instanceof Error ? error.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -171,14 +149,12 @@ export default function Page() {
 
   return (
     <main className="min-h-screen bg-black px-6 py-16 text-white">
+      <HomeMenu />
       <div className="mx-auto max-w-4xl">
-
         {/* Header */}
 
         <div className="mb-10 text-center">
-          <h1 className="mb-3 text-4xl font-bold">
-            Epsilone
-          </h1>
+          <h1 className="mb-3 text-4xl font-bold">Epsilone</h1>
 
           <p className="text-zinc-400">
             Describe the beat you are looking for.
@@ -187,16 +163,11 @@ export default function Page() {
 
         {/* Search */}
 
-        <form
-          onSubmit={handleSubmit}
-          className="mb-10 flex gap-3"
-        >
+        <form onSubmit={handleSubmit} className="mb-10 flex gap-3">
           <input
             type="text"
             value={query}
-            onChange={(event) =>
-              setQuery(event.target.value)
-            }
+            onChange={(event) => setQuery(event.target.value)}
             placeholder="یه بیت غمگین و شبونه برای رانندگی میخوام..."
             className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-4 outline-none placeholder:text-zinc-600 focus:border-zinc-500"
           />
@@ -228,124 +199,101 @@ export default function Page() {
 
         {/* Results */}
 
-        {restored &&
-          !loading &&
-          results.length > 0 && (
-            <div className="space-y-4">
+        {restored && !loading && results.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="mb-4 text-xl font-semibold">Recommended Beats</h2>
 
-              <h2 className="mb-4 text-xl font-semibold">
-                Recommended Beats
-              </h2>
+            {results.map((beat) => (
+              <div
+                key={beat.id}
+                className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+              >
+                {/* Cover */}
 
-              {results.map((beat) => (
-                <div
-                  key={beat.id}
-                  className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-                >
-                  {/* Cover */}
+                {beat.cover_url && (
+                  <img
+                    src={beat.cover_url}
+                    alt={beat.title ?? "Beat cover"}
+                    className="h-24 w-24 rounded-xl object-cover"
+                  />
+                )}
 
-                  {beat.cover_url && (
-                    <img
-                      src={beat.cover_url}
-                      alt={
-                        beat.title ?? "Beat cover"
-                      }
-                      className="h-24 w-24 rounded-xl object-cover"
+                <div className="flex-1">
+                  {/* Title / Match / Favorite */}
+
+                  <div className="mb-1 flex items-center justify-between gap-4">
+                    <div className="min-w-0">
+                      <h3 className="font-semibold">
+                        {beat.title ?? "Untitled Beat"}
+                      </h3>
+
+                      {beat.producer_username && (
+                        <Link
+                          href={`/producers/${encodeURIComponent(
+                            beat.producer_username,
+                          )}`}
+                          className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-white"
+                        >
+                          @{beat.producer_username}
+                        </Link>
+                      )}
+                    </div>
+
+                    <span className="text-sm text-zinc-400">
+                      {Number(beat.match_score).toFixed(1)}%
+                    </span>
+
+                    <FavoriteButton beatId={beat.id} />
+                  </div>
+
+                  {/* Metadata */}
+
+                  <p className="mb-2 text-sm text-zinc-500">
+                    {beat.genre ?? "Unknown genre"}
+
+                    {beat.bpm ? ` • ${beat.bpm} BPM` : ""}
+
+                    {beat.key ? ` • ${beat.key}` : ""}
+                  </p>
+
+                  {/* Player */}
+
+                  {(beat.preview_url || beat.audio_url) && (
+                    <WaveformPlayer
+                      url={beat.preview_url ?? beat.audio_url ?? ""}
+                      title={beat.title ?? "Untitled Beat"}
+                      waveformStyle="line"
                     />
                   )}
 
-                  <div className="flex-1">
+                  {/* Cart */}
 
-                    {/* Title / Match / Favorite */}
+                  <AddToCartButton
+                    beatId={beat.id}
+                    title={beat.title ?? "Untitled Beat"}
+                  />
 
-                    <div className="mb-1 flex items-center justify-between gap-4">
-                      <h3 className="font-semibold">
-                        {beat.title ??
-                          "Untitled Beat"}
-                      </h3>
+                  {/* View Beat */}
 
-                      <span className="text-sm text-zinc-400">
-                        {Number(
-                          beat.match_score,
-                        ).toFixed(1)}
-                        %
-                      </span>
-
-                      <FavoriteButton
-                        beatId={beat.id}
-                      />
-                    </div>
-
-                    {/* Metadata */}
-
-                    <p className="mb-2 text-sm text-zinc-500">
-                      {beat.genre ??
-                        "Unknown genre"}
-
-                      {beat.bpm
-                        ? ` • ${beat.bpm} BPM`
-                        : ""}
-
-                      {beat.key
-                        ? ` • ${beat.key}`
-                        : ""}
-                    </p>
-
-                    {/* Player */}
-
-                    {(beat.preview_url ||
-                      beat.audio_url) && (
-                      <WaveformPlayer
-                        url={
-                          beat.preview_url ??
-                          beat.audio_url ??
-                          ""
-                        }
-                        title={
-                          beat.title ??
-                          "Untitled Beat"
-                        }
-                        waveformStyle="line"
-                      />
-                    )}
-
-                    {/* Cart */}
-
-                    <AddToCartButton
-                      beatId={beat.id}
-                      title={
-                        beat.title ??
-                        "Untitled Beat"
-                      }
-                    />
-
-                    {/* View Beat */}
-
-                    <Link
-                      href={`/beat/${beat.id}`}
-                      className="mt-3 flex w-full items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:border-zinc-500 hover:bg-zinc-800"
-                    >
-                      View Beat →
-                    </Link>
-
-                  </div>
+                  <Link
+                    href={`/beat/${beat.id}`}
+                    className="mt-3 flex w-full items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:border-zinc-500 hover:bg-zinc-800"
+                  >
+                    View Beat →
+                  </Link>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Empty state */}
 
-        {restored &&
-          !loading &&
-          !error &&
-          results.length === 0 && (
-            <div className="py-16 text-center text-zinc-600">
-              حس پیچیده ای داری هنوز بیتی به این
-              احوالات نداریم :(
-            </div>
-          )}
-
+        {restored && !loading && !error && results.length === 0 && (
+          <div className="py-16 text-center text-zinc-600">
+            حس پیچیده ای داری هنوز بیتی به این احوالات نداریم :(
+          </div>
+        )}
       </div>
     </main>
   );

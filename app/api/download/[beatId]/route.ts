@@ -9,6 +9,22 @@ type DownloadRouteProps = {
   }>;
 };
 
+function sanitizeFilename(name: string): string {
+  return name
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+    .trim();
+}
+
+function getExtensionFromKey(key: string): string {
+  const dotIndex = key.lastIndexOf(".");
+
+  if (dotIndex === -1) {
+    return "";
+  }
+
+  return key.slice(dotIndex).toLowerCase();
+}
+
 export async function GET(
   request: Request,
   { params }: DownloadRouteProps,
@@ -23,7 +39,17 @@ export async function GET(
       );
     }
 
+    const requestUrl = new URL(request.url);
+    const downloadType =
+      requestUrl.searchParams.get("type") === "stems"
+        ? "stems"
+        : "master";
+
     const supabase = await createClient();
+
+    // ---------------------------------------------------------
+    // 1. Get authenticated user
+    // ---------------------------------------------------------
 
     const {
       data: { user },
@@ -37,14 +63,67 @@ export async function GET(
     }
 
     // ---------------------------------------------------------
-    // 1. Find order items for this beat
+    // 2. Find paid orders belonging to current user
     // ---------------------------------------------------------
 
-    const { data: orderItems, error: orderItemsError } =
+    const { data: paidOrders, error: paidOrdersError } =
       await supabase
-        .from("order_items")
-        .select("id, order_id, beat_id")
-        .eq("beat_id", beatId);
+        .from("orders")
+        .select("id")
+        .eq("buyer_id", user.id)
+        .eq("status", "paid");
+
+    if (paidOrdersError) {
+      console.error(
+        "Failed to load paid orders:",
+        paidOrdersError,
+      );
+
+      return NextResponse.json(
+        { error: "Failed to verify purchase" },
+        { status: 500 },
+      );
+    }
+
+    if (!paidOrders || paidOrders.length === 0) {
+      return NextResponse.json(
+        { error: "You have not purchased this beat" },
+        { status: 403 },
+      );
+    }
+
+    const paidOrderIds = paidOrders.map(
+      (order) => order.id,
+    );
+
+    // ---------------------------------------------------------
+    // 3. Verify purchase and Stem entitlement
+    // ---------------------------------------------------------
+
+    let orderItemsQuery = supabase
+      .from("order_items")
+      .select(
+        `
+          id,
+          order_id,
+          beat_id,
+          includes_stems
+        `,
+      )
+      .eq("beat_id", beatId)
+      .in("order_id", paidOrderIds);
+
+    if (downloadType === "stems") {
+      orderItemsQuery = orderItemsQuery.eq(
+        "includes_stems",
+        true,
+      );
+    }
+
+    const {
+      data: orderItems,
+      error: orderItemsError,
+    } = await orderItemsQuery;
 
     if (orderItemsError) {
       console.error(
@@ -59,41 +138,16 @@ export async function GET(
     }
 
     if (!orderItems || orderItems.length === 0) {
-      return NextResponse.json(
-        { error: "You have not purchased this beat" },
-        { status: 403 },
-      );
-    }
+      if (downloadType === "stems") {
+        return NextResponse.json(
+          {
+            error:
+              "Your purchase does not include the Stem Pack.",
+          },
+          { status: 403 },
+        );
+      }
 
-    const orderIds = orderItems.map((item) => item.order_id);
-
-    // ---------------------------------------------------------
-    // 2. Verify paid order belongs to current user
-    // ---------------------------------------------------------
-
-    const { data: paidOrder, error: paidOrderError } =
-      await supabase
-        .from("orders")
-        .select("id, buyer_id, status")
-        .in("id", orderIds)
-        .eq("buyer_id", user.id)
-        .eq("status", "paid")
-        .limit(1)
-        .maybeSingle();
-
-    if (paidOrderError) {
-      console.error(
-        "Failed to verify paid order:",
-        paidOrderError,
-      );
-
-      return NextResponse.json(
-        { error: "Failed to verify purchase" },
-        { status: 500 },
-      );
-    }
-
-    if (!paidOrder) {
       return NextResponse.json(
         { error: "You have not purchased this beat" },
         { status: 403 },
@@ -101,12 +155,21 @@ export async function GET(
     }
 
     // ---------------------------------------------------------
-    // 3. Get beat storage information
+    // 4. Get beat storage information
     // ---------------------------------------------------------
 
     const { data: beat, error: beatError } = await supabase
       .from("beats")
-      .select("id, title, audio_key, audio_url")
+      .select(
+        `
+          id,
+          title,
+          audio_key,
+          audio_url,
+          stems_key,
+          stems_file_name
+        `,
+      )
       .eq("id", beatId)
       .single();
 
@@ -118,27 +181,65 @@ export async function GET(
     }
 
     // ---------------------------------------------------------
-    // 4. New R2 beats
+    // 5. Stem download
+    // ---------------------------------------------------------
+
+    if (downloadType === "stems") {
+      if (!beat.stems_key) {
+        return NextResponse.json(
+          {
+            error: "Stem Pack is no longer available.",
+          },
+          { status: 404 },
+        );
+      }
+
+      const fallbackStemFilename =
+        `epsilone-stems${getExtensionFromKey(
+          beat.stems_key,
+        )}`;
+
+      const safeStemFilename =
+        sanitizeFilename(
+          beat.stems_file_name ||
+            fallbackStemFilename,
+        ) || fallbackStemFilename;
+
+      const signedUrl = await getR2SignedUrl(
+        beat.stems_key,
+        300,
+        safeStemFilename,
+      );
+
+      return NextResponse.redirect(signedUrl);
+    }
+
+    // ---------------------------------------------------------
+    // 6. Master download
     // ---------------------------------------------------------
 
     if (beat.audio_key) {
-      const safeTitle = (beat.title ?? "epsilone-beat")
-        .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
-        .trim();
-    
-      const filename = `${safeTitle || "epsilone-beat"}.mp3`;
-    
+      const extension =
+        getExtensionFromKey(beat.audio_key) || ".mp3";
+
+      const safeTitle = sanitizeFilename(
+        beat.title ?? "epsilone-beat",
+      );
+
+      const filename =
+        `${safeTitle || "epsilone-beat"}${extension}`;
+
       const signedUrl = await getR2SignedUrl(
         beat.audio_key,
         300,
         filename,
       );
-    
+
       return NextResponse.redirect(signedUrl);
     }
 
     // ---------------------------------------------------------
-    // 5. Legacy Supabase Storage beats
+    // 7. Legacy Supabase Storage master
     // ---------------------------------------------------------
 
     if (beat.audio_url) {
@@ -146,7 +247,7 @@ export async function GET(
     }
 
     // ---------------------------------------------------------
-    // 6. No master file
+    // 8. No master file
     // ---------------------------------------------------------
 
     return NextResponse.json(

@@ -98,7 +98,7 @@ export default function ProducerLoginPage() {
       // email + password.
       // ------------------------------------------------------
 
-      const signupResponse = await ", {
+      const signupResponse = await fetch("/api/auth/producer-auto-signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

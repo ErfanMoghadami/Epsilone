@@ -5,6 +5,7 @@ export interface UploadFormState {
   genre: string;
   audioFile: File | null;
   coverFile: File | null;
+  stemFile: File | null;
 }
 
 export const initialState: UploadFormState = {
@@ -14,6 +15,7 @@ export const initialState: UploadFormState = {
   genre: "",
   audioFile: null,
   coverFile: null,
+  stemFile: null,
 };
 
 const allowedTypes: string[] = [
@@ -24,22 +26,44 @@ const allowedTypes: string[] = [
   "audio/mp3",
 ];
 
-const allowedImageTypes: string[] = ["image/jpeg", "image/png"];
+const allowedImageTypes: string[] = [
+  "image/jpeg",
+  "image/png",
+];
 
 const maxFileSize = 100;
-const maxFileSizeInBytes = maxFileSize * 1024 * 1024;
+const maxFileSizeInBytes =
+  maxFileSize * 1024 * 1024;
 
 const maxImageSize = 10;
-const maxImageSizeInBytes = maxImageSize * 1024 * 1024;
+const maxImageSizeInBytes =
+  maxImageSize * 1024 * 1024;
 
-const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const notes = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
 
-export const musicalKey = notes.flatMap((note) => [
-  `${note} Major`,
-  `${note} Minor`,
-]);
+export const musicalKey = notes.flatMap(
+  (note) => [
+    `${note} Major`,
+    `${note} Minor`,
+  ],
+);
 
-export function validate(form: UploadFormState): string | null {
+export function validate(
+  form: UploadFormState,
+): string | null {
   // Title
   if (form.title.trim() === "") {
     return "Title is required";
@@ -60,7 +84,10 @@ export function validate(form: UploadFormState): string | null {
     return "BPM must be a whole number";
   }
 
-  if (!Number.isInteger(bpm) || bpm < 50 || bpm > 250) {
+  if (
+    bpm < 50 ||
+    bpm > 250
+  ) {
     return "BPM must be between 50 and 250.";
   }
 
@@ -95,8 +122,11 @@ export function validate(form: UploadFormState): string | null {
     return "Audio file is empty";
   }
 
-  if (form.audioFile.size > maxFileSizeInBytes) {
-    return "Audio file must be 500MB or smaller";
+  if (
+    form.audioFile.size >
+    maxFileSizeInBytes
+  ) {
+    return "Audio file must be 100MB or smaller";
   }
 
   // Cover
@@ -104,7 +134,11 @@ export function validate(form: UploadFormState): string | null {
     return "Cover file is required";
   }
 
-  if (!allowedImageTypes.includes(form.coverFile.type)) {
+  if (
+    !allowedImageTypes.includes(
+      form.coverFile.type,
+    )
+  ) {
     return "Invalid cover file type. Only JPEG and PNG are supported";
   }
 
@@ -112,8 +146,43 @@ export function validate(form: UploadFormState): string | null {
     return "Cover file is empty";
   }
 
-  if (form.coverFile.size > maxImageSizeInBytes) {
+  if (
+    form.coverFile.size >
+    maxImageSizeInBytes
+  ) {
     return "Cover file must be 10MB or smaller";
+  }
+
+  // Stem Pack
+  // Optional.
+  if (form.stemFile) {
+    const stemExtension =
+      form.stemFile.name
+        .slice(
+          form.stemFile.name.lastIndexOf("."),
+        )
+        .toLowerCase();
+
+    if (
+      stemExtension !== ".zip" &&
+      stemExtension !== ".rar"
+    ) {
+      return "Stem Pack must be a ZIP or RAR file";
+    }
+
+    if (form.stemFile.size <= 0) {
+      return "Stem Pack is empty";
+    }
+
+    const maxStemSize =
+      1024 * 1024 * 1024;
+
+    if (
+      form.stemFile.size >
+      maxStemSize
+    ) {
+      return "Stem Pack must be 1GB or smaller";
+    }
   }
 
   return null;

@@ -7,10 +7,7 @@ type RouteContext = {
   }>;
 };
 
-export async function GET(
-  _request: Request,
-  context: RouteContext,
-) {
+export async function GET(_request: Request, context: RouteContext) {
   try {
     const { beatId } = await context.params;
 
@@ -18,7 +15,7 @@ export async function GET(
 
     const { data, error } = await supabase
       .from("beat_licenses")
-      .select("id, license_type, price, currency")
+      .select("id, license_type, price, currency, includes_stems")
       .eq("beat_id", beatId)
       .eq("is_active", true)
       .order("price", { ascending: true });
@@ -42,9 +39,7 @@ export async function GET(
       {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load licenses.",
+          error instanceof Error ? error.message : "Failed to load licenses.",
       },
       { status: 500 },
     );

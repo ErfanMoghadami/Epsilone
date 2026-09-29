@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       await supabase
         .from("beat_licenses")
         .select(
-          "id, beat_id, license_type, price, currency, is_active",
+          "id, beat_id, license_type, price, currency, is_active, includes_stems",
         )
         .in("id", licenseIds)
         .eq("is_active", true);
@@ -132,7 +132,9 @@ export async function POST(request: Request) {
 
     const { data: beats, error: beatsError } = await supabase
       .from("beats")
-      .select("id, title, producer_id")
+      .select(
+        "id, title, producer_id, stems_key",
+      )
       .in("id", beatIds);
 
     if (beatsError) {
@@ -184,6 +186,17 @@ export async function POST(request: Request) {
         );
       }
 
+      // A license cannot include stems if the beat
+      // no longer has a Stem Pack.
+      if (
+        license.includes_stems &&
+        (!beat.stems_key || beat.stems_key.trim() === "")
+      ) {
+        throw new Error(
+          `The selected license for "${beat.title}" includes stems, but the Stem Pack is no longer available.`,
+        );
+      }
+
       return {
         beat_id: beat.id,
         producer_id: beat.producer_id,
@@ -191,6 +204,7 @@ export async function POST(request: Request) {
         unit_price: Number(license.price),
         license_type: license.license_type,
         currency: license.currency,
+        includes_stems: Boolean(license.includes_stems),
       };
     });
 
@@ -206,7 +220,8 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "All items in one order must use the same currency.",
+          error:
+            "All items in one order must use the same currency.",
         },
         { status: 400 },
       );
@@ -257,6 +272,7 @@ export async function POST(request: Request) {
       title_snapshot: item.title_snapshot,
       unit_price: item.unit_price,
       license_type: item.license_type,
+      includes_stems: item.includes_stems,
     }));
 
     const { error: itemsError } = await supabase
