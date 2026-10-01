@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { deleteR2Objects, headR2Object } from "@/lib/r2-upload-server";
+import { musicalKey } from "@/lib/uploadConfig";
 
-const MAX_AUDIO_SIZE = 500 * 1024 * 1024;
+const MAX_AUDIO_SIZE = 100 * 1024 * 1024;
 
 const MAX_COVER_SIZE = 10 * 1024 * 1024;
 
@@ -143,17 +144,17 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!Number.isInteger(bpm) || bpm < 20 || bpm > 300) {
+    if (!Number.isInteger(bpm) || bpm < 50 || bpm > 250) {
       return NextResponse.json(
         {
           success: false,
-          error: "BPM must be an integer between 20 and 300.",
+          error: "BPM must be an integer between 50 and 250.",
         },
         { status: 400 },
       );
     }
 
-    if (!key || key.length > 30) {
+    if (!musicalKey.includes(key)) {
       return NextResponse.json(
         {
           success: false,

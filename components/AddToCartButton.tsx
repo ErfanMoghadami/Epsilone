@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { resolveTerms, getLicenseTerms } from "@/lib/licenses";
 
 type License = {
   id: string;
@@ -9,6 +10,7 @@ type License = {
   price: number;
   currency: string;
   includes_stems: boolean;
+  terms: string[] | null;
 };
 
 type AddToCartButtonProps = {
@@ -156,8 +158,8 @@ export default function AddToCartButton({
         >
           {licenses.map((license) => (
             <option key={license.id} value={license.id}>
-              {license.license_type} — ${license.price}{" "}
-              {license.includes_stems ? "— Stems included" : "— Beat only"}
+              {license.license_type} — ${license.price}
+              {license.includes_stems ? " + Stems" : ""}
             </option>
           ))}
         </select>
@@ -170,7 +172,17 @@ export default function AddToCartButton({
           {added ? "Added ✓" : "Add to Cart"}
         </button>
       </div>
-
+      {selectedLicenseData && (
+        <ul className="mt-2 space-y-1 text-xs text-zinc-500">
+          {resolveTerms(
+            selectedLicenseData.license_type,
+            selectedLicenseData.terms,
+          ).map((term) => (
+            <li key={term}>✓ {term}</li>
+          ))}
+          {selectedLicenseData.includes_stems && <li>✓ Stems pack included</li>}
+        </ul>
+      )}
       {showCartPrompt && selectedLicenseData && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm"
@@ -200,9 +212,10 @@ export default function AddToCartButton({
                   </p>
 
                   <p>
+                    {getLicenseTerms(selectedLicenseData.license_type).tagline}
                     {selectedLicenseData.includes_stems
-                      ? "✓ Stems included"
-                      : "Beat only · No stems"}
+                      ? " · Stems included"
+                      : ""}
                   </p>
                 </div>
               </div>

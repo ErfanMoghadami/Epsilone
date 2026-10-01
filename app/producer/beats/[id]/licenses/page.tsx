@@ -3,10 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {
+  LICENSE_TERMS,
+  MAX_TERMS,
+  MAX_TERM_LENGTH,
+  cleanTerms,
+  type LicenseType,
+} from "@/lib/licenses";
 
 const supabase = createClient();
-
-type LicenseType = "Basic" | "Premium" | "Exclusive";
 
 type License = {
   id?: string;
@@ -16,6 +21,7 @@ type License = {
   currency: string;
   is_active: boolean;
   includes_stems: boolean;
+  terms: string[];
 };
 
 type StemInfo = {
@@ -45,12 +51,6 @@ const DEFAULT_LICENSES = [
     is_active: true,
   },
 ];
-
-const LICENSE_DESCRIPTIONS: Record<LicenseType, string> = {
-  Basic: "Standard license for regular beat usage.",
-  Premium: "Extended license for broader commercial usage.",
-  Exclusive: "Exclusive ownership-style license for the buyer.",
-};
 
 function formatFileSize(bytes: number | null) {
   if (!bytes || bytes <= 0) {
@@ -157,7 +157,7 @@ export default function LicensesPage() {
       const { data: existingLicenses, error: licenseError } = await supabase
         .from("beat_licenses")
         .select(
-          "id, beat_id, license_type, price, currency, is_active, includes_stems",
+          "id, beat_id, license_type, price, currency, is_active, includes_stems, terms",
         )
         .eq("beat_id", beatId)
         .order("id", {
@@ -197,6 +197,8 @@ export default function LicensesPage() {
 
             includes_stems:
               hasStemPack && defaultLicense.license_type !== "Basic",
+
+            terms: LICENSE_TERMS[defaultLicense.license_type].terms,
           };
         }
 
@@ -214,6 +216,11 @@ export default function LicensesPage() {
           is_active: Boolean(existing.is_active),
 
           includes_stems: hasStemPack && Boolean(existing.includes_stems),
+
+          terms:
+            existing.terms && existing.terms.length > 0
+              ? (existing.terms as string[])
+              : LICENSE_TERMS[defaultLicense.license_type].terms,
         };
       });
 
@@ -233,8 +240,8 @@ export default function LicensesPage() {
 
   function updateLicense(
     licenseType: LicenseType,
-    field: "price" | "is_active" | "includes_stems",
-    value: number | boolean,
+    field: "price" | "is_active" | "includes_stems" | "terms",
+    value: number | boolean | string[],
   ) {
     setLicenses((previous) =>
       previous.map((license) =>
@@ -478,6 +485,12 @@ export default function LicensesPage() {
 
         return;
       }
+
+      if (cleanTerms(license.terms).length === 0) {
+        setError(`${license.license_type} needs at least one term.`);
+
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -519,6 +532,8 @@ export default function LicensesPage() {
         is_active: license.is_active,
 
         includes_stems: hasStemPack && license.includes_stems,
+
+        terms: cleanTerms(license.terms),
       }));
 
       const { error: upsertError } = await supabase
@@ -707,7 +722,7 @@ export default function LicensesPage() {
                   </h2>
 
                   <p className="mt-1 text-sm text-zinc-500">
-                    {LICENSE_DESCRIPTIONS[license.license_type]}
+                    {LICENSE_TERMS[license.license_type].tagline}
                   </p>
                 </div>
 
@@ -760,6 +775,35 @@ export default function LicensesPage() {
                     className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 pl-8 text-white outline-none transition focus:border-zinc-600"
                   />
                 </div>
+              </div>
+
+              {/* Terms */}
+              <div className="mt-6">
+                <label
+                  htmlFor={`terms-${license.license_type}`}
+                  className="mb-2 block text-sm text-zinc-400"
+                >
+                  License terms (one per line)
+                </label>
+
+                <textarea
+                  id={`terms-${license.license_type}`}
+                  value={license.terms.join("\n")}
+                  onChange={(event) =>
+                    updateLicense(
+                      license.license_type,
+                      "terms",
+                      event.target.value.split("\n"),
+                    )
+                  }
+                  rows={5}
+                  placeholder={"Up to 100,000 streams\n1 music video"}
+                  className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-zinc-600"
+                />
+
+                <p className="mt-1 text-xs text-zinc-600">
+                  Max {MAX_TERMS} lines, {MAX_TERM_LENGTH} characters each.
+                </p>
               </div>
 
               {/* Includes Stems */}

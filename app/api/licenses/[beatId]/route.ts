@@ -15,7 +15,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { data, error } = await supabase
       .from("beat_licenses")
-      .select("id, license_type, price, currency, includes_stems")
+      .select("id, license_type, price, currency, includes_stems, terms")
       .eq("beat_id", beatId)
       .eq("is_active", true)
       .order("price", { ascending: true });

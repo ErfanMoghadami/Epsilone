@@ -8,6 +8,16 @@ type TestPaymentBody = {
 };
 
 export async function POST(request: Request) {
+  export async function POST(request: Request) {
+    if (
+      process.env.NODE_ENV === "production" &&
+      process.env.ALLOW_TEST_PAYMENTS !== "true"
+    ) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    try {
+      // ... بقیه بدون تغییر
   try {
     const supabase = await createClient();
 
