@@ -8,9 +8,7 @@ const CART_KEY = "epsilone-cart";
 
 function getCartCount() {
   try {
-    const storedCart = JSON.parse(
-      localStorage.getItem(CART_KEY) ?? "[]",
-    );
+    const storedCart = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]");
 
     return Array.isArray(storedCart) ? storedCart.length : 0;
   } catch {
@@ -60,6 +58,10 @@ export default function GlobalNav() {
     {
       href: "/dashboard",
       label: "Dashboard",
+    },
+    {
+      href: "/discover",
+      label: "Discover",
     },
   ];
 

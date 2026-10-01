@@ -27,6 +27,13 @@ export default function HomeMenu() {
       {open && (
         <div className="absolute right-0 mt-3 w-56 rounded-2xl border border-white/10 bg-zinc-950 p-2 shadow-2xl">
           <Link
+            href="/discover"
+            onClick={() => setOpen(false)}
+            className="block rounded-xl px-4 py-3 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"
+          >
+            Discover
+          </Link>
+          <Link
             href="/producers"
             onClick={() => setOpen(false)}
             className="block rounded-xl px-4 py-3 text-sm text-zinc-300 transition hover:bg-white/5 hover:text-white"

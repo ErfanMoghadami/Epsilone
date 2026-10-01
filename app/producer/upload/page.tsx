@@ -118,6 +118,7 @@ export default function Page() {
 
   const [uploadId, setUploadId] = useState<string | null>(null);
 
+  const [aiAnalysisEnabled, setAiAnalysisEnabled] = useState(true);
   const audioInputRef = useRef<HTMLInputElement | null>(null);
 
   const coverInputRef = useRef<HTMLInputElement | null>(null);
@@ -434,6 +435,8 @@ export default function Page() {
           coverKey: presignData.cover.key,
 
           stemsKey: presignData.stem?.key ?? null,
+
+          aiAnalysisEnabled,
         }),
       });
 
@@ -454,7 +457,7 @@ export default function Page() {
       setForm({
         ...initialState,
       });
-
+      setAiAnalysisEnabled(true);
       setUploadId(null);
 
       setUploadProgress(100);
@@ -662,6 +665,49 @@ export default function Page() {
             </button>
           </div>
         )}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-medium text-zinc-100">
+                AI Beat Analysis
+              </p>
+        
+              <p className="mt-1 text-xs leading-5 text-zinc-500">
+                Let Epsilone analyze the beat for mood, atmosphere,
+                instruments, scenes, energy, and recommendation tags.
+              </p>
+            </div>
+        
+            <button
+              type="button"
+              role="switch"
+              aria-checked={aiAnalysisEnabled}
+              onClick={() =>
+                setAiAnalysisEnabled((previous) => !previous)
+              }
+              disabled={isLoading}
+              className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                aiAnalysisEnabled
+                  ? "bg-violet-600"
+                  : "bg-zinc-700"
+              } ${isLoading ? "cursor-not-allowed opacity-50" : ""}`}
+            >
+              <span
+                className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
+                  aiAnalysisEnabled
+                    ? "left-6"
+                    : "left-1"
+                }`}
+              />
+            </button>
+          </div>
+        
+          <p className="mt-3 text-xs text-zinc-600">
+            {aiAnalysisEnabled
+              ? "AI analysis is enabled. This beat will be sent to Epsilone AI."
+              : "AI analysis is disabled. This beat will not be sent to Gemini."}
+          </p>
+        </div>
         {coverPreviewUrl && (
           <img
             src={coverPreviewUrl}
