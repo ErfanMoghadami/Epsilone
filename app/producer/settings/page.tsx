@@ -1,24 +1,25 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import AvatarUploader from "@/components/producer/avatar-uploader";
 
 import { createClient } from "@/lib/supabase/client";
 import ChangeEmailForm from "@/components/auth/change-email-form";
 
 export default function ProducerSettingsPage() {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
   const [userId, setUserId] = useState("");
 
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [changingPassword, setChangingPassword] =
-    useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-
+  
   useEffect(() => {
     async function loadUser() {
       const supabase = createClient();
@@ -35,24 +36,28 @@ export default function ProducerSettingsPage() {
       }
 
       setUserId(user.id);
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      setAvatarUrl(profile?.avatar_url ?? null);
       setLoading(false);
     }
 
     loadUser();
   }, []);
 
-  async function handlePasswordChange(
-    event: FormEvent<HTMLFormElement>,
-  ) {
+  async function handlePasswordChange(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
     setMessage("");
 
     if (password.length < 6) {
-      setError(
-        "Password must be at least 6 characters.",
-      );
+      setError("Password must be at least 6 characters.");
       return;
     }
 
@@ -65,16 +70,12 @@ export default function ProducerSettingsPage() {
 
     const supabase = createClient();
 
-    const { error } =
-      await supabase.auth.updateUser({
-        password,
-      });
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
 
     if (error) {
-      console.error(
-        "Change password error:",
-        error,
-      );
+      console.error("Change password error:", error);
 
       setError(error.message);
       setChangingPassword(false);
@@ -84,9 +85,7 @@ export default function ProducerSettingsPage() {
     setPassword("");
     setConfirmPassword("");
 
-    setMessage(
-      "Password updated successfully.",
-    );
+    setMessage("Password updated successfully.");
 
     setChangingPassword(false);
   }
@@ -94,13 +93,9 @@ export default function ProducerSettingsPage() {
   if (loading) {
     return (
       <div className="max-w-xl">
-        <h1 className="mb-2 text-2xl font-semibold">
-          Account Settings
-        </h1>
+        <h1 className="mb-2 text-2xl font-semibold">Account Settings</h1>
 
-        <p className="text-sm text-zinc-500">
-          Loading account...
-        </p>
+        <p className="text-sm text-zinc-500">Loading account...</p>
       </div>
     );
   }
@@ -109,22 +104,18 @@ export default function ProducerSettingsPage() {
     <div className="max-w-xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold">
-          Account Settings
-        </h1>
+        <h1 className="text-2xl font-semibold">Account Settings</h1>
 
         <p className="mt-2 text-sm text-zinc-500">
           Manage your Epsilone account.
         </p>
       </div>
-
+      <AvatarUploader initialAvatarUrl={avatarUrl} />
       <div className="space-y-6">
         {/* User ID */}
         <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
           <div className="mb-4">
-            <h2 className="text-lg font-medium">
-              User ID
-            </h2>
+            <h2 className="text-lg font-medium">User ID</h2>
 
             <p className="mt-1 text-sm text-zinc-500">
               Your account ID cannot be changed.
@@ -140,26 +131,19 @@ export default function ProducerSettingsPage() {
         </section>
 
         {/* Email */}
-        <ChangeEmailForm
-          redirectPath="/producer/settings"
-        />
+        <ChangeEmailForm redirectPath="/producer/settings" />
 
         {/* Password */}
         <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
           <div className="mb-6">
-            <h2 className="text-lg font-medium">
-              Change password
-            </h2>
+            <h2 className="text-lg font-medium">Change password</h2>
 
             <p className="mt-1 text-sm text-zinc-500">
               Update the password you use to sign in.
             </p>
           </div>
 
-          <form
-            onSubmit={handlePasswordChange}
-            className="space-y-4"
-          >
+          <form onSubmit={handlePasswordChange} className="space-y-4">
             <div>
               <label
                 htmlFor="new-password"
@@ -172,9 +156,7 @@ export default function ProducerSettingsPage() {
                 id="new-password"
                 type="password"
                 value={password}
-                onChange={(event) =>
-                  setPassword(event.target.value)
-                }
+                onChange={(event) => setPassword(event.target.value)}
                 minLength={6}
                 autoComplete="new-password"
                 placeholder="••••••••"
@@ -194,11 +176,7 @@ export default function ProducerSettingsPage() {
                 id="confirm-password"
                 type="password"
                 value={confirmPassword}
-                onChange={(event) =>
-                  setConfirmPassword(
-                    event.target.value,
-                  )
-                }
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 minLength={6}
                 autoComplete="new-password"
                 placeholder="••••••••"
@@ -223,9 +201,7 @@ export default function ProducerSettingsPage() {
               disabled={changingPassword}
               className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {changingPassword
-                ? "Updating..."
-                : "Change Password"}
+              {changingPassword ? "Updating..." : "Change Password"}
             </button>
           </form>
         </section>
