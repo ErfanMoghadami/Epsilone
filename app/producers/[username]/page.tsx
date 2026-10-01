@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { getR2SignedUrl } from "@/lib/r2";
 
 import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -25,6 +24,21 @@ type ProducerBeat = {
   cover_url: string | null;
   cover_key: string | null;
 };
+
+function buildR2Url(key: string | null): string | null {
+  const r2PublicUrl = process.env.R2_PUBLIC_URL
+    ?.trim()
+    .replace(/\/+$/, "");
+
+  if (!r2PublicUrl || !key) {
+    return null;
+  }
+
+  return `${r2PublicUrl}/${key
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+}
 
 export default async function ProducerProfilePage({
   params,
@@ -92,34 +106,25 @@ export default async function ProducerProfilePage({
   }
 
   // --------------------------------------------------------
-  // Generate R2 signed URLs
+  // Build R2 public URLs
   // --------------------------------------------------------
 
-  const beatCards = await Promise.all(
-    (beats ?? []).map(async (beat: ProducerBeat) => {
-      let previewUrl = beat.preview_url;
-      let coverUrl = beat.cover_url;
+  const beatCards = (beats ?? []).map(
+    (beat: ProducerBeat) => {
+      const previewUrl =
+        beat.preview_url ??
+        buildR2Url(beat.preview_key);
 
-      if (!previewUrl && beat.preview_key) {
-        previewUrl = await getR2SignedUrl(
-          beat.preview_key,
-          600,
-        );
-      }
-
-      if (!coverUrl && beat.cover_key) {
-        coverUrl = await getR2SignedUrl(
-          beat.cover_key,
-          600,
-        );
-      }
+      const coverUrl =
+        beat.cover_url ??
+        buildR2Url(beat.cover_key);
 
       return {
         ...beat,
         previewUrl,
         coverUrl,
       };
-    }),
+    },
   );
 
   const producerName =

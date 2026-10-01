@@ -74,12 +74,15 @@ export async function POST(request: Request) {
     const rateLimit = checkRateLimit(clientIp);
 
     if (!rateLimit.allowed) {
-      const retryAfter = Math.ceil((rateLimit.resetAt - Date.now()) / 1000);
+      const retryAfter = Math.ceil(
+        (rateLimit.resetAt - Date.now()) / 1000,
+      );
 
       return NextResponse.json(
         {
           success: false,
-          error: "Too many recommendation requests. Please try again later.",
+          error:
+            "Too many recommendation requests. Please try again later.",
         },
         {
           status: 429,
@@ -102,7 +105,10 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (userError) {
-      console.error("Could not get Supabase user:", userError.message);
+      console.error(
+        "Could not get Supabase user:",
+        userError.message,
+      );
     }
 
     const userId = user?.id ?? null;
@@ -138,9 +144,11 @@ export async function POST(request: Request) {
     // 4. Worker configuration
     // --------------------------------------------------------
 
-    const workerUrl = process.env.VPS_WORKER_URL;
+    const workerUrl = process.env.VPS_WORKER_URL
+      ?.trim()
+      .replace(/\/+$/, "");
 
-    const workerSecret = process.env.VPS_WORKER_SECRET;
+    const workerSecret = process.env.VPS_WORKER_SECRET?.trim();
 
     if (!workerUrl) {
       return NextResponse.json(
@@ -162,30 +170,101 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("Recommendation worker config:", {
+      workerUrl,
+      workerSecretPresent: Boolean(workerSecret),
+    });
+
     // --------------------------------------------------------
     // 5. Send query + user_id to Worker
     // --------------------------------------------------------
 
-    const response = await fetch(`${workerUrl}/recommend`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${workerSecret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: query.trim(),
-        user_id: userId,
-      }),
-      cache: "no-store",
-    });
+    let response: Response;
 
-    const data = await response.json();
+    try {
+      response = await fetch(`${workerUrl}/recommend`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${workerSecret}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: query.trim(),
+          user_id: userId,
+        }),
+        cache: "no-store",
+      });
+    } catch (error) {
+      const fetchError = error as Error & {
+        cause?: unknown;
+      };
 
-    if (!response.ok) {
+      console.error("Recommendation worker fetch failed:", {
+        message: fetchError.message,
+        name: fetchError.name,
+        cause: fetchError.cause,
+        workerUrl,
+      });
+
       return NextResponse.json(
         {
           success: false,
-          error: data?.error || "Worker recommendation failed",
+          error: "Recommendation worker is unavailable.",
+        },
+        { status: 502 },
+      );
+    }
+
+    // --------------------------------------------------------
+    // 6. Read Worker response safely
+    // --------------------------------------------------------
+
+    const rawBody = await response.text();
+
+    console.log("Recommendation worker response:", {
+      status: response.status,
+      ok: response.ok,
+      bodyPreview: rawBody.slice(0, 500),
+    });
+
+    let data: any = {};
+
+    try {
+      data = rawBody ? JSON.parse(rawBody) : {};
+    } catch (error) {
+      console.error(
+        "Invalid JSON from recommendation worker:",
+        {
+          status: response.status,
+          bodyPreview: rawBody.slice(0, 500),
+          error,
+        },
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Recommendation worker returned an invalid response.",
+        },
+        { status: 502 },
+      );
+    }
+
+    if (!response.ok) {
+      console.error(
+        "Recommendation worker returned an error:",
+        {
+          status: response.status,
+          body: data,
+        },
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            data?.error || "Worker recommendation failed",
         },
         {
           status: response.status,
@@ -193,38 +272,61 @@ export async function POST(request: Request) {
       );
     }
 
-    const results = Array.isArray(data?.results) ? data.results : [];
+    const results = Array.isArray(data?.results)
+      ? data.results
+      : [];
+
+    // --------------------------------------------------------
+    // 7. Collect beat IDs
+    // --------------------------------------------------------
 
     const beatIds = results
       .map((beat: { id?: unknown }) => beat.id)
-      .filter((id: unknown): id is string => typeof id === "string");
+      .filter(
+        (id: unknown): id is string =>
+          typeof id === "string",
+      );
+
+    // --------------------------------------------------------
+    // 8. Load R2 storage keys
+    // --------------------------------------------------------
 
     let storageRows: {
       id: string;
       preview_key: string | null;
       cover_key: string | null;
     }[] = [];
+
     let producerRows: {
       id: string;
       username: string | null;
     }[] = [];
+
     if (beatIds.length > 0) {
-      const { data: rows, error: storageError } = await supabase
+      const {
+        data: rows,
+        error: storageError,
+      } = await supabase
         .from("beats")
         .select("id, preview_key, cover_key")
         .in("id", beatIds);
 
       if (storageError) {
-        console.error("Failed to load R2 keys:", storageError.message);
+        console.error(
+          "Failed to load R2 keys:",
+          storageError.message,
+        );
       } else {
         storageRows = rows ?? [];
       }
     }
 
-    const storageMap = new Map(storageRows.map((row) => [row.id, row]));
+    const storageMap = new Map(
+      storageRows.map((row) => [row.id, row]),
+    );
 
     // --------------------------------------------------------
-    // Load producer IDs directly from beats
+    // 9. Load producer IDs directly from beats
     // --------------------------------------------------------
 
     let beatProducerRows: {
@@ -233,7 +335,10 @@ export async function POST(request: Request) {
     }[] = [];
 
     if (beatIds.length > 0) {
-      const { data: beatRows, error: beatRowsError } = await supabase
+      const {
+        data: beatRows,
+        error: beatRowsError,
+      } = await supabase
         .from("beats")
         .select("id, producer_id")
         .in("id", beatIds);
@@ -249,23 +354,32 @@ export async function POST(request: Request) {
     }
 
     const beatProducerMap = new Map(
-      beatProducerRows.map((row) => [row.id, row.producer_id]),
+      beatProducerRows.map((row) => [
+        row.id,
+        row.producer_id,
+      ]),
     );
 
     // --------------------------------------------------------
-    // Load producer usernames
+    // 10. Load producer usernames
     // --------------------------------------------------------
 
     const producerIds = [
       ...new Set(
         beatProducerRows
           .map((row) => row.producer_id)
-          .filter((id): id is string => typeof id === "string"),
+          .filter(
+            (id): id is string =>
+              typeof id === "string",
+          ),
       ),
     ];
 
     if (producerIds.length > 0) {
-      const { data: producers, error: producerError } = await supabase
+      const {
+        data: producers,
+        error: producerError,
+      } = await supabase
         .from("profiles")
         .select("id, username")
         .in("id", producerIds)
@@ -288,12 +402,17 @@ export async function POST(request: Request) {
       ]),
     );
 
-    // const producerMap = new Map(
-    //   producerRows.map((producer) => [producer.id, producer]),
-    // );
-    const r2PublicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
+    // --------------------------------------------------------
+    // 11. R2 public URL helper
+    // --------------------------------------------------------
 
-    function buildR2Url(key: string | null): string | null {
+    const r2PublicUrl = process.env.R2_PUBLIC_URL
+      ?.trim()
+      .replace(/\/+$/, "");
+
+    function buildR2Url(
+      key: string | null,
+    ): string | null {
       if (!r2PublicUrl || !key) {
         return null;
       }
@@ -303,6 +422,10 @@ export async function POST(request: Request) {
         .map(encodeURIComponent)
         .join("/")}`;
     }
+
+    // --------------------------------------------------------
+    // 12. Enrich results
+    // --------------------------------------------------------
 
     const enrichedResults = results.map(
       (beat: {
@@ -314,22 +437,38 @@ export async function POST(request: Request) {
         const storage = storageMap.get(beat.id);
 
         const producerId =
-          beat.producer_id ?? beatProducerMap.get(beat.id) ?? null;
+          beat.producer_id ??
+          beatProducerMap.get(beat.id) ??
+          null;
 
-        const producer = producerId ? producerMap.get(producerId) : undefined;
+        const producer = producerId
+          ? producerMap.get(producerId)
+          : undefined;
 
         return {
           ...beat,
 
           preview_url:
-            beat.preview_url ?? buildR2Url(storage?.preview_key ?? null),
+            beat.preview_url ??
+            buildR2Url(
+              storage?.preview_key ?? null,
+            ),
 
-          cover_url: beat.cover_url ?? buildR2Url(storage?.cover_key ?? null),
+          cover_url:
+            beat.cover_url ??
+            buildR2Url(
+              storage?.cover_key ?? null,
+            ),
 
-          producer_username: producer?.username ?? null,
+          producer_username:
+            producer?.username ?? null,
         };
       },
     );
+
+    // --------------------------------------------------------
+    // 13. Return response
+    // --------------------------------------------------------
 
     return NextResponse.json({
       ...data,
@@ -341,7 +480,10 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown server error",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown server error",
       },
       { status: 500 },
     );

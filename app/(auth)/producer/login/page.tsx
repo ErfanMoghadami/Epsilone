@@ -1,20 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+
 export default function ProducerLoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const supabase = createClient();
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -165,6 +163,7 @@ export default function ProducerLoginPage() {
       setLoading(false);
     }
   }
+
   async function handleGoogleLogin() {
     setError("");
     setLoading(true);
@@ -254,6 +253,7 @@ export default function ProducerLoginPage() {
                   disabled={loading}
                   className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600 transition focus:border-white/30 focus:bg-black/60 disabled:cursor-not-allowed disabled:opacity-50"
                 />
+
                 <div className="flex justify-end">
                   <Link
                     href="/producer/forgot-password"
