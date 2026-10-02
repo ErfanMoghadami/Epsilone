@@ -35,6 +35,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@arraypress/waveform-player/dist/waveform-player.css";
 import GlobalNav from "@/components/GlobalNav";
+import PlayTracker from "@/components/PlayTracker";
+import StreakWidget from "@/components/StreakWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -62,6 +64,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <GlobalNav />
         {children}
+        <PlayTracker />
+        <StreakWidget />
       </body>
     </html>
   );

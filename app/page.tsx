@@ -2,7 +2,6 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import WaveformTracker from "@arraypress/waveform-tracker";
 import { WaveformPlayer } from "@arraypress/waveform-player-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToCartButton from "@/components/AddToCartButton";
@@ -43,19 +42,6 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [restored, setRestored] = useState(false);
-
-  // ------------------------------------------------------
-  // Waveform analytics
-  // ------------------------------------------------------
-
-  useEffect(() => {
-    WaveformTracker.init({
-      endpoint: "/api/analytics/play",
-      events: {
-        play: 3,
-      },
-    });
-  }, []);
 
   // ------------------------------------------------------
   // Restore previous search

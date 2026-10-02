@@ -288,8 +288,30 @@ export async function POST(
       }`
     );
 
+    // --------------------------------------------------------
+    // 6. Daily play streak (logged-in + verified email only)
+    // --------------------------------------------------------
+
+    let streak: unknown = null;
+
+    if (userId && user?.email_confirmed_at) {
+      const { data: streakData, error: streakError } =
+        await supabaseAdmin.rpc("streak_register_play", {
+          p_user_id: userId,
+          p_beat_id: beat.id,
+        });
+
+      if (streakError) {
+        // never fail the play event because of the streak
+        console.error("Streak register failed:", streakError.message);
+      } else {
+        streak = streakData;
+      }
+    }
+
     return NextResponse.json({
       success: true,
+      streak,
     });
   } catch (error) {
     console.error(
