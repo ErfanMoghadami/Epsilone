@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 
 import BeatSection from "@/components/discover/BeatSection";
 import BeatGridSkeleton from "@/components/discover/BeatGridSkeleton";
@@ -9,7 +10,11 @@ import SearchBar from "@/components/discover/SearchBar";
 
 import { useDiscover } from "./useDiscover";
 
+type BeatMode = "ai" | "regular";
+
 export default function DiscoverPage() {
+  const [beatMode, setBeatMode] = useState<BeatMode>("ai");
+
   const {
     filters,
     facets,
@@ -30,6 +35,17 @@ export default function DiscoverPage() {
     clearFilters,
     loadMore,
   } = useDiscover();
+
+  const displayedBeats =
+    beatMode === "ai" ? aiAnalyzedBeats : regularBeats;
+
+  const selectedTitle =
+    beatMode === "ai" ? "AI Analyzed Beats" : "Regular Beats";
+
+  const selectedDescription =
+    beatMode === "ai"
+      ? "Beats analyzed by Epsilone AI and ready for mood-based discovery."
+      : "Beats available for listening and purchase without AI analysis.";
 
   return (
     <main className="min-h-screen bg-black px-5 py-10 text-white sm:px-6 sm:py-12">
@@ -97,16 +113,46 @@ export default function DiscoverPage() {
           />
         )}
 
+        {/* Beat type switch */}
+        <div className="mb-8">
+          <div className="inline-flex w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 p-1">
+            <button
+              type="button"
+              onClick={() => setBeatMode("ai")}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                beatMode === "ai"
+                  ? "bg-white text-black"
+                  : "text-zinc-500 hover:text-white"
+              }`}
+            >
+              AI ANALYZED BEATS
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setBeatMode("regular")}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-medium transition ${
+                beatMode === "regular"
+                  ? "bg-white text-black"
+                  : "text-zinc-500 hover:text-white"
+              }`}
+            >
+              REGULAR BEATS
+            </button>
+          </div>
+        </div>
+
         {/* Result header */}
         <div className="mb-8 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold">
-              {loading ? "Loading..." : "Beats"}
+              {loading ? "Loading..." : selectedTitle}
             </h2>
 
             {!loading && (
               <p className="mt-1 text-sm text-zinc-600">
-                {totalCount} beat{totalCount === 1 ? "" : "s"} found
+                {displayedBeats.length} beat
+                {displayedBeats.length === 1 ? "" : "s"} in this category
               </p>
             )}
           </div>
@@ -146,20 +192,25 @@ export default function DiscoverPage() {
           </div>
         )}
 
-        {!loading && (
-          <>
-            <BeatSection
-              title="AI Analyzed Beats"
-              description="Beats analyzed by Epsilone AI and ready for mood-based discovery."
-              beats={aiAnalyzedBeats}
-            />
+        {!loading && beats.length > 0 && displayedBeats.length === 0 && (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-6 py-20 text-center">
+            <p className="text-lg font-medium">
+              No {beatMode === "ai" ? "AI analyzed" : "regular"} beats found
+            </p>
 
-            <BeatSection
-              title="Regular Beats"
-              description="Beats available for listening and purchase without AI analysis."
-              beats={regularBeats}
-            />
-          </>
+            <p className="mt-2 text-sm text-zinc-600">
+              Try switching to the other beat category or changing your
+              filters.
+            </p>
+          </div>
+        )}
+
+        {!loading && displayedBeats.length > 0 && (
+          <BeatSection
+            title={selectedTitle}
+            description={selectedDescription}
+            beats={displayedBeats}
+          />
         )}
 
         {hasMore && (
