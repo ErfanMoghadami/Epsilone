@@ -5,8 +5,7 @@ import { useState } from "react";
 
 import BeatSection from "@/components/discover/BeatSection";
 import BeatGridSkeleton from "@/components/discover/BeatGridSkeleton";
-import FilterPanel from "@/components/discover/FilterPanel";
-import SearchBar from "@/components/discover/SearchBar";
+import FilterPanel from "@/components/discover/FilterPanel"; import SearchBar from "@/components/discover/SearchBar";
 
 import { useDiscover } from "./useDiscover";
 
@@ -36,8 +35,7 @@ export default function DiscoverPage() {
     loadMore,
   } = useDiscover();
 
-  const displayedBeats =
-    beatMode === "ai" ? aiAnalyzedBeats : regularBeats;
+  const displayedBeats = beatMode === "ai" ? aiAnalyzedBeats : regularBeats;
 
   const selectedTitle =
     beatMode === "ai" ? "AI Analyzed Beats" : "Regular Beats";
@@ -199,8 +197,7 @@ export default function DiscoverPage() {
             </p>
 
             <p className="mt-2 text-sm text-zinc-600">
-              Try switching to the other beat category or changing your
-              filters.
+              Try switching to the other beat category or changing your filters.
             </p>
           </div>
         )}

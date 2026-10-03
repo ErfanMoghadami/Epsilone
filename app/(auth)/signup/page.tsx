@@ -46,9 +46,13 @@ export default function SignupPage() {
     const supabase = createClient();
 
     try {
+      const cleanEmail = email.trim().toLowerCase();
       const { data, error: signupError } = await supabase.auth.signUp({
-        email: email.trim(),
+        email: cleanEmail,
         password,
+        options: {
+          data: { role: "buyer" },
+        },
       });
 
       if (signupError) {
@@ -57,8 +61,8 @@ export default function SignupPage() {
       }
 
       if (!data.session) {
-        setMessage(
-          "Account created. Please check your email to verify your account.",
+        router.push(
+          `/verify-email?email=${encodeURIComponent(cleanEmail)}&type=signup&next=${encodeURIComponent("/")}`,
         );
         return;
       }

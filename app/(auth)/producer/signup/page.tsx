@@ -77,13 +77,9 @@ export default function ProducerSignupPage() {
         );
       }
 
-      setMessage(
-        "Your producer account has been created. Redirecting to login...",
+      router.push(
+        `/verify-email?email=${encodeURIComponent(email.trim().toLowerCase())}&type=signup&next=${encodeURIComponent("/producer/setup")}`,
       );
-
-      setTimeout(() => {
-        router.push("/producer/login");
-      }, 1200);
     } catch (error) {
       console.error("Producer signup error:", error);
 

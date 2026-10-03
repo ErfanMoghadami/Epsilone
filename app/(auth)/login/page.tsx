@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
+
 export default function LoginPage() {
   const router = useRouter();
 
@@ -41,15 +42,25 @@ export default function LoginPage() {
     setError("");
 
     const supabase = createClient();
+    const cleanEmail = email.trim().toLowerCase();
 
     try {
       const { data, error: loginError } =
         await supabase.auth.signInWithPassword({
-          email: email.trim(),
+          email: cleanEmail,
           password,
         });
 
       if (loginError) {
+        // Account exists but the email was never verified -> send to OTP page.
+        if (loginError.code === "email_not_confirmed") {
+          await supabase.auth.resend({ type: "signup", email: cleanEmail });
+          router.push(
+            `/verify-email?email=${encodeURIComponent(cleanEmail)}&next=${encodeURIComponent("/")}`,
+          );
+          return;
+        }
+
         setError(loginError.message);
         return;
       }
@@ -147,8 +158,6 @@ export default function LoginPage() {
                 >
                   Password
                 </label>
-
-                
               </div>
 
               <input
@@ -204,7 +213,7 @@ export default function LoginPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-neutral-500">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <button
             type="button"
             onClick={() => router.push("/signup")}

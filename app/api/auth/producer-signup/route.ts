@@ -236,11 +236,31 @@ export async function POST(request: Request) {
       );
     }
 
+    // Send the signup confirmation email. The Supabase email template must
+    // use {{ .Token }} for a six-digit code (rather than only a confirmation URL).
+    const { error: emailError } = await supabaseAdmin.auth.resend({
+      type: "signup",
+      email: email.trim().toLowerCase(),
+    });
+
+    if (emailError) {
+      console.error("Producer confirmation email error:", emailError);
+      await supabaseAdmin.from("profiles").delete().eq("id", userId);
+      await supabaseAdmin.auth.admin.deleteUser(userId);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Could not send the verification code. Please try again.",
+        },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json(
       {
         success: true,
-        message:
-          "Producer account created successfully.",
+        message: "Producer account created. Check your email for the verification code.",
       },
       { status: 201 },
     );

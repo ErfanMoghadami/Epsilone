@@ -21,135 +21,68 @@ export default function ProducerLoginPage() {
     setError("");
 
     const supabase = createClient();
-
     const normalizedEmail = email.trim().toLowerCase();
 
     try {
-      // ------------------------------------------------------
-      // 1. Try normal login
-      // ------------------------------------------------------
-
       const { data, error: loginError } =
         await supabase.auth.signInWithPassword({
           email: normalizedEmail,
           password,
         });
 
-      // ------------------------------------------------------
-      // 2. Existing account -> normal login
-      // ------------------------------------------------------
-
-      if (!loginError) {
-        if (!data.user) {
-          setError("User account was not found.");
+      if (loginError) {
+        // Producer signed up but never verified the email -> OTP page.
+        if (loginError.code === "email_not_confirmed") {
+          await supabase.auth.resend({
+            type: "signup",
+            email: normalizedEmail,
+          });
+          router.push(
+            `/verify-email?email=${encodeURIComponent(normalizedEmail)}&next=${encodeURIComponent("/producer/setup")}`,
+          );
           return;
         }
 
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("role, username")
-          .eq("id", data.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error("Profile lookup error:", profileError);
-
-          await supabase.auth.signOut();
-
-          setError("Could not load your account.");
-          return;
-        }
-
-        if (!profile) {
-          await supabase.auth.signOut();
-
-          setError("Your account profile was not found.");
-          return;
-        }
-
-        if (profile.role !== "producer") {
-          await supabase.auth.signOut();
-
-          setError("This account is not registered as a producer.");
-
-          return;
-        }
-
-        // Producer exists but has not chosen username yet.
-        if (!profile.username) {
-          router.push("/producer/setup");
-          router.refresh();
-          return;
-        }
-
-        // Existing producer with username.
-        router.push(`/producer/${encodeURIComponent(profile.username)}`);
-
-        router.refresh();
-        return;
-      }
-
-      // ------------------------------------------------------
-      // 3. Login failed
-      //
-      // Try creating a producer account using the same
-      // email + password.
-      // ------------------------------------------------------
-
-      const signupResponse = await fetch("/api/auth/producer-auto-signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          password,
-        }),
-      });
-
-      const signupData = await signupResponse.json();
-
-      // ------------------------------------------------------
-      // 4. Account could not be created
-      //
-      // Most likely:
-      // - account already exists
-      // - wrong password
-      // - Google-only account
-      // ------------------------------------------------------
-
-      if (!signupResponse.ok || !signupData.success) {
         setError("Invalid email or password.");
         return;
       }
 
-      // ------------------------------------------------------
-      // 5. New producer account created
-      //
-      // Sign in immediately with same credentials.
-      // ------------------------------------------------------
-
-      const { data: newLoginData, error: newLoginError } =
-        await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password,
-        });
-
-      if (newLoginError || !newLoginData.user) {
-        console.error("Auto-created producer login error:", newLoginError);
-
-        setError(
-          "Your account was created, but automatic login failed. Please try again.",
-        );
-
+      if (!data.user) {
+        setError("User account was not found.");
         return;
       }
 
-      // ------------------------------------------------------
-      // 6. Send new producer to username setup
-      // ------------------------------------------------------
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role, username")
+        .eq("id", data.user.id)
+        .maybeSingle();
 
-      router.push("/producer/setup");
+      if (profileError) {
+        console.error("Profile lookup error:", profileError);
+        await supabase.auth.signOut();
+        setError("Could not load your account.");
+        return;
+      }
+
+      if (!profile) {
+        await supabase.auth.signOut();
+        setError("Your account profile was not found.");
+        return;
+      }
+
+      if (profile.role !== "producer") {
+        await supabase.auth.signOut();
+        setError("This account is not registered as a producer.");
+        return;
+      }
+
+      if (!profile.username) {
+        router.push("/producer/setup");
+      } else {
+        router.push(`/producer/${encodeURIComponent(profile.username)}`);
+      }
+
       router.refresh();
     } catch (error) {
       console.error("Producer login error:", error);
@@ -297,7 +230,7 @@ export default function ProducerLoginPage() {
 
           <div className="mt-6 space-y-3 text-center text-sm">
             <p className="text-neutral-500">
-              Don't have a producer account?{" "}
+              Don&apos;t have a producer account?{" "}
               <button
                 type="button"
                 onClick={() => router.push("/producer/signup")}
