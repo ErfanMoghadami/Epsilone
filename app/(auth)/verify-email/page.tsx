@@ -18,7 +18,11 @@ function friendlyError(err: unknown, fallback: string) {
   ) {
     return "That code is wrong or has expired. Request a new one and try again.";
   }
-  if (e?.status === 429 || e?.code === "over_email_send_rate_limit" || msg.includes("rate limit")) {
+  if (
+    e?.status === 429 ||
+    e?.code === "over_email_send_rate_limit" ||
+    msg.includes("rate limit")
+  ) {
     return "Too many attempts. Please wait a minute and try again.";
   }
   return e?.message || fallback;
@@ -72,11 +76,14 @@ export default function VerifyEmailPage() {
       const { data, error: verifyError } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: "signup",
+        type: "email",
       });
 
       if (verifyError) throw verifyError;
-      if (!data.user) throw new Error("Verification succeeded, but no user session was returned.");
+      if (!data.user)
+        throw new Error(
+          "Verification succeeded, but no user session was returned.",
+        );
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -85,8 +92,13 @@ export default function VerifyEmailPage() {
         .maybeSingle();
 
       if (profileError) {
-        console.error("Profile lookup after OTP verification failed:", profileError);
-        throw new Error("Your email is verified, but we could not load your profile. Please log in.");
+        console.error(
+          "Profile lookup after OTP verification failed:",
+          profileError,
+        );
+        throw new Error(
+          "Your email is verified, but we could not load your profile. Please log in.",
+        );
       }
 
       if (profile?.role === "producer") {
@@ -103,7 +115,12 @@ export default function VerifyEmailPage() {
       router.refresh();
     } catch (caught) {
       console.error("OTP verification failed:", caught);
-      setError(friendlyError(caught, "That code could not be verified. Request a new one and try again."));
+      setError(
+        friendlyError(
+          caught,
+          "That code could not be verified. Request a new one and try again.",
+        ),
+      );
     } finally {
       setLoading(false);
     }
@@ -125,12 +142,19 @@ export default function VerifyEmailPage() {
         email,
       });
       if (resendError) throw resendError;
-      setMessage("A new verification code has been sent. Check your inbox and spam folder.");
+      setMessage(
+        "A new verification code has been sent. Check your inbox and spam folder.",
+      );
       setOtp("");
       setCooldown(RESEND_COOLDOWN);
     } catch (caught) {
       console.error("OTP resend failed:", caught);
-      setError(friendlyError(caught, "Could not resend the code. Please wait a moment and try again."));
+      setError(
+        friendlyError(
+          caught,
+          "Could not resend the code. Please wait a moment and try again.",
+        ),
+      );
       setCooldown(RESEND_COOLDOWN);
     } finally {
       setResending(false);
@@ -141,18 +165,35 @@ export default function VerifyEmailPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#080808] px-6 text-white">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl font-bold text-black">E</div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">Email verification</p>
-          <h1 className="text-3xl font-semibold tracking-tight">Check your inbox</h1>
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl font-bold text-black">
+            E
+          </div>
+          <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
+            Email verification
+          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Check your inbox
+          </h1>
           <p className="mt-3 text-sm leading-6 text-neutral-400">
-            Enter the six-digit code sent to {email ? <span className="text-white">{email}</span> : "your email address"}.
+            Enter the six-digit code sent to{" "}
+            {email ? (
+              <span className="text-white">{email}</span>
+            ) : (
+              "your email address"
+            )}
+            .
           </p>
         </div>
 
         <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl">
           <form onSubmit={handleVerify} className="space-y-5">
             <div>
-              <label htmlFor="otp" className="mb-2 block text-sm font-medium text-neutral-300">Verification code</label>
+              <label
+                htmlFor="otp"
+                className="mb-2 block text-sm font-medium text-neutral-300"
+              >
+                Verification code
+              </label>
               <input
                 id="otp"
                 type="text"
@@ -161,7 +202,9 @@ export default function VerifyEmailPage() {
                 pattern="[0-9]{6}"
                 maxLength={6}
                 value={otp}
-                onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(event) =>
+                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
+                }
                 placeholder="000000"
                 required
                 disabled={loading}
@@ -169,10 +212,28 @@ export default function VerifyEmailPage() {
               />
             </div>
 
-            {error && <div role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-400">{error}</div>}
-            {message && <div role="status" className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-400">{message}</div>}
+            {error && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-400"
+              >
+                {error}
+              </div>
+            )}
+            {message && (
+              <div
+                role="status"
+                className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-400"
+              >
+                {message}
+              </div>
+            )}
 
-            <button type="submit" disabled={loading || otp.length !== 6} className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50">
+            <button
+              type="submit"
+              disabled={loading || otp.length !== 6}
+              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+            >
               {loading ? "Verifying..." : "Verify email"}
             </button>
           </form>
@@ -194,7 +255,12 @@ export default function VerifyEmailPage() {
 
           <p className="mt-4 text-center text-xs leading-5 text-neutral-600">
             Didn&apos;t get a code? You may already have an account —{" "}
-            <Link href={nextPath === "/producer/setup" ? "/producer/login" : "/login"} className="text-neutral-400 hover:text-white">
+            <Link
+              href={
+                nextPath === "/producer/setup" ? "/producer/login" : "/login"
+              }
+              className="text-neutral-400 hover:text-white"
+            >
               try logging in
             </Link>
             .
@@ -202,7 +268,15 @@ export default function VerifyEmailPage() {
         </div>
 
         <p className="mt-6 text-center text-sm text-neutral-500">
-          Wrong email? <Link href={nextPath === "/producer/setup" ? "/producer/signup" : "/signup"} className="text-white hover:text-neutral-300">Go back to sign up</Link>
+          Wrong email?{" "}
+          <Link
+            href={
+              nextPath === "/producer/setup" ? "/producer/signup" : "/signup"
+            }
+            className="text-white hover:text-neutral-300"
+          >
+            Go back to sign up
+          </Link>
         </p>
       </div>
     </main>
