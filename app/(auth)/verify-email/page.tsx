@@ -65,8 +65,8 @@ export default function VerifyEmailPage() {
       setError("Email address is missing. Please return to sign up.");
       return;
     }
-    if (!/^\d{6}$/.test(otp)) {
-      setError("Enter the six-digit code from your email.");
+    if (!/^\d{8}$/.test(otp)) {
+      setError("Enter the eight-digit code from your email.");
       return;
     }
 
@@ -199,16 +199,16 @@ export default function VerifyEmailPage() {
                 type="text"
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                pattern="[0-9]{6}"
-                maxLength={6}
+                pattern="[0-9]{8}"
+                maxLength={8}
                 value={otp}
                 onChange={(event) =>
-                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 6))
+                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 8))
                 }
-                placeholder="000000"
+                placeholder="00000000"
                 required
                 disabled={loading}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-4 text-center text-2xl tracking-[0.5em] text-white outline-none placeholder:text-neutral-700 focus:border-white/30 disabled:opacity-50"
+                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-4 text-center text-2xl tracking-[0.35em] text-white outline-none placeholder:text-neutral-700 focus:border-white/30 disabled:opacity-50"
               />
             </div>
 
@@ -231,7 +231,7 @@ export default function VerifyEmailPage() {
 
             <button
               type="submit"
-              disabled={loading || otp.length !== 6}
+              disabled={loading || otp.length !== 8}
               className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? "Verifying..." : "Verify email"}
