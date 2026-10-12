@@ -20,6 +20,7 @@ type Beat = {
   bpm: number | null;
   key: string | null;
   genre: string | null;
+  subgenre: string | null;
   moods: string[] | null;
   preview_url: string | null;
   preview_key: string | null;
@@ -53,6 +54,7 @@ export default async function BeatDetailPage({ params }: PageProps) {
         bpm,
         key,
         genre,
+        subgenre,
         moods,
         preview_url,
         preview_key,
@@ -203,6 +205,7 @@ export default async function BeatDetailPage({ params }: PageProps) {
                 <p className="text-xs text-zinc-600">Genre</p>
 
                 <p className="mt-1 font-semibold">{beat.genre ?? "-"}</p>
+                {beat.subgenre && <p className="mt-1 text-xs text-violet-300">{beat.subgenre}</p>}
               </div>
             </div>
 

@@ -25,7 +25,10 @@ const fa = (n: number) => n.toLocaleString("fa-IR");
 
 function BeatRow({ beat, label }: { beat: BeatCard; label: string }) {
   return (
-    <div className="glass-card mt-5 flex items-center gap-3 rounded-2xl p-3">
+    <Link
+      href={`/beat/${beat.id}`}
+      className="glass-card mt-5 flex items-center gap-3 rounded-2xl p-3 transition hover:border-brand/40"
+    >
       {beat.coverUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -37,7 +40,7 @@ function BeatRow({ beat, label }: { beat: BeatCard; label: string }) {
         <div className="h-12 w-12 shrink-0 rounded-lg bg-white/5" />
       )}
 
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-[11px] text-zinc-500">{label}</p>
         <p className="truncate text-sm font-medium" dir="ltr">
           {beat.title ?? "Untitled Beat"}
@@ -46,7 +49,11 @@ function BeatRow({ beat, label }: { beat: BeatCard; label: string }) {
           {beat.producer}
         </p>
       </div>
-    </div>
+
+      <span className="shrink-0 text-zinc-500" aria-hidden="true">
+        ←
+      </span>
+    </Link>
   );
 }
 
@@ -107,7 +114,7 @@ export default function StreakPage() {
       dir="rtl"
       className="font-fa min-h-[calc(100svh-64px)] bg-ink px-5 py-10 text-white sm:py-16"
     >
-      <div className="mx-auto flex max-w-5xl flex-col-reverse items-center gap-10 md:flex-row md:gap-16">
+      <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-10 md:flex-row md:gap-24">
         {/* متن + مراحل */}
         <section className="w-full md:flex-1">
           <h1 className="text-3xl font-black leading-[1.7] sm:text-4xl">

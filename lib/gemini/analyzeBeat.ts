@@ -15,13 +15,51 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
+
+function mergeUniqueMetadata(primary: unknown, secondary: unknown, max: number): string[] {
+  const values = [primary, secondary].flatMap((source) =>
+    Array.isArray(source)
+      ? source.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+          .map((value) => value.trim())
+      : [],
+  );
+
+  const merged: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    const key = value.toLocaleLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(value);
+    if (merged.length >= max) break;
+  }
+  return merged;
+}
+
 export async function analyzeBeat(beatId: string, audioUrl: string) {
-  await supabase
-    .from("beats")
-    .update({ analysis_status: "processing" })
-    .eq("id", beatId);
+  let producerMetadata: {
+    moods?: unknown;
+    atmosphere?: unknown;
+    instruments?: unknown;
+    scenes?: unknown;
+    semantic_tags?: unknown;
+  } = {};
 
   try {
+    const { data: existingBeat, error: metadataError } = await supabase
+      .from("beats")
+      .select("moods, atmosphere, instruments, scenes, semantic_tags")
+      .eq("id", beatId)
+      .maybeSingle();
+
+    if (metadataError) throw metadataError;
+    producerMetadata = existingBeat ?? {};
+
+    await supabase
+      .from("beats")
+      .update({ analysis_status: "processing" })
+      .eq("id", beatId);
+
     const audioRes = await fetch(audioUrl);
     const mimeType = audioRes.headers.get("content-type") ?? "audio/mpeg";
     const audioBuffer = Buffer.from(await audioRes.arrayBuffer());
@@ -58,6 +96,12 @@ export async function analyzeBeat(beatId: string, audioUrl: string) {
       .from("beats")
       .update({
         ...clean,
+        // Producer-selected metadata has priority; AI enriches empty slots.
+        moods: mergeUniqueMetadata(producerMetadata.moods, clean.moods, 5),
+        atmosphere: mergeUniqueMetadata(producerMetadata.atmosphere, clean.atmosphere, 4),
+        instruments: mergeUniqueMetadata(producerMetadata.instruments, clean.instruments, 8),
+        scenes: mergeUniqueMetadata(producerMetadata.scenes, clean.scenes, 3),
+        semantic_tags: mergeUniqueMetadata(producerMetadata.semantic_tags, clean.semantic_tags, 10),
         analysis_status: "completed",
         analyzed_at: new Date().toISOString(),
       })

@@ -383,6 +383,70 @@ export const SCENES: readonly Scene[] = [
   "Meditation",
 ];
 
+// ------------------------------------------------------------
+// Producer-facing Genre → Subgenre taxonomy
+// ------------------------------------------------------------
+
+export const GENRE_TAXONOMY = {
+  "Hip Hop": [
+    "Trap",
+    "Melodic Trap",
+    "Rage",
+    "Plugg",
+    "PluggnB",
+    "Cloud Rap",
+    "Alternative Hip Hop",
+    "Underground Hip Hop",
+    "Boom Bap",
+    "Lo-fi Hip Hop",
+    "Experimental Hip Hop",
+    "West Coast Hip Hop",
+  ],
+  "R&B": [
+    "Contemporary R&B",
+    "Alternative R&B",
+    "Trap Soul",
+    "Neo-Soul",
+    "Slow Jam",
+  ],
+  "Pop": ["Pop Rap", "Dark Pop", "Synth-Pop", "Indie Pop", "Dance Pop"],
+  "Electronic": [
+    "Ambient",
+    "House",
+    "Techno",
+    "Synthwave",
+    "Drum & Bass",
+    "Experimental Electronic",
+    "Downtempo",
+  ],
+  "Afrobeats": ["Afro-R&B", "Afro-Fusion", "Afro-Pop"],
+  "Latin": ["Latin Trap", "Reggaeton", "Latin Pop"],
+  "Jazz": ["Jazz Rap", "Jazz Fusion", "Lo-fi Jazz"],
+  "Rock": ["Alternative Rock", "Indie Rock", "Pop Punk"],
+  "Country": ["Country Pop", "Americana", "Country Rap"],
+  "Folk": ["Indie Folk", "Acoustic Folk", "Folk Pop"],
+  "Reggae": ["Dancehall", "Roots Reggae", "Reggae Fusion"],
+  "Gospel": ["Contemporary Gospel", "Gospel R&B", "Choir Gospel"],
+  "Cinematic": ["Epic Cinematic", "Ambient Cinematic", "Trailer Music"],
+  "Other": [],
+} as const;
+
+export type Genre = keyof typeof GENRE_TAXONOMY;
+export const GENRES = Object.keys(GENRE_TAXONOMY) as Genre[];
+export const SUBGENRES = Array.from(
+  new Set(Object.values(GENRE_TAXONOMY).flat()),
+) as string[];
+
+export function isValidGenre(value: string): value is Genre {
+  return Object.prototype.hasOwnProperty.call(GENRE_TAXONOMY, value);
+}
+
+export function isValidSubgenre(genre: string, subgenre: string): boolean {
+  if (!subgenre) return true;
+  if (!isValidGenre(genre)) return false;
+  return (GENRE_TAXONOMY[genre] as readonly string[]).includes(subgenre);
+}
+
 export const ENERGY_LEVELS: readonly EnergyLevel[] = [
   "Very Low",
   "Low",

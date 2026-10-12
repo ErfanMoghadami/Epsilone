@@ -2,6 +2,14 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { deleteR2Objects, headR2Object } from "@/lib/r2-upload-server";
 import { musicalKey } from "@/lib/uploadConfig";
+import {
+  ATMOSPHERES,
+  GENRE_TAXONOMY,
+  INSTRUMENTS,
+  MOODS,
+  SCENES,
+  type Genre,
+} from "@/lib/taxonomy";
 
 const MAX_AUDIO_SIZE = 100 * 1024 * 1024;
 
@@ -22,6 +30,37 @@ const STEM_CONTENT_TYPES = new Set([
   "application/x-rar-compressed",
   "application/octet-stream",
 ]);
+
+function parseTaxonomyArray(
+  value: unknown,
+  allowed: readonly string[],
+  max: number,
+): string[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > max) return null;
+
+  const result: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string" || !allowed.includes(item)) return null;
+    if (!result.includes(item)) result.push(item);
+  }
+  return result;
+}
+
+function parseUserTags(value: unknown): string[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 3) return null;
+
+  const tags: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string") return null;
+    const tag = item.trim().replace(/^#/, "").replace(/\s+/g, " ");
+    if (tag.length < 2 || tag.length > 40) return null;
+    if (tags.some((existing) => existing.toLowerCase() === tag.toLowerCase())) return null;
+    tags.push(tag);
+  }
+  return tags;
+}
 
 function isValidAudioUploadKey(
   key: string,
@@ -111,6 +150,12 @@ export async function POST(request: Request) {
     const key = typeof body.key === "string" ? body.key.trim() : "";
 
     const genre = typeof body.genre === "string" ? body.genre.trim() : "";
+    const subgenre = typeof body.subgenre === "string" ? body.subgenre.trim() : "";
+    const moods = parseTaxonomyArray(body.moods, MOODS, 5);
+    const atmosphere = parseTaxonomyArray(body.atmosphere, ATMOSPHERES, 4);
+    const instruments = parseTaxonomyArray(body.instruments, INSTRUMENTS, 8);
+    const scenes = parseTaxonomyArray(body.scenes, SCENES, 3);
+    const tags = parseUserTags(body.tags);
 
     audioKey = typeof body.audioKey === "string" ? body.audioKey.trim() : null;
 
@@ -164,15 +209,30 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!genre || genre.length > 80) {
+    if (!Object.prototype.hasOwnProperty.call(GENRE_TAXONOMY, genre)) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Genre is required and must be 80 characters or less.",
-        },
+        { success: false, error: "Choose a valid genre from the taxonomy." },
         { status: 400 },
       );
     }
+
+    if (subgenre && !(GENRE_TAXONOMY[genre as Genre] as readonly string[]).includes(subgenre)) {
+      return NextResponse.json(
+        { success: false, error: "Subgenre does not belong to the selected genre." },
+        { status: 400 },
+      );
+    }
+
+    if (!moods || !atmosphere || !instruments || !scenes || !tags) {
+      return NextResponse.json(
+        { success: false, error: "One or more metadata values are invalid or exceed the allowed limit." },
+        { status: 400 },
+      );
+    }
+
+    const semanticTags = [...tags, ...(subgenre ? [subgenre] : [])].filter(
+      (tag, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === tag.toLowerCase()) === index,
+    );
 
     if (
       !audioKey ||
@@ -293,6 +353,12 @@ export async function POST(request: Request) {
         bpm,
         key,
         genre,
+        subgenre: subgenre || null,
+        moods,
+        atmosphere,
+        instruments,
+        scenes,
+        semantic_tags: semanticTags,
         audio_url: null,
         cover_url: null,
         audio_key: audioKey,

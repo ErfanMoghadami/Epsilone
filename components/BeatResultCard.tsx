@@ -35,7 +35,9 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
   function handleCardClick(event: MouseEvent<HTMLElement>) {
     const target = event.target as HTMLElement;
 
-    if (target.closest("a, button, input, select, .beat-player, [role='dialog']")) {
+    if (
+      target.closest("a, button, input, select, .beat-player, [role='dialog']")
+    ) {
       return;
     }
 
@@ -101,10 +103,7 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
 
       {/* Player: روی موبایل تمام عرض کارت */}
       {audioUrl && (
-        <div
-          className="beat-player col-span-2 w-full sm:col-span-1"
-          dir="ltr"
-        >
+        <div className="beat-player col-span-2 w-full sm:col-span-1" dir="ltr">
           <WaveformPlayer
             url={audioUrl}
             title={beat.title ?? "Untitled Beat"}
@@ -133,7 +132,16 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
         >
           {beat.bpm && (
             <span className="flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
                 <path d="M3 10v4M7 7v10M11 3v18M15 8v8M19 6v12M22 11v2" />
               </svg>
               bpm: {beat.bpm}
@@ -142,7 +150,17 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
 
           {beat.key && (
             <span className="flex items-center gap-1.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M9 18V5l12-2v13" />
                 <circle cx="6" cy="18" r="3" />
                 <circle cx="18" cy="16" r="3" />
@@ -164,7 +182,17 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
             className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-full border border-brand/60 px-4 text-sm font-medium text-white transition hover:bg-brand/10 sm:h-9 sm:flex-none sm:text-xs"
           >
             مشاهده بیت
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
           </Link>

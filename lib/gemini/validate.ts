@@ -1,4 +1,11 @@
-import { MOODS, ATMOSPHERES, SCENES, INSTRUMENTS } from "@/lib/taxonomy";
+import {
+  ATMOSPHERES,
+  GENRES,
+  GENRE_TAXONOMY,
+  INSTRUMENTS,
+  MOODS,
+  SCENES,
+} from "@/lib/taxonomy";
 
 function filterByTaxonomy<T extends string>(
   arr: unknown,
@@ -51,6 +58,9 @@ interface RawAnalysis {
 export function validateAnalysis(raw: unknown) {
   const result = (raw ?? {}) as RawAnalysis;
 
+  const aiGenres = filterByTaxonomy(result.ai_genres, GENRES, 2);
+  const allowedSubgenres = aiGenres.flatMap((genre) => GENRE_TAXONOMY[genre]);
+
   return {
     moods: filterByTaxonomy(result.moods, MOODS, 5),
     atmosphere: filterByTaxonomy(result.atmosphere, ATMOSPHERES, 4),
@@ -58,11 +68,9 @@ export function validateAnalysis(raw: unknown) {
     scenes: filterByTaxonomy(result.scenes, SCENES, 3),
     instruments: filterByTaxonomy(result.instruments, INSTRUMENTS, 8),
 
-    // These fields are free-form because no canonical arrays currently
-    // exist for them in lib/taxonomy.ts.
     vocals: filterStrings(result.vocals, 2),
-    ai_genres: filterStrings(result.ai_genres, 2),
-    ai_subgenres: filterStrings(result.ai_subgenres, 2),
+    ai_genres: aiGenres,
+    ai_subgenres: filterByTaxonomy(result.ai_subgenres, allowedSubgenres, 2),
 
     semantic_tags: filterStrings(result.semantic_tags, 10),
     description:
