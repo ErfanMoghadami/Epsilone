@@ -2,103 +2,120 @@
 
 import { useEffect, useRef } from "react";
 
-const LINE_COUNT = 34; // بیشتر = پرتر و بافته‌تر
-const VB_WIDTH = 680;
-const VB_HEIGHT = 320;
-const SAMPLE_STEP = 8; // کمتر = نرم‌تر ولی سنگین‌تر
-const LOOP_SECONDS = 10; // مدت یک دور کامل (بی‌درز)
-
-function buildPath(index: number, time: number) {
-  const off = (index - LINE_COUNT / 2) * 3.6;
-  const phase = index * 0.09 + time;
-  const amp = 70 + Math.sin(index * 0.3) * 10;
-  let d = "";
-
-  for (let x = 0; x <= VB_WIDTH; x += SAMPLE_STEP) {
-    // خطوط رو به لبه‌ها جمع می‌شن و وسط پهن می‌شن
-    const envelope = Math.sin((x / VB_WIDTH) * Math.PI);
-    const y =
-      VB_HEIGHT / 2 +
-      off +
-      Math.sin((x / VB_WIDTH) * Math.PI * 2 + phase) * amp * envelope;
-    d += (x === 0 ? "M" : "L") + x + "," + y.toFixed(1) + " ";
-  }
-
-  return d;
-}
+const LINE_COUNT = 18;
+const VB_W = 680;
+const VB_H = 320;
+const STEP = 12; // فاصله‌ی نقطه‌ها (کمتر = نرم‌تر ولی سنگین‌تر)
+const LOOP_SECONDS = 10;
+const FRAME_MS = 1000 / 30; // سقف ۳۰ فریم بر ثانیه
 
 export default function WaveBackground() {
-  const pathRefs = useRef<(SVGPathElement | null)[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (!canvas || !ctx) return;
+
+    // مقدارهایی که فقط یک بار محاسبه می‌شن
+    const xs: number[] = [];
+    for (let x = 0; x <= VB_W; x += STEP) xs.push(x);
+
+    const angle = xs.map((x) => (x / VB_W) * Math.PI * 2);
+    const envelope = xs.map((x) => Math.sin((x / VB_W) * Math.PI));
+
+    const lines = Array.from({ length: LINE_COUNT }, (_, i) => ({
+      offset: (i - LINE_COUNT / 2) * 3.6 * (34 / LINE_COUNT),
+      phase: i * 0.09 * (34 / LINE_COUNT),
+      amp: 70 + Math.sin(i * 0.3) * 10,
+    }));
+
+    let width = 0;
+    let height = 0;
+    let gradient: CanvasGradient;
+
     const draw = (time: number) => {
-      pathRefs.current.forEach((path, i) => {
-        path?.setAttribute("d", buildPath(i, time));
-      });
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = 0.55;
+
+      const sx = width / VB_W;
+      const sy = height / VB_H;
+
+      for (const line of lines) {
+        ctx.beginPath();
+
+        for (let k = 0; k < xs.length; k++) {
+          const y =
+            VB_H / 2 +
+            line.offset +
+            Math.sin(angle[k] + line.phase + time) * line.amp * envelope[k];
+
+          if (k === 0) ctx.moveTo(xs[k] * sx, y * sy);
+          else ctx.lineTo(xs[k] * sx, y * sy);
+        }
+
+        ctx.stroke();
+      }
     };
 
-    draw(0);
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
-    // کاربرانی که انیمیشن کم رو انتخاب کردن: فقط تصویر ثابت
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      gradient = ctx.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0, "rgba(255,127,92,0.15)");
+      gradient.addColorStop(0.5, "rgba(255,127,92,0.9)");
+      gradient.addColorStop(1, "rgba(255,127,92,0.15)");
+
+      draw(0);
+    };
+
+    resize();
+
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(canvas);
+
+    // کاربرانی که انیمیشن کم رو انتخاب کردن: تصویر ثابت
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return;
+      return () => resizeObserver.disconnect();
     }
 
     let frame = 0;
+    let last = 0;
     const start = performance.now();
 
     const tick = (now: number) => {
+      frame = requestAnimationFrame(tick);
+
+      // توی تب مخفی نمی‌کشه، و فریم‌ها رو روی ۳۰ در ثانیه نگه می‌داره
+      if (document.hidden || now - last < FRAME_MS) return;
+      last = now;
+
       const progress = ((now - start) / 1000 / LOOP_SECONDS) % 1;
       draw(progress * Math.PI * 2);
-      frame = requestAnimationFrame(tick);
     };
 
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   return (
-    <div
+    <canvas
+      ref={canvasRef}
       aria-hidden="true"
-      // className="pointer-events-none absolute inset-x-0 bottom-0 h-56 sm:h-72"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-56 sm:h-72"
-      style={{
-        maskImage:
-          "linear-gradient(to bottom, transparent, black 35%, black 75%, transparent)",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, transparent, black 35%, black 75%, transparent)",
-      }}
-    >
-      <svg
-        className="h-full w-full"
-        viewBox={`0 0 ${VB_WIDTH} ${VB_HEIGHT}`}
-        preserveAspectRatio="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <defs>
-          <linearGradient id="waveHeroGradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#ff7f5c" stopOpacity="0.15" />
-            <stop offset="50%" stopColor="#ff7f5c" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#ff7f5c" stopOpacity="0.15" />
-          </linearGradient>
-        </defs>
-
-        <g>
-          {Array.from({ length: LINE_COUNT }).map((_, i) => (
-            <path
-              key={i}
-              ref={(el) => {
-                pathRefs.current[i] = el;
-              }}
-              fill="none"
-              stroke="url(#waveHeroGradient)"
-              strokeWidth="0.6"
-              opacity="0.55"
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-        </g>
-      </svg>
-    </div>
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-0 h-56 w-full sm:h-72"
+    />
   );
 }
