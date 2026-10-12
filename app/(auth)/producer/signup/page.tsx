@@ -250,7 +250,7 @@ export default function ProducerSignupPage() {
                     setPassword(e.target.value)
                   }
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={8}
                   required
                   disabled={loading}
                   className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-white/30 focus:bg-black/60 disabled:cursor-not-allowed disabled:opacity-50"

@@ -16,6 +16,7 @@ type License = {
 type AddToCartButtonProps = {
   beatId: string;
   title: string;
+  variant?: "default" | "compact";
 };
 
 type CartItem = {
@@ -33,6 +34,7 @@ const CART_KEY = "epsilone-cart";
 export default function AddToCartButton({
   beatId,
   title,
+  variant = "default",
 }: AddToCartButtonProps) {
   const [licenses, setLicenses] = useState<License[]>([]);
   const [selectedLicense, setSelectedLicense] = useState<string>("");
@@ -124,6 +126,11 @@ export default function AddToCartButton({
     window.dispatchEvent(new Event("cart-updated"));
   }
 
+  // حالت compact: تا لایسنس‌ها لود نشدن یه placeholder کوچیک
+  if (variant === "compact" && (loading || error || licenses.length === 0)) {
+    return <div className="h-9 w-24 animate-pulse rounded-full bg-white/10" />;
+  }
+
   if (loading) {
     return (
       <div className="mt-3 text-sm text-zinc-500">Loading licenses...</div>
@@ -146,43 +153,74 @@ export default function AddToCartButton({
 
   return (
     <>
-      <div className="mt-3 flex items-center gap-2">
-        <select
-          value={selectedLicense}
-          onChange={(e) => {
-            setSelectedLicense(e.target.value);
-            setAdded(false);
-            setShowCartPrompt(false);
-          }}
-          className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
-        >
-          {licenses.map((license) => (
-            <option key={license.id} value={license.id}>
-              {license.license_type} — ${license.price}
-              {license.includes_stems ? " + Stems" : ""}
-            </option>
-          ))}
-        </select>
-
+      {variant === "compact" ? (
         <button
           type="button"
           onClick={addToCart}
-          className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-zinc-200"
+          className="glass-btn flex h-9 items-center gap-2 rounded-full px-4 text-xs font-bold text-ink transition hover:brightness-110"
         >
-          {added ? "Added ✓" : "Add to Cart"}
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="8" cy="21" r="1" />
+            <circle cx="19" cy="21" r="1" />
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+          </svg>
+          {added ? "اضافه شد" : "خرید"}
         </button>
-      </div>
-      {selectedLicenseData && (
-        <ul className="mt-2 space-y-1 text-xs text-zinc-500">
-          {resolveTerms(
-            selectedLicenseData.license_type,
-            selectedLicenseData.terms,
-          ).map((term) => (
-            <li key={term}>✓ {term}</li>
-          ))}
-          {selectedLicenseData.includes_stems && <li>✓ Stems pack included</li>}
-        </ul>
+      ) : (
+        <>
+          <div className="mt-3 flex items-center gap-2">
+            <select
+              value={selectedLicense}
+              onChange={(e) => {
+                setSelectedLicense(e.target.value);
+                setAdded(false);
+                setShowCartPrompt(false);
+              }}
+              className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-white"
+            >
+              {licenses.map((license) => (
+                <option key={license.id} value={license.id}>
+                  {license.license_type} — ${license.price}
+                  {license.includes_stems ? " + Stems" : ""}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={addToCart}
+              className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-zinc-200"
+            >
+              {added ? "Added ✓" : "Add to Cart"}
+            </button>
+          </div>
+
+          {selectedLicenseData && (
+            <ul className="mt-2 space-y-1 text-xs text-zinc-500">
+              {resolveTerms(
+                selectedLicenseData.license_type,
+                selectedLicenseData.terms,
+              ).map((term) => (
+                <li key={term}>✓ {term}</li>
+              ))}
+              {selectedLicenseData.includes_stems && (
+                <li>✓ Stems pack included</li>
+              )}
+            </ul>
+          )}
+        </>
       )}
+
       {showCartPrompt && selectedLicenseData && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm"

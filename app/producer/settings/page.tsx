@@ -56,8 +56,8 @@ export default function ProducerSettingsPage() {
     setError("");
     setMessage("");
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
       return;
     }
 
@@ -157,7 +157,7 @@ export default function ProducerSettingsPage() {
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                minLength={6}
+                minLength={8}
                 autoComplete="new-password"
                 placeholder="••••••••"
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25"

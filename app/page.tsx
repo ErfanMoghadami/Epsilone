@@ -2,10 +2,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { WaveformPlayer } from "@arraypress/waveform-player-react";
-import FavoriteButton from "@/components/FavoriteButton";
-import AddToCartButton from "@/components/AddToCartButton";
+// import { WaveformPlayer } from "@arraypress/waveform-player-react";
+// import FavoriteButton from "@/components/FavoriteButton";
+// import AddToCartButton from "@/components/AddToCartButton";
+import BeatResultCard, { type Beat } from "@/components/BeatResultCard";
 import HomeMenu from "@/components/HomeMenu";
+import EpsiloneLogo from "@/components/EpsiloneLogo";
+import WaveBackground from "@/components/WaveBackground";
+
 type Beat = {
   id: string;
   title: string;
@@ -42,7 +46,8 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [restored, setRestored] = useState(false);
-
+  const [searched, setSearched] = useState(false);
+  const [shownQuery, setShownQuery] = useState("");
   // ------------------------------------------------------
   // Restore previous search
   // ------------------------------------------------------
@@ -124,6 +129,8 @@ export default function Page() {
       const nextResults = data.results ?? [];
 
       setResults(nextResults);
+      setSearched(true);
+      setShownQuery(query.trim());
 
       saveSearchState(query.trim(), nextResults);
     } catch (error) {
@@ -133,69 +140,131 @@ export default function Page() {
     }
   }
 
+  const hasActivity = loading || !!error || searched || results.length > 0;
+
   return (
-    <main className="min-h-screen bg-black px-6 py-16 text-white">
-      <HomeMenu />
-      <div className="mx-auto max-w-4xl">
-        {/* Header */}
+    <main
+      dir="rtl"
+      className={`font-fa relative flex flex-col overflow-hidden bg-ink text-white ${
+        hasActivity ? "min-h-svh" : "h-svh"
+      }`}
+    >
+      {/* Top bar */}
+      <header className="relative z-20 flex items-center justify-between px-5 pt-5 sm:px-12 sm:pt-7">
+        <HomeMenu />
 
-        <div className="mb-10 text-center">
-          <h1 className="mb-3 text-4xl font-bold">Epsilone</h1>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/login"
+            className="rounded-full border border-brand/70 px-8 py-2 text-xs font-bold text-white transition hover:bg-brand/10"
+          >
+            ورود
+          </Link>
+          <Link
+            href="/signup"
+            className="text-xs text-white/90 transition hover:text-brand"
+          >
+            ثبت نام
+          </Link>
+        </div>
+      </header>
 
-          <p className="text-zinc-400">
-            Describe the beat you are looking for.
-          </p>
+      {/* Hero */}
+      <section
+        className={`relative z-10 mx-auto flex max-w-2xl flex-col items-center px-5 text-center transition-all ${
+          hasActivity ? "pt-12 pb-8" : "flex-1 justify-center pb-24"
+        }`}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-64 w-[34rem] max-w-full -translate-x-1/2 rounded-full  blur-3xl"
+        />
+        <div className="mb-12 sm:mb-14">
+          <EpsiloneLogo className="text-5xl sm:text-6xl" />
         </div>
 
-        {/* Search */}
+        <form onSubmit={handleSubmit} className="w-full">
+          <div className="glass-bar flex h-12 items-center gap-3 rounded-full py-1 pr-5 pl-1">
+            {/* waveform icon (right side in RTL) */}
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#ff7f5c"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+              className="shrink-0"
+            >
+              <path d="M3 10v4M7 7v10M11 3v18M15 8v8M19 6v12M22 11v2" />
+            </svg>
 
-        <form onSubmit={handleSubmit} className="mb-10 flex gap-3">
-          <input
-            type="text"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="یه بیت غمگین و شبونه برای رانندگی میخوام..."
-            className="flex-1 rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-4 outline-none placeholder:text-zinc-600 focus:border-zinc-500"
-          />
+            <input
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="مثلا : یه بیت گنگ میخوام"
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+            />
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="rounded-xl bg-white px-6 py-4 font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Analyzing..." : "Search"}
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              aria-label="جستجو"
+              className="glass-btn flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {loading ? (
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink/30 border-t-ink" />
+              ) : (
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+              )}
+            </button>
+          </div>
         </form>
 
-        {/* Error */}
+        <p className="mt-6 text-sm leading-8 text-white/90">
+          حس فضا یا داستانی که توی ذهنت داری رو توصیف کن
+          <br />
+          اپسیلون با هوش مصنوعی اونو پیدا میکنه برات
+        </p>
+      </section>
 
+      {/* Results */}
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-40">
         {error && (
-          <div className="mb-6 rounded-xl border border-red-900 bg-red-950/30 p-4 text-red-400">
+          <div className="mb-6 rounded-xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-400">
             {error}
           </div>
         )}
 
-        {/* Loading */}
-
         {loading && (
-          <div className="py-10 text-center text-zinc-500">
-            Understanding your mood...
+          <div className="py-10 text-center text-sm text-zinc-400">
+            دارم حس و حالتو تحلیل میکنم...
           </div>
         )}
 
-        {/* Results */}
-
-        {restored && !loading && results.length > 0 && (
+        {/*{restored && !loading && results.length > 0 && (
           <div className="space-y-4">
-            <h2 className="mb-4 text-xl font-semibold">Recommended Beats</h2>
+            <h2 className="mb-4 text-lg font-semibold">بیت‌های پیشنهادی</h2>
 
             {results.map((beat) => (
               <div
                 key={beat.id}
-                className="flex gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
+                className="flex gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
               >
-                {/* Cover */}
-
                 {beat.cover_url && (
                   <img
                     src={beat.cover_url}
@@ -204,9 +273,7 @@ export default function Page() {
                   />
                 )}
 
-                <div className="flex-1">
-                  {/* Title / Match / Favorite */}
-
+                <div className="min-w-0 flex-1" dir="ltr">
                   <div className="mb-1 flex items-center justify-between gap-4">
                     <div className="min-w-0">
                       <h3 className="font-semibold">
@@ -218,31 +285,25 @@ export default function Page() {
                           href={`/producers/${encodeURIComponent(
                             beat.producer_username,
                           )}`}
-                          className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-white"
+                          className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-brand"
                         >
                           @{beat.producer_username}
                         </Link>
                       )}
                     </div>
 
-                    <span className="text-sm text-zinc-400">
+                    <span className="text-sm text-brand">
                       {Number(beat.match_score).toFixed(1)}%
                     </span>
 
                     <FavoriteButton beatId={beat.id} />
                   </div>
 
-                  {/* Metadata */}
-
                   <p className="mb-2 text-sm text-zinc-500">
                     {beat.genre ?? "Unknown genre"}
-
                     {beat.bpm ? ` • ${beat.bpm} BPM` : ""}
-
                     {beat.key ? ` • ${beat.key}` : ""}
                   </p>
-
-                  {/* Player */}
 
                   {(beat.preview_url || beat.audio_url) && (
                     <WaveformPlayer
@@ -252,18 +313,14 @@ export default function Page() {
                     />
                   )}
 
-                  {/* Cart */}
-
                   <AddToCartButton
                     beatId={beat.id}
                     title={beat.title ?? "Untitled Beat"}
                   />
 
-                  {/* View Beat */}
-
                   <Link
                     href={`/beat/${beat.id}`}
-                    className="mt-3 flex w-full items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:border-zinc-500 hover:bg-zinc-800"
+                    className="mt-3 flex w-full items-center justify-center rounded-full border border-brand/60 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand/10"
                   >
                     View Beat →
                   </Link>
@@ -271,16 +328,30 @@ export default function Page() {
               </div>
             ))}
           </div>
+        )}*/}
+        {restored && !loading && results.length > 0 && (
+          <div>
+            {shownQuery && (
+              <h2 className="mb-6 text-center text-lg font-medium text-white">
+                {shownQuery}
+              </h2>
+            )}
+
+            <div className="space-y-4">
+              {results.map((beat) => (
+                <BeatResultCard key={beat.id} beat={beat} />
+              ))}
+            </div>
+          </div>
         )}
-
-        {/* Empty state */}
-
-        {restored && !loading && !error && results.length === 0 && (
-          <div className="py-16 text-center text-zinc-600">
+        {restored && !loading && !error && searched && results.length === 0 && (
+          <div className="py-10 text-center text-sm text-zinc-500">
             حس پیچیده ای داری هنوز بیتی به این احوالات نداریم :(
           </div>
         )}
-      </div>
+      </section>
+
+      <WaveBackground />
     </main>
   );
 }

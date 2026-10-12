@@ -133,7 +133,7 @@ export default function SignupPage() {
                 placeholder="••••••••"
                 autoComplete="new-password"
                 required
-                minLength={6}
+                minLength={8}
                 disabled={loading}
                 className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600 transition focus:border-white/30 focus:bg-black/60 disabled:opacity-50"
               />

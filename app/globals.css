@@ -10,6 +10,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-fa: var(--font-vazirmatn);
+  --font-logo: var(--font-jura);
+  --color-ink: #121620;
+  --color-brand: #ff7f5c;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +27,143 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.font-fa {
+  font-family: var(--font-vazirmatn), Tahoma, sans-serif;
+}
+
+@keyframes wave-drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.wave-drift {
+  animation: wave-drift 40s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-drift {
+    animation: none;
+  }
+}
+
+.glass-bar {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 127, 92, 0.06) 0%,
+    rgba(18, 22, 32, 0.35) 100%
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 40px rgba(0, 0, 0, 0.45);
+  transition: box-shadow 0.25s;
+}
+
+/* بوردر گرادیانی: بالا روشن، پایین محو */
+.glass-bar::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.02) 50%,
+    rgba(255, 127, 92, 0.3)
+  );
+}
+
+.glass-bar:focus-within {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 0 0 3px rgba(255, 127, 92, 0.15),
+    0 10px 40px rgba(0, 0, 0, 0.45);
+}
+
+/* دکمه‌ی نارنجی با براق شیشه‌ای */
+.glass-btn {
+  background: linear-gradient(180deg, #ff9a7c 0%, #ff7f5c 60%, #f2663f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 4px 14px rgba(255, 127, 92, 0.4);
+}
+
+/* پلیر داخل کارت نتایج: دکمه‌ی نارنجی، بدون کادر */
+.beat-player .waveform-player {
+  --wfp-button-color: #121620;
+}
+
+.beat-player .waveform-btn {
+  border: none;
+  background: linear-gradient(180deg, #ff9a7c 0%, #ff7f5c 60%, #f2663f 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 4px 14px rgba(255, 127, 92, 0.35);
+  opacity: 1;
+}
+
+.beat-player .waveform-container {
+  min-height: 36px;
+}
+
+/* موج تمام عرض بگیره */
+.beat-player,
+.beat-player .waveform-player,
+.beat-player .waveform-body,
+.beat-player .waveform-track {
+  width: 100%;
+}
+
+.beat-player .waveform-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* کارت شیشه‌ای */
+.glass-card {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 127, 92, 0.05) 0%,
+    rgba(255, 255, 255, 0.025) 100%
+  );
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.4);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22),
+    rgba(255, 255, 255, 0.03) 50%,
+    rgba(255, 127, 92, 0.22)
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 16px 48px rgba(0, 0, 0, 0.5);
 }
