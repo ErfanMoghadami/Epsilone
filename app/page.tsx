@@ -10,19 +10,7 @@ import HomeMenu from "@/components/HomeMenu";
 import EpsiloneLogo from "@/components/EpsiloneLogo";
 import WaveBackground from "@/components/WaveBackground";
 
-// type Beat = {
-//   id: string;
-//   title: string;
-//   audio_url: string | null;
-//   preview_url: string | null;
-//   cover_url: string | null;
-//   bpm: number | null;
-//   key: string | null;
-//   genre: string | null;
-//   match_score: number | null;
-//   producer_id: string | null;
-//   producer_username: string | null;
-// };
+
 
 type RecommendResponse = {
   success: boolean;
@@ -150,7 +138,7 @@ export default function Page() {
       }`}
     >
       {/* Top bar */}
-      <header className="relative z-20 flex items-center justify-between px-5 pt-5 sm:px-12 sm:pt-7">
+      <header className="relative z-20 flex items-center justify-between m-2 px-5 pt-5 sm:px-12 sm:pt-7">
         <HomeMenu />
 
         <div className="flex items-center gap-4">
@@ -345,7 +333,7 @@ export default function Page() {
           </div>
         )}
         {restored && !loading && !error && searched && results.length === 0 && (
-          <div className="py-10 text-center text-sm text-zinc-500">
+          <div className="py-10 text-center text-sm text-zinc-500 ">
             حس پیچیده ای داری هنوز بیتی به این احوالات نداریم :(
           </div>
         )}

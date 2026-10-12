@@ -77,7 +77,7 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
           {beat.producer_username && (
             <Link
               href={`/producers/${encodeURIComponent(beat.producer_username)}`}
-              className="mt-0.5 block truncate text-xs text-zinc-500 transition hover:text-brand sm:text-[11px]"
+              className="mt-0.5 block truncate text-xs text-zinc-500 transition hover:text-brand sm:text-[14px]"
             >
               {beat.producer_username}
             </Link>
