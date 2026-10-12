@@ -63,6 +63,7 @@ export default function GlobalNav() {
       href: "/discover",
       label: "Discover",
     },
+    { href: "/trending", label: "Trending" },
   ];
 
   return (

@@ -3,13 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-
-type BeatCard = {
-  id: string;
-  title: string | null;
-  producer: string;
-  coverUrl: string | null;
-};
+import BeatResultCard, { type Beat } from "@/components/BeatResultCard";
 
 type StreakStatus = {
   authenticated: boolean;
@@ -17,45 +11,11 @@ type StreakStatus = {
   target?: number;
   currentStreak?: number;
   countedToday?: boolean;
-  weeklyBeat?: BeatCard | null;
-  reward?: { id: string; expiresAt: string; beat: BeatCard | null } | null;
+  weeklyBeat?: Beat | null;
+  reward?: { id: string; expiresAt: string; beat: Beat | null } | null;
 };
 
 const fa = (n: number) => n.toLocaleString("fa-IR");
-
-function BeatRow({ beat, label }: { beat: BeatCard; label: string }) {
-  return (
-    <Link
-      href={`/beat/${beat.id}`}
-      className="glass-card mt-5 flex items-center gap-3 rounded-2xl p-3 transition hover:border-brand/40"
-    >
-      {beat.coverUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={beat.coverUrl}
-          alt=""
-          className="h-12 w-12 shrink-0 rounded-lg object-cover"
-        />
-      ) : (
-        <div className="h-12 w-12 shrink-0 rounded-lg bg-white/5" />
-      )}
-
-      <div className="min-w-0 flex-1">
-        <p className="text-[11px] text-zinc-500">{label}</p>
-        <p className="truncate text-sm font-medium" dir="ltr">
-          {beat.title ?? "Untitled Beat"}
-        </p>
-        <p className="truncate text-xs text-zinc-500" dir="ltr">
-          {beat.producer}
-        </p>
-      </div>
-
-      <span className="shrink-0 text-zinc-500" aria-hidden="true">
-        ←
-      </span>
-    </Link>
-  );
-}
 
 export default function StreakPage() {
   const [status, setStatus] = useState<StreakStatus | null>(null);
@@ -112,32 +72,38 @@ export default function StreakPage() {
   return (
     <main
       dir="rtl"
-      className="font-fa min-h-[calc(100svh-64px)] bg-ink px-5 py-10 text-white sm:py-16"
+      className="font-fa min-h-[calc(100svh-64px)] overflow-x-hidden bg-ink px-5 py-8 text-white sm:py-16"
     >
-      <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-10 md:flex-row md:gap-24">
+      <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-8 md:flex-row md:gap-24">
         {/* متن + مراحل */}
         <section className="w-full md:flex-1">
-          <h1 className="text-3xl font-black leading-[1.7] sm:text-4xl">
+          <h1 className="text-[1.7rem] font-black leading-[1.7] sm:text-4xl">
             {fa(target)} روز جستجو کن ،
             <br />
             یه <span className="text-brand">بیت رایگان</span> بگیر
           </h1>
 
-          <p className="mt-6 text-sm leading-8 text-white/80 sm:text-base">
+          <p className="mt-5 text-sm leading-8 text-white/80 sm:mt-6 sm:text-base">
             هر روز که جستجو میکنی ی روز به بیت رایگان نزدیک میشی
             <br />
             بعد از {fa(target)} روز ی بیت رایگان از اپسیلون میگیری
           </p>
 
           {/* مراحل: ۱ سمت راست، ۷ سمت چپ */}
-          <ol className="mt-8 flex items-center">
+          <ol className="mt-7 flex w-full max-w-md items-center sm:mt-8 sm:max-w-none">
             {Array.from({ length: target }).map((_, i) => {
               const filled = i < streak;
+              const isLast = i === target - 1;
 
               return (
-                <li key={i} className="flex items-center">
+                <li
+                  key={i}
+                  className={`flex items-center ${
+                    isLast ? "" : "flex-1 sm:flex-none"
+                  }`}
+                >
                   <span
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold sm:h-11 sm:w-11 sm:text-base ${
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold sm:h-11 sm:w-11 sm:text-base ${
                       filled
                         ? "border-brand bg-brand text-ink shadow-[0_4px_14px_rgba(255,127,92,0.4)]"
                         : "border-white/10 bg-gradient-to-b from-white/10 to-ink text-white"
@@ -146,9 +112,9 @@ export default function StreakPage() {
                     {fa(i + 1)}
                   </span>
 
-                  {i < target - 1 && (
+                  {!isLast && (
                     <span
-                      className={`h-0.5 w-3 sm:w-7 ${
+                      className={`h-0.5 min-w-1 flex-1 sm:w-7 sm:flex-none ${
                         i < streak - 1 ? "bg-brand" : "bg-white/15"
                       }`}
                     />
@@ -159,7 +125,7 @@ export default function StreakPage() {
           </ol>
 
           {/* وضعیت */}
-          <div className="mt-8 max-w-md text-sm">
+          <div className="mt-7 w-full max-w-xl text-sm sm:mt-8">
             {status && !status.authenticated && (
               <Link
                 href="/login"
@@ -188,7 +154,9 @@ export default function StreakPage() {
                 <p className="font-bold text-brand">بیت رایگانت آماده‌ست 🎁</p>
 
                 {reward.beat && (
-                  <BeatRow beat={reward.beat} label="بیت رایگان تو" />
+                  <div className="mt-4" dir="rtl">
+                    <BeatResultCard beat={reward.beat} />
+                  </div>
                 )}
 
                 <p className="mt-3 text-xs text-zinc-500">
@@ -200,7 +168,7 @@ export default function StreakPage() {
                   type="button"
                   onClick={claim}
                   disabled={claiming}
-                  className="glass-btn mt-4 flex h-11 w-full items-center justify-center rounded-full text-sm font-bold text-ink transition hover:brightness-110 disabled:opacity-60"
+                  className="glass-btn mt-4 flex h-12 w-full items-center justify-center rounded-full text-sm font-bold text-ink transition hover:brightness-110 disabled:opacity-60"
                 >
                   {claiming ? "در حال دریافت..." : "دریافت بیت رایگان"}
                 </button>
@@ -222,16 +190,29 @@ export default function StreakPage() {
               </>
             )}
 
-            {!reward && !claimedTitle && weeklyBeat && (
-              <BeatRow beat={weeklyBeat} label="بیت رایگان این هفته" />
-            )}
+            {/* بیت رایگان این هفته: همون کارت صفحه‌ی نتایج */}
+            {status &&
+              !reward &&
+              !claimedTitle &&
+              (weeklyBeat ? (
+                <div className="mt-5">
+                  <p className="mb-2 text-xs text-zinc-500">
+                    بیت رایگان این هفته
+                  </p>
+                  <BeatResultCard beat={weeklyBeat} />
+                </div>
+              ) : (
+                <p className="mt-5 text-xs text-zinc-500">
+                  بیت رایگان این هفته هنوز مشخص نشده.
+                </p>
+              ))}
 
             {error && <p className="mt-3 text-red-400">{error}</p>}
           </div>
         </section>
 
         {/* عکس CD: سه قاب پشت هم */}
-        <div className="w-full h-full max-w-xs shrink-0 md:max-w-md">
+        <div className="w-full max-w-[15rem] shrink-0 sm:max-w-xs md:max-w-md">
           <div className="relative">
             {[2, 1].map((n) => (
               <Image

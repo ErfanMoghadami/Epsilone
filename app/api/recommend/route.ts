@@ -275,17 +275,25 @@ export async function POST(request: Request) {
     const results = Array.isArray(data?.results)
       ? data.results
       : [];
+    
+    const alternatives = Array.isArray(data?.alternatives)
+      ? data.alternatives
+      : [];
 
     // --------------------------------------------------------
     // 7. Collect beat IDs
     // --------------------------------------------------------
 
-    const beatIds = results
-      .map((beat: { id?: unknown }) => beat.id)
-      .filter(
-        (id: unknown): id is string =>
-          typeof id === "string",
-      );
+    const beatIds = [
+      ...new Set(
+        [...results, ...alternatives]
+          .map((beat: { id?: unknown }) => beat.id)
+          .filter(
+            (id: unknown): id is string =>
+              typeof id === "string",
+          ),
+      ),
+    ];
 
     // --------------------------------------------------------
     // 8. Load R2 storage keys
@@ -427,44 +435,44 @@ export async function POST(request: Request) {
     // 12. Enrich results
     // --------------------------------------------------------
 
-    const enrichedResults = results.map(
-      (beat: {
-        id: string;
-        producer_id?: string | null;
-        preview_url?: string | null;
-        cover_url?: string | null;
-      }) => {
-        const storage = storageMap.get(beat.id);
-
-        const producerId =
-          beat.producer_id ??
-          beatProducerMap.get(beat.id) ??
-          null;
-
-        const producer = producerId
-          ? producerMap.get(producerId)
-          : undefined;
-
-        return {
-          ...beat,
-
-          preview_url:
-            beat.preview_url ??
-            buildR2Url(
-              storage?.preview_key ?? null,
-            ),
-
-          cover_url:
-            beat.cover_url ??
-            buildR2Url(
-              storage?.cover_key ?? null,
-            ),
-
-          producer_username:
-            producer?.username ?? null,
-        };
-      },
-    );
+    const enrichBeatList = (items: typeof results) =>
+      items.map(
+        (beat: {
+          id: string;
+          producer_id?: string | null;
+          preview_url?: string | null;
+          cover_url?: string | null;
+        }) => {
+          const storage = storageMap.get(beat.id);
+    
+          const producerId =
+            beat.producer_id ??
+            beatProducerMap.get(beat.id) ??
+            null;
+    
+          const producer = producerId
+            ? producerMap.get(producerId)
+            : undefined;
+    
+          return {
+            ...beat,
+    
+            preview_url:
+              beat.preview_url ??
+              buildR2Url(storage?.preview_key ?? null),
+    
+            cover_url:
+              beat.cover_url ??
+              buildR2Url(storage?.cover_key ?? null),
+    
+            producer_username:
+              producer?.username ?? null,
+          };
+        },
+      );
+    
+    const enrichedResults = enrichBeatList(results);
+    const enrichedAlternatives = enrichBeatList(alternatives);
 
     // --------------------------------------------------------
     // 13. Return response
@@ -473,6 +481,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...data,
       results: enrichedResults,
+      alternatives: enrichedAlternatives,
     });
   } catch (error) {
     console.error("Recommendation API error:", error);

@@ -10,6 +10,7 @@ const ITEMS = [
   { href: "/producers", label: "پرودیوسرها" },
   { href: "/dashboard", label: "داشبورد" },
   { href: "/cart", label: "سبد خرید" },
+  { href: "/trending", label: "Trending" },
 ];
 
 export default function HomeMenu() {
