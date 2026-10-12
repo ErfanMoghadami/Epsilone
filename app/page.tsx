@@ -10,19 +10,19 @@ import HomeMenu from "@/components/HomeMenu";
 import EpsiloneLogo from "@/components/EpsiloneLogo";
 import WaveBackground from "@/components/WaveBackground";
 
-type Beat = {
-  id: string;
-  title: string;
-  audio_url: string | null;
-  preview_url: string | null;
-  cover_url: string | null;
-  bpm: number | null;
-  key: string | null;
-  genre: string | null;
-  match_score: number | null;
-  producer_id: string | null;
-  producer_username: string | null;
-};
+// type Beat = {
+//   id: string;
+//   title: string;
+//   audio_url: string | null;
+//   preview_url: string | null;
+//   cover_url: string | null;
+//   bpm: number | null;
+//   key: string | null;
+//   genre: string | null;
+//   match_score: number | null;
+//   producer_id: string | null;
+//   producer_username: string | null;
+// };
 
 type RecommendResponse = {
   success: boolean;
