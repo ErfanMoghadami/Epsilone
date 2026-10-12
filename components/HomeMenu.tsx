@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import hamburger from "../public/HAMBURGER.svg"
+import ThemeControls from "@/components/ThemeControls";
 const ITEMS = [
   { href: "/discover", label: "کشف بیت‌ها" },
   { href: "/producers", label: "پرودیوسرها" },
@@ -23,6 +24,7 @@ export default function HomeMenu() {
         aria-expanded={open}
         className="flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:text-brand"
       >
+        
         <Image width={29} src={hamburger} alt="hamburger"></Image>
         {/*<svg width="24" height="22" viewBox="0 0 24 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M20 2h2" />
@@ -45,6 +47,7 @@ export default function HomeMenu() {
             </Link>
           ))}
         </div>
+        
       )}
     </div>
   );

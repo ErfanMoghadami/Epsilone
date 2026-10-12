@@ -10,8 +10,6 @@ import HomeMenu from "@/components/HomeMenu";
 import EpsiloneLogo from "@/components/EpsiloneLogo";
 import WaveBackground from "@/components/WaveBackground";
 
-
-
 type RecommendResponse = {
   success: boolean;
   query?: {

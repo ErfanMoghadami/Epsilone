@@ -1,11 +1,13 @@
 import { Geist, Geist_Mono, Vazirmatn, Jura } from "next/font/google";
 import "./globals.css";
 import "@arraypress/waveform-player/dist/waveform-player.css";
+
 import GlobalNav from "@/components/GlobalNav";
 import PlayTracker from "@/components/PlayTracker";
 import StreakWidget from "@/components/StreakWidget";
-import type { Metadata, Viewport } from "next";
 import PWARegister from "@/components/PWARegister";
+
+import type { Metadata, Viewport } from "next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,22 +50,82 @@ export const metadata: Metadata = {
     apple: "/icons/apple-touch-icon.png",
   },
 };
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
   themeColor: "#000000",
-  colorScheme: "dark",
+  colorScheme: "light dark",
 };
-export default function RootLayout({ children }: LayoutProps<"/">) {
+
+const themeInitScript = `
+(function () {
+  try {
+    var mode =
+      localStorage.getItem("epsilone-theme-mode") || "system";
+
+    var dark = false;
+
+    if (mode === "dark") {
+      dark = true;
+    } else if (mode === "light") {
+      dark = false;
+    } else if (mode === "iran-time") {
+      var parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Tehran",
+        hour: "2-digit",
+        hourCycle: "h23"
+      }).formatToParts(new Date());
+
+      var hour = Number(
+        parts.find(function (part) {
+          return part.type === "hour";
+        })?.value ?? "12"
+      );
+
+      // Light: 07:00–18:59 Iran time
+      // Dark: 19:00–06:59 Iran time
+      dark = hour < 7 || hour >= 19;
+    } else {
+      dark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+    }
+
+    document.documentElement.classList.toggle("dark", dark);
+
+    document.documentElement.style.colorScheme = dark
+      ? "dark"
+      : "light";
+  } catch (error) {
+    // Theme initialization must not prevent the app from loading.
+  }
+})();
+`;
+
+export default function RootLayout({
+  children,
+}: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${vazirmatn.variable} ${jura.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: themeInitScript,
+          }}
+        />
+      </head>
+
       <body className="min-h-full flex flex-col">
         <GlobalNav />
+
         {children}
+
         <PlayTracker />
         <StreakWidget />
         <PWARegister />
