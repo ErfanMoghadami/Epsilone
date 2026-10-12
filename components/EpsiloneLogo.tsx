@@ -1,11 +1,17 @@
 import Image from "next/image";
 import logo from "../public/logo.svg";
-export default function EpsiloneLogo({ className = "" }: { className?: string }) {
+
+export default function EpsiloneLogo({
+  className = "",
+}: {
+  className?: string;
+}) {
   return (
-    <div>
-      <Image src={logo} alt="logo"></Image>
-    </div>
+    <Image
+      src={logo}
+      alt="Epsilone"
+      priority
+      className={`h-auto w-full ${className}`}
+    />
   );
 }
-
-

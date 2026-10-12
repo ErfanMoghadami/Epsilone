@@ -162,7 +162,7 @@ export default function Page() {
           </Link>
           <Link
             href="/signup"
-            className="text-xs text-white/90 transition hover:text-brand"
+            className="hidden text-xs text-white/90 transition hover:text-brand sm:block"
           >
             ثبت نام
           </Link>
@@ -179,8 +179,8 @@ export default function Page() {
           aria-hidden="true"
           className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-64 w-[34rem] max-w-full -translate-x-1/2 rounded-full  blur-3xl"
         />
-        <div className="mb-12 sm:mb-14">
-          <EpsiloneLogo className="text-5xl sm:text-6xl" />
+        <div className="mb-20 mt-2 w-60 sm:mb-14 sm:w-72 md:w-120 ">
+          <EpsiloneLogo />
         </div>
 
         <form onSubmit={handleSubmit} className="w-full">

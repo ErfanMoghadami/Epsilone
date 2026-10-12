@@ -7,7 +7,6 @@ import { WaveformPlayer } from "@arraypress/waveform-player-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import AddToCartButton from "@/components/AddToCartButton";
 
-
 export type Beat = {
   id: string;
   title: string;
