@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { formatMoney } from "@/lib/currency";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type CartItem = {
   beatId: string;
@@ -10,6 +10,8 @@ type CartItem = {
   licenseId: string;
   licenseType: string;
   price: number;
+  originalPrice?: number;
+  discountPercent?: number;
   currency: string;
   includesStems: boolean;
 };
@@ -21,14 +23,50 @@ type Producer = {
   avatarUrl: string | null;
 };
 
+type CartLicenseMeta = {
+  id: string;
+  licenseType: string;
+  price: number;
+  discountedPrice: number;
+  discountPercent: number;
+  currency: string;
+  includesStems: boolean;
+};
+
 type BeatMeta = {
   id: string;
   title: string | null;
   coverUrl: string | null;
+  discountPercent: number;
+  licenses: CartLicenseMeta[];
   producer: Producer | null;
 };
 
-const CART_KEY = "epsilone-cart-v2";
+type CartPricing = {
+  originalPrice: number;
+  finalPrice: number;
+  discountPercent: number;
+};
+
+function getItemPricing(item: CartItem, metadata?: BeatMeta): CartPricing {
+  const license = metadata?.licenses?.find((candidate) => candidate.id === item.licenseId);
+  if (license) {
+    return {
+      originalPrice: Number(license.price),
+      finalPrice: Number(license.discountedPrice),
+      discountPercent: Number(license.discountPercent ?? 0),
+    };
+  }
+
+  const originalPrice = Number(item.originalPrice ?? item.price);
+  return {
+    originalPrice: Number.isFinite(originalPrice) ? originalPrice : 0,
+    finalPrice: Number(item.price) || 0,
+    discountPercent: Number(item.discountPercent ?? 0),
+  };
+}
+
+const CART_KEY = "epsilone-cart";
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -39,7 +77,10 @@ export default function CartPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  // Load cart.
+  // --------------------------------------------------------
+  // Load cart
+  // --------------------------------------------------------
+
   useEffect(() => {
     function loadCart() {
       try {
@@ -72,7 +113,10 @@ export default function CartPage() {
     };
   }, []);
 
-  // Load beat metadata.
+  // --------------------------------------------------------
+  // Load beat metadata
+  // --------------------------------------------------------
+
   useEffect(() => {
     if (!loaded || items.length === 0) {
       setBeatMeta({});
@@ -118,7 +162,10 @@ export default function CartPage() {
     loadBeatMeta();
   }, [items, loaded]);
 
-  // Remove item.
+  // --------------------------------------------------------
+  // Remove item
+  // --------------------------------------------------------
+
   function removeItem(beatId: string, licenseId: string) {
     const updatedItems = items.filter(
       (item) =>
@@ -140,7 +187,10 @@ export default function CartPage() {
     window.dispatchEvent(new Event("cart-updated"));
   }
 
-  // Clear cart.
+  // --------------------------------------------------------
+  // Clear cart
+  // --------------------------------------------------------
+
   function clearCart() {
     setItems([]);
     setBeatMeta({});
@@ -151,39 +201,40 @@ export default function CartPage() {
     window.dispatchEvent(new Event("cart-updated"));
   }
 
-  // Totals.
+  // --------------------------------------------------------
+  // Totals
+  // --------------------------------------------------------
+
   const subtotal = useMemo(() => {
-    return items.reduce(
-      (sum, item) => sum + Number(item.price),
+    const sum = items.reduce(
+      (total, item) => total + getItemPricing(item, beatMeta[item.beatId]).originalPrice,
       0,
     );
-  }, [items]);
+    return Math.round((sum + Number.EPSILON) * 100) / 100;
+  }, [items, beatMeta]);
 
-  const total = subtotal;
+  const total = useMemo(() => {
+    const sum = items.reduce(
+      (total, item) => total + getItemPricing(item, beatMeta[item.beatId]).finalPrice,
+      0,
+    );
+    return Math.round((sum + Number.EPSILON) * 100) / 100;
+  }, [items, beatMeta]);
 
-  const currency =
-    items.length > 0 ? items[0].currency : "TOMAN";
-
-  const hasMixedCurrencies = items.some(
-    (item) => item.currency !== currency,
-  );
+  const discountTotal = Math.max(0, Math.round((subtotal - total + Number.EPSILON) * 100) / 100);
 
   const hasMissingBeats = items.some(
     (item) => !beatMeta[item.beatId],
   );
 
-  // Checkout.
+  // --------------------------------------------------------
+  // Checkout
+  // --------------------------------------------------------
+
   async function handleCheckout() {
     setCheckoutError(null);
 
     if (items.length === 0) {
-      return;
-    }
-
-    if (hasMixedCurrencies) {
-      setCheckoutError(
-        "Your cart contains different currencies. Remove the old items and add the licenses again.",
-      );
       return;
     }
 
@@ -233,7 +284,10 @@ export default function CartPage() {
     }
   }
 
-  // Loading.
+  // --------------------------------------------------------
+  // Loading
+  // --------------------------------------------------------
+
   if (!loaded) {
     return (
       <main className="mx-auto max-w-6xl px-5 py-12 text-white sm:px-6">
@@ -242,7 +296,10 @@ export default function CartPage() {
     );
   }
 
-  // Empty cart.
+  // --------------------------------------------------------
+  // Empty cart
+  // --------------------------------------------------------
+
   if (items.length === 0) {
     return (
       <main className="mx-auto max-w-6xl px-5 py-12 text-white sm:px-6">
@@ -280,7 +337,10 @@ export default function CartPage() {
     );
   }
 
-  // Cart.
+  // --------------------------------------------------------
+  // Cart
+  // --------------------------------------------------------
+
   return (
     <main className="mx-auto max-w-6xl px-5 py-12 text-white sm:px-6">
       {/* Header */}
@@ -324,6 +384,7 @@ export default function CartPage() {
               meta?.producer?.displayName?.trim() ||
               meta?.producer?.username?.trim() ||
               "Producer";
+            const pricing = getItemPricing(item, meta);
 
             return (
               <article
@@ -417,12 +478,19 @@ export default function CartPage() {
                           Price
                         </p>
 
-                        <p className="mt-1 font-semibold">
-                          {formatMoney(
-                            item.price,
-                            item.currency,
-                          )}
+                        {pricing.discountPercent > 0 && (
+                          <p className="mt-1 text-xs text-zinc-500 line-through">
+                            {formatPriceAmount(pricing.originalPrice)}
+                          </p>
+                        )}
+                        <p className={`mt-1 font-semibold ${pricing.discountPercent > 0 ? "text-orange-300" : ""}`}>
+                          {formatPriceAmount(pricing.finalPrice)}
                         </p>
+                        {pricing.discountPercent > 0 && (
+                          <span className="mt-1 inline-flex rounded-full bg-orange-400/10 px-2 py-1 text-[10px] font-bold text-orange-300">
+                            {pricing.discountPercent}% OFF
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -440,12 +508,23 @@ export default function CartPage() {
 
           <div className="mt-6 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-zinc-500">Subtotal</span>
+              <span className="text-zinc-500">
+                Subtotal
+              </span>
 
               <span className="font-medium">
-                {formatMoney(subtotal, currency)}
+                {formatPriceAmount(subtotal)}
               </span>
             </div>
+
+            {discountTotal > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-orange-300">Discount</span>
+                <span className="font-medium text-orange-300">
+                  − {formatPriceAmount(discountTotal)}
+                </span>
+              </div>
+            )}
 
             <div className="flex items-center justify-between">
               <span className="text-zinc-500">
@@ -453,7 +532,7 @@ export default function CartPage() {
               </span>
 
               <span className="text-zinc-400">
-                {formatMoney(0, currency)}
+                0
               </span>
             </div>
           </div>
@@ -461,19 +540,14 @@ export default function CartPage() {
           <div className="my-6 border-t border-zinc-800" />
 
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400">Total</span>
+            <span className="text-zinc-400">
+              Total
+            </span>
 
             <span className="text-2xl font-bold">
-              {formatMoney(total, currency)}
+              {formatPriceAmount(total)}
             </span>
           </div>
-
-          {hasMixedCurrencies && (
-            <div className="mt-5 rounded-xl border border-yellow-900/50 bg-yellow-950/20 p-4 text-sm text-yellow-500">
-              Your cart contains different currencies. Remove
-              the old items and add the licenses again.
-            </div>
-          )}
 
           {checkoutError && (
             <div className="mt-5 rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-sm text-red-400">
@@ -492,8 +566,8 @@ export default function CartPage() {
 
           {hasMissingBeats && (
             <div className="mt-5 rounded-xl border border-yellow-900/50 bg-yellow-950/20 p-4 text-sm text-yellow-500">
-              One or more beats could not be found. Remove
-              the unavailable item before checkout.
+              One or more beats are no longer available (deleted or turned OFF).
+              Remove unavailable items before checkout.
             </div>
           )}
 
@@ -503,8 +577,7 @@ export default function CartPage() {
             disabled={
               checkoutLoading ||
               metaLoading ||
-              hasMissingBeats ||
-              hasMixedCurrencies
+              hasMissingBeats
             }
             className="mt-6 w-full rounded-xl bg-white px-5 py-3.5 font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
           >

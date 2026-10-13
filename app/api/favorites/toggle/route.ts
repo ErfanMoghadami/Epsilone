@@ -98,8 +98,29 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------------
-    // 5. Add favorite
+    // 5. Add favorite only for currently published beats
     // --------------------------------------------------------
+
+    const { data: publishedBeat, error: publishedBeatError } = await supabase
+      .from("beats")
+      .select("id")
+      .eq("id", beatId)
+      .eq("is_published", true)
+      .maybeSingle();
+
+    if (publishedBeatError) {
+      return NextResponse.json(
+        { success: false, error: publishedBeatError.message },
+        { status: 500 },
+      );
+    }
+
+    if (!publishedBeat) {
+      return NextResponse.json(
+        { success: false, error: "This beat is not currently available." },
+        { status: 404 },
+      );
+    }
 
     const {
       error: insertError,

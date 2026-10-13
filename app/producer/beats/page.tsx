@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { WaveformPlayer } from "@arraypress/waveform-player-react";
-import { deleteBeat, retryAnalysis } from "./actions";
+import { deleteBeat, retryAnalysis, toggleBeatPublishing } from "./actions";
 import { useRouter } from "next/navigation";
 const supabase = createClient();
 
@@ -15,6 +15,7 @@ type Beat = {
   key: string | null;
   genre: string | null;
   analysis_status: string | null;
+  is_published: boolean;
   analysis_error: string | null;
   preview_url: string | null;
   audio_url: string | null;
@@ -51,6 +52,7 @@ export default function Page() {
   const [analytics, setAnalytics] = useState<Record<string, Analytics>>({});
   const [deletingBeatId, setDeletingBeatId] = useState<string | null>(null);
   const [retryingBeatId, setRetryingBeatId] = useState<string | null>(null);
+  const [togglingBeatId, setTogglingBeatId] = useState<string | null>(null);
 const router = useRouter();
   async function dataUser() {
     const { data, error: authError } = await supabase.auth.getUser();
@@ -81,7 +83,7 @@ const router = useRouter();
     const { data, error: fetchError } = await supabase
       .from("beats")
       .select(
-        "id, title, bpm, key, genre, analysis_status, analysis_error, preview_url, audio_url",
+        "id, title, bpm, key, genre, analysis_status, is_published, analysis_error, preview_url, audio_url",
       )
       .eq("producer_id", userId)
       .order("created_at", {
@@ -219,6 +221,45 @@ const router = useRouter();
       setError("Something went wrong while deleting this beat.");
     } finally {
       setDeletingBeatId(null);
+    }
+  }
+
+  async function handleTogglePublishing(beat: Beat) {
+    const nextIsPublished = !beat.is_published;
+    const title = beat.title ?? "Untitled Beat";
+
+    if (nextIsPublished === false) {
+      const confirmed = window.confirm(
+        `Turn OFF "${title}"?\n\nIt will be hidden from Discover, Trending, recommendations and new purchases. Existing orders and media files will remain unchanged.`,
+      );
+      if (!confirmed) return;
+    }
+
+    setError(null);
+    setSuccess(null);
+    setTogglingBeatId(beat.id);
+
+    try {
+      const result = await toggleBeatPublishing(beat.id, nextIsPublished);
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+
+      setBeats((currentBeats) =>
+        currentBeats.map((currentBeat) =>
+          currentBeat.id === beat.id
+            ? { ...currentBeat, is_published: result.isPublished }
+            : currentBeat,
+        ),
+      );
+      setSuccess(result.message);
+      router.refresh();
+    } catch (toggleError) {
+      console.error("Publishing toggle error:", toggleError);
+      setError("Something went wrong while changing publishing status.");
+    } finally {
+      setTogglingBeatId(null);
     }
   }
 
@@ -360,6 +401,45 @@ const router = useRouter();
                     >
                       {getAnalysisStatusLabel(beat.analysis_status)}
                     </span>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        beat.analysis_status === "completed" || beat.analysis_status === "skipped"
+                          ? beat.is_published
+                            ? "bg-emerald-900/40 text-emerald-400"
+                            : "bg-zinc-800 text-zinc-400"
+                          : "bg-zinc-800 text-zinc-500"
+                      }`}
+                      title={
+                        beat.analysis_status === "completed" || beat.analysis_status === "skipped"
+                          ? beat.is_published ? "Visible in marketplace" : "Hidden from marketplace"
+                          : "Available after analysis is completed or skipped"
+                      }
+                    >
+                      {beat.analysis_status === "completed" || beat.analysis_status === "skipped"
+                        ? beat.is_published ? "ON · Published" : "OFF · Hidden"
+                        : "Not ready"}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePublishing(beat)}
+                      disabled={
+                        togglingBeatId === beat.id ||
+                        deletingBeatId === beat.id ||
+                        retryingBeatId === beat.id ||
+                        !(beat.analysis_status === "completed" || beat.analysis_status === "skipped")
+                      }
+                      className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-40 ${
+                        beat.is_published
+                          ? "border-amber-900/70 text-amber-400 hover:bg-amber-950/50 hover:text-amber-300"
+                          : "border-emerald-900/70 text-emerald-400 hover:bg-emerald-950/50 hover:text-emerald-300"
+                      }`}
+                    >
+                      {togglingBeatId === beat.id
+                        ? "Saving..."
+                        : beat.is_published ? "Turn OFF" : "Turn ON"}
+                    </button>
 
                     {beat.analysis_status === "failed" && (
                       <button

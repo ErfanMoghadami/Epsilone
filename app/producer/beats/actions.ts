@@ -308,3 +308,88 @@ export async function retryAnalysis(
   }
 }
 
+export type ToggleBeatPublishingResult =
+  | { success: true; isPublished: boolean; message: string }
+  | { success: false; error: string };
+
+/** Toggle marketplace visibility without deleting the beat or its media. */
+export async function toggleBeatPublishing(
+  beatId: string,
+  isPublished: boolean,
+): Promise<ToggleBeatPublishingResult> {
+  if (!beatId || typeof beatId !== "string" || typeof isPublished !== "boolean") {
+    return { success: false, error: "Invalid publishing request." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { success: false, error: "You must be logged in as a producer." };
+  }
+
+  const { data: beat, error: beatError } = await supabase
+    .from("beats")
+    .select("id, producer_id, analysis_status, is_published")
+    .eq("id", beatId)
+    .eq("producer_id", user.id)
+    .maybeSingle();
+
+  if (beatError || !beat) {
+    console.error("Failed to load beat for publishing toggle:", beatError);
+    return { success: false, error: "Beat not found or you do not have access to it." };
+  }
+
+  if (!["completed", "skipped"].includes(beat.analysis_status ?? "")) {
+    return {
+      success: false,
+      error: "A beat can only be published after analysis is completed or skipped.",
+    };
+  }
+
+  if (Boolean(beat.is_published) === isPublished) {
+    return {
+      success: true,
+      isPublished,
+      message: isPublished ? "Beat is already ON." : "Beat is already OFF.",
+    };
+  }
+
+  const { data: updatedBeat, error: updateError } = await supabase
+    .from("beats")
+    .update({ is_published: isPublished })
+    .eq("id", beat.id)
+    .eq("producer_id", user.id)
+    .select("id, is_published")
+    .maybeSingle();
+
+  if (updateError || !updatedBeat) {
+    console.error("Failed to change beat publishing status:", updateError);
+    return {
+      success: false,
+      error: "Could not update publishing status. Check the beats UPDATE policy.",
+    };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/discover");
+  revalidatePath("/trending");
+  revalidatePath("/producers");
+  revalidatePath("/producer/beats");
+  revalidatePath("/api/discover");
+  revalidatePath("/api/trending");
+  revalidatePath("/api/recommend");
+  revalidatePath("/beat/[id]", "page");
+  revalidatePath("/producers/[username]", "page");
+
+  return {
+    success: true,
+    isPublished,
+    message: isPublished
+      ? "Beat is ON and visible in the marketplace."
+      : "Beat is OFF and hidden from the marketplace. Existing orders are unchanged.",
+  };
+}

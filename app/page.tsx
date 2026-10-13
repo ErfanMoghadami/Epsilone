@@ -63,49 +63,108 @@ export default function Page() {
   // ------------------------------------------------------
 
   useEffect(() => {
-    try {
-      const savedSearch = sessionStorage.getItem("epsilone-search-state");
+    let cancelled = false;
 
-      if (!savedSearch) {
-        return;
+    async function restoreSearchState() {
+      try {
+        const savedSearch = sessionStorage.getItem("epsilone-search-state");
+        if (!savedSearch) return;
+
+        const parsed = JSON.parse(savedSearch);
+
+        if (typeof parsed.query === "string") {
+          setQuery(parsed.query);
+          setShownQuery(parsed.query);
+        }
+
+        const savedResults: Beat[] = Array.isArray(parsed.results)
+          ? parsed.results
+          : [];
+        const savedAlternatives: Beat[] = Array.isArray(parsed.alternatives)
+          ? parsed.alternatives
+          : [];
+
+        let visibleResults = savedResults;
+        let visibleAlternatives = savedAlternatives;
+        const ids = [...new Set(
+          [...savedResults, ...savedAlternatives]
+            .map((beat) => beat?.id)
+            .filter((id): id is string => typeof id === "string"),
+        )];
+
+        // Do not restore a cached player for a beat the producer has since
+        // turned OFF (or deleted). This check uses the same published-only
+        // endpoint as the cart, and fails closed if visibility cannot be verified.
+        if (ids.length > 0) {
+          try {
+            const response = await fetch("/api/cart/beats", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ beatIds: ids }),
+              cache: "no-store",
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success || !Array.isArray(data.beats)) {
+              throw new Error(data.error || "Could not verify cached beat availability.");
+            }
+
+            const visibleIds = new Set<string>(
+              data.beats
+                .map((beat: { id?: unknown }) => beat?.id)
+                .filter((id: unknown): id is string => typeof id === "string"),
+            );
+            visibleResults = savedResults.filter((beat) => visibleIds.has(beat.id));
+            visibleAlternatives = savedAlternatives.filter((beat) => visibleIds.has(beat.id));
+          } catch (visibilityError) {
+            console.warn("Could not verify cached beat visibility:", visibilityError);
+            visibleResults = [];
+            visibleAlternatives = [];
+          }
+        }
+
+        if (cancelled) return;
+
+        setResults(visibleResults);
+        setAlternatives(visibleAlternatives);
+        setAlternativeReason(
+          typeof parsed.alternativeReason === "string"
+            ? parsed.alternativeReason
+            : null,
+        );
+
+        // Replace the saved state too, so unavailable beats are not restored again.
+        try {
+          sessionStorage.setItem(
+            "epsilone-search-state",
+            JSON.stringify({
+              ...parsed,
+              results: visibleResults,
+              alternatives: visibleAlternatives,
+            }),
+          );
+        } catch {
+          // Rendering still works if session storage is unavailable.
+        }
+
+        if (
+          parsed.searched === true ||
+          visibleResults.length > 0 ||
+          visibleAlternatives.length > 0
+        ) {
+          setSearched(true);
+        }
+      } catch (restoreError) {
+        console.error("Failed to restore search state:", restoreError);
+      } finally {
+        if (!cancelled) setRestored(true);
       }
-
-      const parsed = JSON.parse(savedSearch);
-
-      if (typeof parsed.query === "string") {
-        setQuery(parsed.query);
-        setShownQuery(parsed.query);
-      }
-
-      const savedResults: Beat[] = Array.isArray(parsed.results)
-        ? parsed.results
-        : [];
-
-      const savedAlternatives: Beat[] = Array.isArray(parsed.alternatives)
-        ? parsed.alternatives
-        : [];
-
-      setResults(savedResults);
-      setAlternatives(savedAlternatives);
-
-      setAlternativeReason(
-        typeof parsed.alternativeReason === "string"
-          ? parsed.alternativeReason
-          : null,
-      );
-
-      if (
-        parsed.searched === true ||
-        savedResults.length > 0 ||
-        savedAlternatives.length > 0
-      ) {
-        setSearched(true);
-      }
-    } catch (restoreError) {
-      console.error("Failed to restore search state:", restoreError);
-    } finally {
-      setRestored(true);
     }
+
+    void restoreSearchState();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ------------------------------------------------------

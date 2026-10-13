@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import PaymentTestControls from "@/components/PaymentTestControls";
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney } from "@/lib/currency";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type PaymentPageProps = {
   params: Promise<{
@@ -71,9 +71,7 @@ export default async function PaymentPage({
           Order #{order.id}
         </p>
 
-        <h1 className="text-3xl font-bold">
-          Payment
-        </h1>
+        <h1 className="text-3xl font-bold">Payment</h1>
 
         <p className="mt-2 text-zinc-500">
           Complete your payment to finish the order.
@@ -83,28 +81,19 @@ export default async function PaymentPage({
       <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-zinc-500">
-              Payment ID
-            </span>
-
+            <span className="text-zinc-500">Payment ID</span>
             <span className="max-w-[260px] truncate text-sm">
               {payment.id}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-zinc-500">
-              Gateway
-            </span>
-
+            <span className="text-zinc-500">Gateway</span>
             <span>{payment.gateway}</span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-zinc-500">
-              Status
-            </span>
-
+            <span className="text-zinc-500">Status</span>
             <span className="font-medium capitalize">
               {payment.status}
             </span>
@@ -112,15 +101,10 @@ export default async function PaymentPage({
 
           <div className="border-t border-zinc-800 pt-4">
             <div className="flex items-center justify-between">
-              <span className="text-zinc-400">
-                Amount
-              </span>
+              <span className="text-zinc-400">Amount</span>
 
               <span className="text-2xl font-bold">
-                {formatMoney(
-                  payment.amount,
-                  payment.currency,
-                )}
+                {formatPriceAmount(payment.amount)}
               </span>
             </div>
           </div>

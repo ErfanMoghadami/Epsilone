@@ -318,7 +318,3 @@ body {
 }
 
 
-/* Hamburger icon: black in day mode, white in night mode */
-:root:not(.dark) .home-menu-hamburger {
-    filter: brightness(0);
-}

@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+
 import CheckoutPaymentButton from "@/components/CheckoutPaymentButton";
-import { formatMoney } from "@/lib/currency";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type CheckoutPageProps = {
   params: Promise<{
@@ -10,9 +11,7 @@ type CheckoutPageProps = {
   }>;
 };
 
-export default async function CheckoutPage({
-  params,
-}: CheckoutPageProps) {
+export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const { orderId } = await params;
 
   const supabase = await createClient();
@@ -34,6 +33,7 @@ export default async function CheckoutPage({
         status,
         currency,
         subtotal,
+        discount_total,
         total,
         created_at
       `,
@@ -54,6 +54,8 @@ export default async function CheckoutPage({
         beat_id,
         title_snapshot,
         unit_price,
+        original_unit_price,
+        discount_percent,
         license_type
       `,
     )
@@ -67,13 +69,9 @@ export default async function CheckoutPage({
   return (
     <main className="mx-auto max-w-4xl px-6 py-16 text-white">
       <div className="mb-10">
-        <p className="mb-2 text-sm text-zinc-500">
-          Order #{order.id}
-        </p>
+        <p className="mb-2 text-sm text-zinc-500">Order #{order.id}</p>
 
-        <h1 className="text-3xl font-bold">
-          Checkout
-        </h1>
+        <h1 className="text-3xl font-bold">Checkout</h1>
 
         <p className="mt-2 text-zinc-500">
           Review your order before continuing to payment.
@@ -87,19 +85,26 @@ export default async function CheckoutPage({
             className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5"
           >
             <div>
-              <h2 className="font-semibold">
-                {item.title_snapshot}
-              </h2>
+              <h2 className="font-semibold">{item.title_snapshot}</h2>
 
               <p className="mt-1 text-sm text-zinc-500">
                 {item.license_type} License
               </p>
             </div>
 
-            <div className="font-medium">
-              {formatMoney(
-                item.unit_price,
-                order.currency,
+            <div className="text-right font-medium">
+              {Number(item.discount_percent ?? 0) > 0 && (
+                <div className="mb-1 text-xs text-zinc-500 line-through">
+                  {formatPriceAmount(item.original_unit_price ?? item.unit_price)}
+                </div>
+              )}
+              <div>
+                {formatPriceAmount(item.unit_price)}
+              </div>
+              {Number(item.discount_percent ?? 0) > 0 && (
+                <div className="mt-1 text-xs font-semibold text-orange-300">
+                  {Number(item.discount_percent)}% OFF
+                </div>
               )}
             </div>
           </div>
@@ -108,28 +113,27 @@ export default async function CheckoutPage({
 
       <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-zinc-500">
-            Subtotal
-          </span>
+          <span className="text-zinc-500">Subtotal</span>
 
           <span>
-            {formatMoney(
-              order.subtotal,
-              order.currency,
-            )}
+            {formatPriceAmount(order.subtotal)}
           </span>
         </div>
 
+        {Number(order.discount_total ?? 0) > 0 && (
+          <div className="mt-3 flex items-center justify-between text-sm">
+            <span className="text-orange-300">Discount</span>
+            <span className="font-medium text-orange-300">
+              − {formatPriceAmount(order.discount_total)}
+            </span>
+          </div>
+        )}
+
         <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4">
-          <span className="text-lg font-semibold">
-            Total
-          </span>
+          <span className="text-lg font-semibold">Total</span>
 
           <span className="text-2xl font-bold">
-            {formatMoney(
-              order.total,
-              order.currency,
-            )}
+            {formatPriceAmount(order.total)}
           </span>
         </div>
 

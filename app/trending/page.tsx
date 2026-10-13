@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { MouseEvent } from "react";
 import AddToCartButton from "@/components/AddToCartButton";
 import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
 import FavoriteButton from "@/components/FavoriteButton";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type RankingMode =
   | "trending"
@@ -30,6 +33,10 @@ type RankedBeat = {
   recent_play_count: number | null;
   trend_score: number | null;
   created_at: string | null;
+  discount_percent?: number;
+  starting_price?: number | null;
+  original_starting_price?: number | null;
+  currency?: string | null;
 };
 
 const TABS: Array<{
@@ -74,6 +81,7 @@ function formatDate(value: string | null): string | null {
 }
 
 export default function TrendingPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<RankingMode>("trending");
   const [beats, setBeats] = useState<RankedBeat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +124,23 @@ export default function TrendingPage() {
     void loadRanking();
     return () => controller.abort();
   }, [mode]);
+
+  function handleCardClick(event: MouseEvent<HTMLElement>, beatId: string) {
+    const target = event.target;
+
+    if (!(target instanceof Element)) return;
+
+    // Preserve all nested navigation/actions and audio controls.
+    if (
+      target.closest(
+        "a, button, input, select, textarea, [role='button'], .beat-preview-player, [role='dialog']",
+      )
+    ) {
+      return;
+    }
+
+    router.push(`/beat/${beatId}`);
+  }
 
   const selectedTab = TABS.find((tab) => tab.id === mode) ?? TABS[0];
 
@@ -180,7 +205,7 @@ export default function TrendingPage() {
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]"
+                className="glass-card overflow-hidden rounded-2xl"
               >
                 <div className="aspect-square animate-pulse bg-white/[0.05]" />
                 <div className="space-y-3 p-4">
@@ -221,7 +246,8 @@ export default function TrendingPage() {
               return (
                 <article
                   key={beat.id}
-                  className="overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 transition hover:border-white/20"
+                  onClick={(event) => handleCardClick(event, beat.id)}
+                  className="glass-card cursor-pointer overflow-hidden rounded-2xl"
                 >
                   <div className="relative">
                     {beat.cover_url ? (
@@ -233,7 +259,7 @@ export default function TrendingPage() {
                         loading={index > 3 ? "lazy" : "eager"}
                       />
                     ) : (
-                      <div className="flex aspect-square w-full items-center justify-center bg-gradient-to-br from-zinc-900 to-black text-sm text-zinc-600">
+                      <div className="flex aspect-square w-full items-center justify-center bg-white/5 text-sm text-zinc-500">
                         Epsilone
                       </div>
                     )}
@@ -248,13 +274,20 @@ export default function TrendingPage() {
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <h2 className="truncate text-lg font-semibold">
-                          {beat.title ?? "Untitled Beat"}
-                        </h2>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="max-w-full truncate text-lg font-semibold">
+                            {beat.title ?? "Untitled Beat"}
+                          </h2>
+                          {Number(beat.discount_percent ?? 0) > 0 && (
+                            <span className="shrink-0 rounded-full bg-orange-300/15 px-2 py-0.5 text-[10px] font-bold text-orange-200">
+                              {Number(beat.discount_percent)}% OFF
+                            </span>
+                          )}
+                        </div>
                         {beat.producer_username ? (
                           <Link
                             href={`/producers/${encodeURIComponent(beat.producer_username)}`}
-                            className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-white"
+                            className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-brand"
                           >
                             @{beat.producer_username}
                           </Link>
@@ -273,8 +306,21 @@ export default function TrendingPage() {
                       {" • "}{beat.key ?? "-"}
                     </p>
 
+                    {beat.starting_price != null && (
+                      <div className="mt-3 flex items-baseline gap-2">
+                        <span className={`font-semibold ${Number(beat.discount_percent ?? 0) > 0 ? "text-orange-300" : "text-zinc-200"}`}>
+                          From {formatPriceAmount(beat.starting_price)}
+                        </span>
+                        {Number(beat.discount_percent ?? 0) > 0 && beat.original_starting_price != null && (
+                          <span className="text-xs text-zinc-600 line-through">
+                            {formatPriceAmount(beat.original_starting_price)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     <div className="mt-4 grid grid-cols-2 gap-2">
-                      <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                         <p className="text-[11px] text-zinc-600">
                           {mode === "trending" || mode === "popular_new" ? `Plays · ${activityWindow}` : "Total plays"}
                         </p>
@@ -282,7 +328,7 @@ export default function TrendingPage() {
                           {formatCount(mode === "trending" || mode === "popular_new" ? beat.recent_play_count : beat.play_count)}
                         </p>
                       </div>
-                      <div className="rounded-xl border border-white/[0.07] bg-white/[0.025] p-3">
+                      <div className="rounded-xl border border-white/10 bg-white/5 p-3">
                         <p className="text-[11px] text-zinc-600">
                           {mode === "trending" || mode === "popular_new" ? `Favorites · ${activityWindow}` : "Total favorites"}
                         </p>
@@ -293,7 +339,7 @@ export default function TrendingPage() {
                     </div>
 
                     {beat.preview_url && (
-                      <div className="mt-4">
+                      <div className="beat-preview-player mt-4">
                         <BeatPreviewPlayer
                           url={beat.preview_url}
                           title={beat.title ?? "Untitled Beat"}
@@ -304,7 +350,7 @@ export default function TrendingPage() {
                     <div className="mt-4 grid gap-2">
                       <Link
                         href={`/beat/${beat.id}`}
-                        className="flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition hover:border-zinc-500 hover:bg-zinc-800"
+                        className="flex w-full items-center justify-center rounded-xl border border-brand/60 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand/10"
                       >
                         View Beat <span className="ml-2" aria-hidden="true">→</span>
                       </Link>

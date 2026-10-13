@@ -20,7 +20,6 @@ export default function DiscoverPage() {
     beats,
     aiAnalyzedBeats,
     regularBeats,
-    totalCount,
     hasMore,
     loading,
     loadingMore,

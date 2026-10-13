@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -24,6 +23,7 @@ type ProducerBeat = {
   preview_key: string | null;
   cover_url: string | null;
   cover_key: string | null;
+  discount_percent: number | null;
 };
 
 function buildR2Url(key: string | null): string | null {
@@ -76,13 +76,13 @@ export default async function ProducerProfilePage({
 
   // --------------------------------------------------------
   // Producer beats
-  // Sold Exclusive beats are hidden from the public profile.
   // --------------------------------------------------------
 
   const { data: beats, error: beatsError } =
     await supabase
       .from("beats")
-      .select(`
+      .select(
+        `
         id,
         title,
         bpm,
@@ -91,11 +91,13 @@ export default async function ProducerProfilePage({
         preview_url,
         preview_key,
         cover_url,
-        cover_key
-      `)
+        cover_key,
+        discount_percent
+        `,
+      )
       .eq("producer_id", producerId)
       .eq("analysis_status", "completed")
-      .is("exclusive_sold_at", null)
+      .eq("is_published", true)
       .order("created_at", {
         ascending: false,
       });
@@ -218,9 +220,16 @@ export default async function ProducerProfilePage({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <h3 className="truncate text-lg font-semibold">
-                            {beat.title ?? "Untitled Beat"}
-                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="truncate text-lg font-semibold">
+                              {beat.title ?? "Untitled Beat"}
+                            </h3>
+                            {Number(beat.discount_percent ?? 0) > 0 && (
+                              <span className="shrink-0 rounded-full bg-orange-300/15 px-2 py-0.5 text-[10px] font-bold text-orange-200">
+                                {Number(beat.discount_percent)}% OFF
+                              </span>
+                            )}
+                          </div>
 
                           <p className="mt-1 text-sm text-zinc-500">
                             {beat.genre ?? "Unknown genre"}

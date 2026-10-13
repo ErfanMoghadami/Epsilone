@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getR2SignedUrl } from "@/lib/r2";
 
 type DownloadRouteProps = {
@@ -158,7 +159,11 @@ export async function GET(
     // 4. Get beat storage information
     // ---------------------------------------------------------
 
-    const { data: beat, error: beatError } = await supabase
+    // Use the server-only admin client after purchase entitlement was verified.
+    // This intentionally allows existing buyers to download a beat even when
+    // the producer has temporarily turned marketplace publication OFF.
+    const supabaseAdmin = createAdminClient();
+    const { data: beat, error: beatError } = await supabaseAdmin
       .from("beats")
       .select(
         `

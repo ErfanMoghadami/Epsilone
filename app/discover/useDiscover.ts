@@ -27,7 +27,8 @@ export function useDiscover() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  const [totalCount, setTotalCount] = useState(0);
+  const [hasMorePages, setHasMorePages] = useState(false);
+  const [nextOffset, setNextOffset] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(true);
 
   // Ignores responses of older requests (fast typing / double clicks).
@@ -73,7 +74,10 @@ export function useDiscover() {
         setBeats(nextResults);
       }
 
-      setTotalCount(Number(data.totalCount ?? 0));
+      setHasMorePages(Boolean(data.pagination?.hasMore));
+      setNextOffset(
+        Number(data.pagination?.nextOffset ?? offset + Number(data.pagination?.limit ?? 24)),
+      );
 
       if (data.facets) {
         setFacets({
@@ -147,7 +151,8 @@ export function useDiscover() {
   }
 
   function loadMore() {
-    loadBeats(filters, beats.length, true, false);
+    if (!hasMorePages || loadingMore) return;
+    loadBeats(filters, nextOffset, true, false);
   }
 
   const aiAnalyzedBeats = useMemo(
@@ -166,8 +171,7 @@ export function useDiscover() {
     beats,
     aiAnalyzedBeats,
     regularBeats,
-    totalCount,
-    hasMore: beats.length < totalCount,
+    hasMore: hasMorePages,
     loading,
     loadingMore,
     error,

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney } from "@/lib/currency";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type OrderItem = {
   id: string;
@@ -53,17 +53,12 @@ export default async function PurchasesPage() {
     throw new Error("Failed to load purchases");
   }
 
-  const orderIds = (orders ?? []).map(
-    (order) => order.id,
-  );
+  const orderIds = (orders ?? []).map((order) => order.id);
 
   let orderItems: OrderItem[] = [];
 
   if (orderIds.length > 0) {
-    const {
-      data: items,
-      error: itemsError,
-    } = await supabase
+    const { data: items, error: itemsError } = await supabase
       .from("order_items")
       .select(
         `
@@ -91,18 +86,14 @@ export default async function PurchasesPage() {
     const orderId = item.order_id;
 
     const existing = itemsByOrder.get(orderId) ?? [];
-
     existing.push(item);
-
     itemsByOrder.set(orderId, existing);
   }
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12 text-white">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold">
-          Purchases
-        </h1>
+        <h1 className="text-3xl font-bold">Purchases</h1>
 
         <p className="mt-2 text-zinc-500">
           Your purchased beats and licenses.
@@ -173,10 +164,7 @@ export default async function PurchasesPage() {
 
                       <div className="flex flex-col gap-2 sm:items-end">
                         <span className="font-medium">
-                          {formatMoney(
-                            item.unit_price,
-                            order.currency,
-                          )}
+                          {formatPriceAmount(item.unit_price)}
                         </span>
 
                         <div className="flex flex-wrap gap-2">
@@ -207,10 +195,7 @@ export default async function PurchasesPage() {
                   </span>
 
                   <span className="text-xl font-bold">
-                    {formatMoney(
-                      order.total,
-                      order.currency,
-                    )}
+                    {formatPriceAmount(order.total)}
                   </span>
                 </div>
               </section>

@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { resolveTerms, getLicenseTerms } from "@/lib/licenses";
-import { formatMoney } from "@/lib/currency";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type License = {
   id: string;
   license_type: string;
   price: number;
+  original_price: number;
+  discounted_price: number;
+  discount_percent: number;
   currency: string;
   includes_stems: boolean;
   terms: string[] | null;
@@ -26,11 +29,13 @@ type CartItem = {
   licenseId: string;
   licenseType: string;
   price: number;
+  originalPrice?: number;
+  discountPercent?: number;
   currency: string;
   includesStems: boolean;
 };
 
-const CART_KEY = "epsilone-cart-v2";
+const CART_KEY = "epsilone-cart";
 
 export default function AddToCartButton({
   beatId,
@@ -68,9 +73,7 @@ export default function AddToCartButton({
         }
       } catch (error) {
         setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load licenses.",
+          error instanceof Error ? error.message : "Failed to load licenses.",
         );
       } finally {
         setLoading(false);
@@ -81,9 +84,7 @@ export default function AddToCartButton({
   }, [beatId]);
 
   function addToCart() {
-    const license = licenses.find(
-      (item) => item.id === selectedLicense,
-    );
+    const license = licenses.find((item) => item.id === selectedLicense);
 
     if (!license) {
       return;
@@ -92,9 +93,7 @@ export default function AddToCartButton({
     let existingCart: CartItem[] = [];
 
     try {
-      const storedCart = JSON.parse(
-        localStorage.getItem(CART_KEY) ?? "[]",
-      );
+      const storedCart = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]");
 
       if (Array.isArray(storedCart)) {
         existingCart = storedCart;
@@ -103,33 +102,37 @@ export default function AddToCartButton({
       existingCart = [];
     }
 
+    const cartItem: CartItem = {
+      beatId,
+      title,
+      licenseId: license.id,
+      licenseType: license.license_type,
+      price: Number(license.discounted_price),
+      originalPrice: Number(license.original_price ?? license.price),
+      discountPercent: Number(license.discount_percent ?? 0),
+      currency: license.currency,
+      includesStems: license.includes_stems,
+    };
+
     const alreadyExists = existingCart.some(
-      (item) =>
-        item.beatId === beatId &&
-        item.licenseId === license.id,
+      (item) => item.beatId === beatId && item.licenseId === license.id,
     );
 
     if (alreadyExists) {
+      const refreshedCart = existingCart.map((item) =>
+        item.beatId === beatId && item.licenseId === license.id
+          ? cartItem
+          : item,
+      );
+      localStorage.setItem(CART_KEY, JSON.stringify(refreshedCart));
+      window.dispatchEvent(new Event("cart-updated"));
       setAdded(true);
       setAlreadyInCart(true);
       setShowCartPrompt(true);
       return;
     }
 
-    const cartItem: CartItem = {
-      beatId,
-      title,
-      licenseId: license.id,
-      licenseType: license.license_type,
-      price: license.price,
-      currency: license.currency,
-      includesStems: license.includes_stems,
-    };
-
-    localStorage.setItem(
-      CART_KEY,
-      JSON.stringify([...existingCart, cartItem]),
-    );
+    localStorage.setItem(CART_KEY, JSON.stringify([...existingCart, cartItem]));
 
     setAdded(true);
     setAlreadyInCart(false);
@@ -138,37 +141,24 @@ export default function AddToCartButton({
     window.dispatchEvent(new Event("cart-updated"));
   }
 
-  // Compact variant: show a small placeholder while licenses load.
-  if (
-    variant === "compact" &&
-    (loading || error || licenses.length === 0)
-  ) {
-    return (
-      <div className="h-9 w-24 animate-pulse rounded-full bg-white/10" />
-    );
+  // حالت compact: تا لایسنس‌ها لود نشدن یه placeholder کوچیک
+  if (variant === "compact" && (loading || error || licenses.length === 0)) {
+    return <div className="h-9 w-24 animate-pulse rounded-full bg-white/10" />;
   }
 
   if (loading) {
     return (
-      <div className="mt-3 text-sm text-zinc-500">
-        Loading licenses...
-      </div>
+      <div className="mt-3 text-sm text-zinc-500">Loading licenses...</div>
     );
   }
 
   if (error) {
-    return (
-      <div className="mt-3 text-sm text-red-400">
-        {error}
-      </div>
-    );
+    return <div className="mt-3 text-sm text-red-400">{error}</div>;
   }
 
   if (licenses.length === 0) {
     return (
-      <div className="mt-3 text-sm text-zinc-500">
-        No licenses available.
-      </div>
+      <div className="mt-3 text-sm text-zinc-500">No licenses available.</div>
     );
   }
 
@@ -199,7 +189,6 @@ export default function AddToCartButton({
             <circle cx="19" cy="21" r="1" />
             <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
           </svg>
-
           {added ? "اضافه شد" : "خرید"}
         </button>
       ) : (
@@ -216,8 +205,8 @@ export default function AddToCartButton({
             >
               {licenses.map((license) => (
                 <option key={license.id} value={license.id}>
-                  {license.license_type} —{" "}
-                  {formatMoney(license.price, license.currency)}
+                  {license.license_type} — {formatPriceAmount(license.discounted_price)}
+                  {license.discount_percent > 0 ? ` (was ${formatPriceAmount(license.price)}, ${license.discount_percent}% off)` : ""}
                   {license.includes_stems ? " + Stems" : ""}
                 </option>
               ))}
@@ -233,6 +222,24 @@ export default function AddToCartButton({
           </div>
 
           {selectedLicenseData && (
+            <div className="mt-3 flex flex-wrap items-baseline gap-2">
+              {selectedLicenseData.discount_percent > 0 && (
+                <span className="text-sm text-zinc-500 line-through">
+                  {formatPriceAmount(selectedLicenseData.price)}
+                </span>
+              )}
+              <span className="text-lg font-semibold text-white">
+                {formatPriceAmount(selectedLicenseData.discounted_price)}
+              </span>
+              {selectedLicenseData.discount_percent > 0 && (
+                <span className="rounded-full bg-orange-400/15 px-2 py-1 text-[11px] font-bold text-orange-300">
+                  {selectedLicenseData.discount_percent}% OFF
+                </span>
+              )}
+            </div>
+          )}
+
+          {selectedLicenseData && (
             <ul className="mt-2 space-y-1 text-xs text-zinc-500">
               {resolveTerms(
                 selectedLicenseData.license_type,
@@ -240,7 +247,6 @@ export default function AddToCartButton({
               ).map((term) => (
                 <li key={term}>✓ {term}</li>
               ))}
-
               {selectedLicenseData.includes_stems && (
                 <li>✓ Stems pack included</li>
               )}
@@ -269,26 +275,28 @@ export default function AddToCartButton({
                     : "Beat added to your cart"}
                 </h2>
 
-                <p className="mt-1 text-sm text-zinc-400">
-                  {title}
-                </p>
+                <p className="mt-1 text-sm text-zinc-400">{title}</p>
 
                 <div className="mt-2 space-y-1 text-xs text-zinc-500">
                   <p>
-                    {selectedLicenseData.license_type} ·{" "}
-                    {formatMoney(
-                      selectedLicenseData.price,
-                      selectedLicenseData.currency,
+                    {selectedLicenseData.license_type} · {" "}
+                    {selectedLicenseData.discount_percent > 0 && (
+                      <span className="mr-1 text-zinc-500 line-through">
+                        {formatPriceAmount(selectedLicenseData.price)}
+                      </span>
+                    )}
+                    <span className="font-semibold text-white">
+                      {formatPriceAmount(selectedLicenseData.discounted_price)}
+                    </span>
+                    {selectedLicenseData.discount_percent > 0 && (
+                      <span className="ml-2 font-semibold text-orange-300">
+                        {selectedLicenseData.discount_percent}% OFF
+                      </span>
                     )}
                   </p>
 
                   <p>
-                    {
-                      getLicenseTerms(
-                        selectedLicenseData.license_type,
-                      ).tagline
-                    }
-
+                    {getLicenseTerms(selectedLicenseData.license_type).tagline}
                     {selectedLicenseData.includes_stems
                       ? " · Stems included"
                       : ""}

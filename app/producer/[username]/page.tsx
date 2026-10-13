@@ -1,9 +1,8 @@
 import { redirect, notFound } from "next/navigation";
-import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney } from "@/lib/currency";
-
+import Link from "next/link";
+import { formatPriceAmount } from "@/lib/format-price";
 type ProducerPanelPageProps = {
   params: Promise<{
     username: string;
@@ -51,7 +50,9 @@ export default async function ProducerPanelPage({
   const { data: producer, error: producerError } =
     await supabase
       .from("profiles")
-      .select("id, role, display_name, username")
+      .select(
+        "id, role, display_name, username",
+      )
       .eq("id", user.id)
       .eq("role", "producer")
       .single();
@@ -61,23 +62,16 @@ export default async function ProducerPanelPage({
   }
 
   // --------------------------------------------------------
-  // Canonical username redirect
+  // Make sure URL belongs to current producer
   // --------------------------------------------------------
 
-  const canonicalUsername =
-    producer.username?.trim().toLowerCase();
-
-  if (!canonicalUsername) {
-    notFound();
-  }
-
-  // If the username was changed, redirect the old dashboard URL
-  // to the producer's current URL.
-  //
-  // Also canonicalize uppercase URLs.
-  if (username !== canonicalUsername) {
+  if (
+    !producer.username ||
+    producer.username.toLowerCase() !==
+      username.toLowerCase()
+  ) {
     redirect(
-      `/producer/${encodeURIComponent(canonicalUsername)}`,
+      `/producer/${producer.username}`,
     );
   }
 
@@ -88,7 +82,9 @@ export default async function ProducerPanelPage({
   const { data: beats, error: beatsError } =
     await supabase
       .from("beats")
-      .select("id, analysis_status")
+      .select(
+        "id, analysis_status",
+      )
       .eq("producer_id", user.id);
 
   if (beatsError) {
@@ -101,22 +97,26 @@ export default async function ProducerPanelPage({
 
   const pending =
     beats?.filter(
-      (beat) => beat.analysis_status === "pending",
+      (beat) =>
+        beat.analysis_status === "pending",
     ).length ?? 0;
 
   const processing =
     beats?.filter(
-      (beat) => beat.analysis_status === "processing",
+      (beat) =>
+        beat.analysis_status === "processing",
     ).length ?? 0;
 
   const completed =
     beats?.filter(
-      (beat) => beat.analysis_status === "completed",
+      (beat) =>
+        beat.analysis_status === "completed",
     ).length ?? 0;
 
   const failed =
     beats?.filter(
-      (beat) => beat.analysis_status === "failed",
+      (beat) =>
+        beat.analysis_status === "failed",
     ).length ?? 0;
 
   // --------------------------------------------------------
@@ -179,7 +179,8 @@ export default async function ProducerPanelPage({
         salesError,
       );
     } else {
-      producerSales = (sales ?? []) as ProducerSale[];
+      producerSales =
+        (sales ?? []) as ProducerSale[];
     }
   }
 
@@ -189,52 +190,24 @@ export default async function ProducerPanelPage({
 
   const totalSales = producerSales.length;
 
+  const totalRevenue = producerSales.reduce(
+    (sum, sale) =>
+      sum + Number(sale.unit_price),
+    0,
+  );
+
+  const averageSale =
+    totalSales > 0
+      ? totalRevenue / totalSales
+      : 0;
+
+  const recentSales = producerSales.slice(0, 5);
+
   const orderMap = new Map<string, PaidOrder>();
 
   for (const order of paidOrders ?? []) {
     orderMap.set(order.id, order as PaidOrder);
   }
-
-  // Keep revenue totals separate by currency.
-  // USD and TOMAN must never be added together.
-  const revenueByCurrency = new Map<
-    string,
-    { total: number; count: number }
-  >();
-
-  for (const sale of producerSales) {
-    const currency =
-      orderMap.get(sale.order_id)?.currency ?? "TOMAN";
-
-    const current = revenueByCurrency.get(currency) ?? {
-      total: 0,
-      count: 0,
-    };
-
-    revenueByCurrency.set(currency, {
-      total: current.total + Number(sale.unit_price),
-      count: current.count + 1,
-    });
-  }
-
-  const totalRevenueLabel =
-    [...revenueByCurrency.entries()]
-      .map(([currency, stats]) =>
-        formatMoney(stats.total, currency),
-      )
-      .join(" + ") || formatMoney(0, "TOMAN");
-
-  const averageSaleLabel =
-    [...revenueByCurrency.entries()]
-      .map(([currency, stats]) =>
-        formatMoney(
-          stats.total / stats.count,
-          currency,
-        ),
-      )
-      .join(" + ") || formatMoney(0, "TOMAN");
-
-  const recentSales = producerSales.slice(0, 5);
 
   // --------------------------------------------------------
   // Display name
@@ -242,12 +215,14 @@ export default async function ProducerPanelPage({
 
   const producerName =
     producer.display_name?.trim() ||
-    canonicalUsername ||
+    producer.username ||
     "Producer";
 
   return (
     <div>
+      {/* -------------------------------------------------- */}
       {/* Header */}
+      {/* -------------------------------------------------- */}
 
       <div className="mb-8">
         <p className="text-sm text-zinc-500">
@@ -259,11 +234,13 @@ export default async function ProducerPanelPage({
         </h1>
 
         <p className="mt-2 text-sm text-zinc-500">
-          @{canonicalUsername}
+          @{producer.username}
         </p>
       </div>
 
+      {/* -------------------------------------------------- */}
       {/* Beat Stats */}
+      {/* -------------------------------------------------- */}
 
       <section className="mb-8">
         <div className="mb-4">
@@ -281,6 +258,7 @@ export default async function ProducerPanelPage({
             <p className="text-sm text-zinc-500">
               Total Beats
             </p>
+
             <p className="mt-2 text-3xl font-bold">
               {total}
             </p>
@@ -290,6 +268,7 @@ export default async function ProducerPanelPage({
             <p className="text-sm text-zinc-500">
               Pending
             </p>
+
             <p className="mt-2 text-3xl font-bold">
               {pending}
             </p>
@@ -299,6 +278,7 @@ export default async function ProducerPanelPage({
             <p className="text-sm text-zinc-500">
               Processing
             </p>
+
             <p className="mt-2 text-3xl font-bold">
               {processing}
             </p>
@@ -308,6 +288,7 @@ export default async function ProducerPanelPage({
             <p className="text-sm text-zinc-500">
               Completed
             </p>
+
             <p className="mt-2 text-3xl font-bold">
               {completed}
             </p>
@@ -317,6 +298,7 @@ export default async function ProducerPanelPage({
             <p className="text-sm text-zinc-500">
               Failed
             </p>
+
             <p className="mt-2 text-3xl font-bold">
               {failed}
             </p>
@@ -324,7 +306,9 @@ export default async function ProducerPanelPage({
         </div>
       </section>
 
+      {/* -------------------------------------------------- */}
       {/* Sales Stats */}
+      {/* -------------------------------------------------- */}
 
       <section className="mb-8">
         <div className="mb-4">
@@ -365,7 +349,7 @@ export default async function ProducerPanelPage({
               </p>
 
               <p className="mt-2 text-3xl font-bold">
-                {totalRevenueLabel}
+                {formatPriceAmount(totalRevenue)}
               </p>
 
               <p className="mt-1 text-xs text-zinc-600">
@@ -379,7 +363,7 @@ export default async function ProducerPanelPage({
               </p>
 
               <p className="mt-2 text-3xl font-bold">
-                {averageSaleLabel}
+                {formatPriceAmount(averageSale)}
               </p>
 
               <p className="mt-1 text-xs text-zinc-600">
@@ -390,7 +374,9 @@ export default async function ProducerPanelPage({
         )}
       </section>
 
+      {/* -------------------------------------------------- */}
       {/* Recent Sales */}
+      {/* -------------------------------------------------- */}
 
       <section className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
@@ -415,7 +401,9 @@ export default async function ProducerPanelPage({
         {recentSales.length > 0 ? (
           <div className="space-y-3">
             {recentSales.map((sale) => {
-              const order = orderMap.get(sale.order_id);
+              const order = orderMap.get(
+                sale.order_id,
+              );
 
               return (
                 <div
@@ -441,10 +429,7 @@ export default async function ProducerPanelPage({
                   </div>
 
                   <p className="font-semibold">
-                    {formatMoney(
-                      sale.unit_price,
-                      order?.currency ?? "TOMAN",
-                    )}
+                    {formatPriceAmount(sale.unit_price)}
                   </p>
                 </div>
               );
@@ -466,7 +451,9 @@ export default async function ProducerPanelPage({
         )}
       </section>
 
+      {/* -------------------------------------------------- */}
       {/* Quick Actions */}
+      {/* -------------------------------------------------- */}
 
       <section>
         <div className="mb-4">
@@ -480,7 +467,9 @@ export default async function ProducerPanelPage({
             href="/producer/beats"
             className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
           >
-            <p className="font-semibold">My Beats</p>
+            <p className="font-semibold">
+              My Beats
+            </p>
 
             <p className="mt-2 text-sm text-zinc-500">
               Edit beats, manage licenses, review analysis,
@@ -492,7 +481,9 @@ export default async function ProducerPanelPage({
             href="/producer/upload"
             className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
           >
-            <p className="font-semibold">Upload Beat</p>
+            <p className="font-semibold">
+              Upload Beat
+            </p>
 
             <p className="mt-2 text-sm text-zinc-500">
               Add a new master, cover, and optional Stem Pack.
@@ -503,7 +494,9 @@ export default async function ProducerPanelPage({
             href="/producer/settings"
             className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
           >
-            <p className="font-semibold">Settings</p>
+            <p className="font-semibold">
+              Settings
+            </p>
 
             <p className="mt-2 text-sm text-zinc-500">
               Manage your producer account and profile.

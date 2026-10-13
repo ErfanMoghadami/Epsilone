@@ -19,6 +19,7 @@ export type Beat = {
   match_score: number | null;
   producer_id: string | null;
   producer_username: string | null;
+  discount_percent?: number | null;
 };
 
 export default function BeatResultCard({ beat }: { beat: Beat }) {
@@ -83,6 +84,11 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
             >
               {beat.producer_username}
             </Link>
+          )}
+          {Number(beat.discount_percent ?? 0) > 0 && (
+            <span className="mt-2 inline-flex rounded-full bg-orange-300/15 px-2.5 py-1 text-[10px] font-bold text-orange-200">
+              {Number(beat.discount_percent)}% OFF
+            </span>
           )}
         </div>
 

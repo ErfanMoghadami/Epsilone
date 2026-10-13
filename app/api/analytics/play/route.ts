@@ -86,46 +86,11 @@ export async function POST(
       });
     }
 
-    if (typeof body.url !== "string" || !body.url.trim() || body.url.length > 2048) {
+    if (!body.url) {
       return NextResponse.json(
         {
           success: false,
-          error: "A valid url is required",
-        },
-        { status: 400 }
-      );
-    }
-
-    // WaveformTracker's `play` event is configured for 3 seconds of
-    // actual media-time. Validate the client payload before counting it.
-    if (
-      typeof body.time !== "number" ||
-      !Number.isFinite(body.time) ||
-      body.time < 3 ||
-      typeof body.duration !== "number" ||
-      !Number.isFinite(body.duration) ||
-      body.duration <= 0
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          ignored: true,
-          error: "Play threshold or duration is invalid",
-        },
-        { status: 400 }
-      );
-    }
-
-    // The client tracker must send a per-page-load session ID. The DB
-    // unique index below uses it to make retries/double events idempotent.
-    if (
-      typeof body.session !== "string" ||
-      !/^[a-zA-Z0-9_-]{6,128}$/.test(body.session)
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "A valid tracker session is required",
+          error: "url is required",
         },
         { status: 400 }
       );
@@ -173,6 +138,7 @@ export async function POST(
         .from("beats")
         .select("id")
         .eq("audio_url", body.url)
+        .eq("is_published", true)
         .maybeSingle();
 
     if (legacyBeatError) {
@@ -210,6 +176,7 @@ export async function POST(
             "preview_key",
             r2ObjectKey
           )
+          .eq("is_published", true)
           .maybeSingle();
 
       if (r2BeatError) {
@@ -248,6 +215,7 @@ export async function POST(
             "preview_url",
             body.url
           )
+          .eq("is_published", true)
           .maybeSingle();
 
       if (previewBeatError) {
@@ -291,22 +259,12 @@ export async function POST(
       .insert({
         beat_id: beat.id,
         user_id: userId,
-        request_id: crypto.randomUUID(),
+        request_id:
+          crypto.randomUUID(),
         event_type: "played",
         position: null,
         match_score: null,
-        tracker_session_id: body.session,
       });
-
-    // A repeat POST for the same beat in the same tracker session is an
-    // expected retry, not a server failure and not an additional play.
-    if (insertError?.code === "23505") {
-      return NextResponse.json({
-        success: true,
-        duplicate: true,
-        streak: null,
-      });
-    }
 
     if (insertError) {
       console.error(

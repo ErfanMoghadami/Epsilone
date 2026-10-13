@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
-import { formatMoney } from "@/lib/currency";
+import { formatPriceAmount } from "@/lib/format-price";
 
 type RecentPurchase = {
   id: string;
@@ -65,16 +65,14 @@ export default async function DashboardPage() {
   // Favorites
   // --------------------------------------------------------
 
-  const {
-    count: favoritesCount,
-    error: favoritesError,
-  } = await supabase
-    .from("favorites")
-    .select("*", {
-      count: "exact",
-      head: true,
-    })
-    .eq("user_id", user.id);
+  const { count: favoritesCount, error: favoritesError } =
+    await supabase
+      .from("favorites")
+      .select("*", {
+        count: "exact",
+        head: true,
+      })
+      .eq("user_id", user.id);
 
   // --------------------------------------------------------
   // Paid orders count
@@ -528,10 +526,7 @@ export default async function DashboardPage() {
                 </div>
 
                 <p className="font-semibold">
-                  {formatMoney(
-                    purchase.total,
-                    purchase.currency,
-                  )}
+                  {formatPriceAmount(purchase.total)}
                 </p>
               </div>
             ))}

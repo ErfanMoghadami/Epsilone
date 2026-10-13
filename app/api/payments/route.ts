@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type CreatePaymentBody = {
   orderId?: string;
@@ -80,6 +81,40 @@ export async function POST(request: Request) {
           error: `Order cannot be paid because its status is "${order.status}"`,
         },
         { status: 400 },
+      );
+    }
+
+    const supabaseAdmin = createAdminClient();
+    const { data: orderItems, error: orderItemsError } = await supabaseAdmin
+      .from("order_items")
+      .select("beat_id")
+      .eq("order_id", order.id);
+
+    if (orderItemsError || !orderItems || orderItems.length === 0) {
+      return NextResponse.json(
+        { error: "Could not verify order items" },
+        { status: 500 },
+      );
+    }
+
+    const orderBeatIds = [...new Set(orderItems.map((item) => item.beat_id))];
+    const { data: availableBeats, error: availableBeatsError } = await supabaseAdmin
+      .from("beats")
+      .select("id")
+      .in("id", orderBeatIds)
+      .eq("is_published", true);
+
+    if (availableBeatsError) {
+      return NextResponse.json(
+        { error: "Could not verify beat availability" },
+        { status: 500 },
+      );
+    }
+
+    if ((availableBeats ?? []).length !== orderBeatIds.length) {
+      return NextResponse.json(
+        { error: "One or more beats in this order are OFF. Remove them from your cart and create a new order." },
+        { status: 409 },
       );
     }
 

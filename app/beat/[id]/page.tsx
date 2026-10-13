@@ -27,7 +27,7 @@ type Beat = {
   cover_url: string | null;
   cover_key: string | null;
   producer_id: string | null;
-  exclusive_sold_at: string | null;
+  discount_percent: number | null;
 };
 
 type Producer = {
@@ -50,29 +50,26 @@ export default async function BeatDetailPage({ params }: PageProps) {
     .from("beats")
     .select(
       `
-      id,
-      title,
-      bpm,
-      key,
-      genre,
-      subgenre,
-      moods,
-      preview_url,
-      preview_key,
-      cover_url,
-      cover_key,
-      producer_id,
-      exclusive_sold_at
-    `,
+        id,
+        title,
+        bpm,
+        key,
+        genre,
+        subgenre,
+        moods,
+        preview_url,
+        preview_key,
+        cover_url,
+        cover_key,
+        producer_id,
+        discount_percent
+        `,
     )
     .eq("id", id)
+    .eq("is_published", true)
     .single();
 
   if (beatError || !beatData) {
-    notFound();
-  }
-
-  if (beatData.exclusive_sold_at) {
     notFound();
   }
 
@@ -124,7 +121,9 @@ export default async function BeatDetailPage({ params }: PageProps) {
         {/* Back */}
         {/* ------------------------------------------------ */}
 
-        <BackButton className="mb-8 inline-flex text-sm text-zinc-500 transition hover:text-white" />
+        <BackButton
+          className="mb-8 inline-flex text-sm text-zinc-500 transition hover:text-white"
+        />
 
         {/* ------------------------------------------------ */}
         {/* Main Beat */}
@@ -159,6 +158,11 @@ export default async function BeatDetailPage({ params }: PageProps) {
                 <h1 className="text-3xl font-bold tracking-tight">
                   {beat.title ?? "Untitled Beat"}
                 </h1>
+                {Number(beat.discount_percent ?? 0) > 0 && (
+                  <span className="mt-3 inline-flex rounded-full bg-orange-300/15 px-3 py-1 text-xs font-bold text-orange-200">
+                    {Number(beat.discount_percent)}% OFF all active licenses
+                  </span>
+                )}
 
                 {/* Producer */}
                 {producer ? (
@@ -209,11 +213,7 @@ export default async function BeatDetailPage({ params }: PageProps) {
                 <p className="text-xs text-zinc-600">Genre</p>
 
                 <p className="mt-1 font-semibold">{beat.genre ?? "-"}</p>
-                {beat.subgenre && (
-                  <p className="mt-1 text-xs text-violet-300">
-                    {beat.subgenre}
-                  </p>
-                )}
+                {beat.subgenre && <p className="mt-1 text-xs text-violet-300">{beat.subgenre}</p>}
               </div>
             </div>
 

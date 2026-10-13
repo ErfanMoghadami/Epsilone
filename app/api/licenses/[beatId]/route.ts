@@ -1,6 +1,6 @@
-
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { applyDiscount, normalizeDiscountPercent } from "@/lib/discounts";
 
 type RouteContext = {
   params: Promise<{
@@ -8,81 +8,74 @@ type RouteContext = {
   }>;
 };
 
-export async function GET(
-  _request: Request,
-  context: RouteContext,
-) {
+export async function GET(_request: Request, context: RouteContext) {
   try {
     const { beatId } = await context.params;
+
     const supabase = await createClient();
 
-    const {
-      data: available,
-      error: availabilityError,
-    } = await supabase.rpc("is_exclusive_beat_available", {
-      p_beat_id: beatId,
-    });
+    const { data: beat, error: beatError } = await supabase
+      .from("beats")
+      .select("id, discount_percent")
+      .eq("id", beatId)
+      .eq("is_published", true)
+      .maybeSingle();
 
-    if (availabilityError) {
-      console.error(
-        "Beat availability check failed:",
-        availabilityError.message,
-      );
-
+    if (beatError) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Could not verify beat availability.",
-        },
+        { success: false, error: beatError.message },
         { status: 500 },
       );
     }
 
-    // Fail closed if the beat is sold or reserved.
-    if (available !== true) {
-      return NextResponse.json({
-        success: true,
-        available: false,
-        licenses: [],
-      });
+    if (!beat) {
+      return NextResponse.json(
+        { success: false, error: "This beat is not currently available." },
+        { status: 404 },
+      );
     }
 
     const { data, error } = await supabase
       .from("beat_licenses")
-      .select(
-        "id, license_type, price, currency, includes_stems, terms",
-      )
+      .select("id, license_type, price, currency, includes_stems, terms")
       .eq("beat_id", beatId)
       .eq("is_active", true)
       .order("price", { ascending: true });
 
     if (error) {
-      console.error("License query failed:", error.message);
-
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to load licenses.",
+          error: error.message,
         },
         { status: 500 },
       );
     }
 
+    const discountPercent = normalizeDiscountPercent(beat.discount_percent);
+    const licenses = (data ?? []).map((license) => {
+      const originalPrice = Number(license.price);
+      const discountedPrice = applyDiscount(originalPrice, discountPercent);
+      return {
+        ...license,
+        price: originalPrice,
+        original_price: originalPrice,
+        discount_percent: discountPercent,
+        discounted_price: discountedPrice,
+      };
+    });
+
     return NextResponse.json({
       success: true,
-      available: true,
-      licenses: data ?? [],
+      discountPercent,
+      licenses,
     });
   } catch (error) {
-    console.error("License API error:", error);
-
     return NextResponse.json(
       {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load licenses.",
+          error instanceof Error ? error.message : "Failed to load licenses.",
       },
       { status: 500 },
     );

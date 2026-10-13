@@ -1,7 +1,6 @@
-
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { resolveTerms } from "@/lib/licenses";
+import { applyDiscount, normalizeDiscountPercent, roundMoney } from "@/lib/discounts";
 
 type CartItem = {
   beatId: string;
@@ -31,10 +30,11 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------
-    // 2. Read and validate cart
+    // 2. Read cart
     // --------------------------------------------------
 
     const body = await request.json();
+
     const items = body?.items as CartItem[];
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -46,6 +46,10 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+
+    // --------------------------------------------------
+    // 3. Validate cart item shape
+    // --------------------------------------------------
 
     const validItems = items.filter(
       (item) =>
@@ -64,7 +68,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prevent duplicate beat/license pairs.
+    // Prevent duplicate beat/license pairs
     const uniqueKeys = new Set(
       validItems.map(
         (item) => `${item.beatId}:${item.licenseId}`,
@@ -81,29 +85,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // --------------------------------------------------
+    // 4. Load real licenses from DB
+    // --------------------------------------------------
+
     const licenseIds = validItems.map(
       (item) => item.licenseId,
     );
 
-    // A cart can contain different licenses for the same beat.
-    const beatIds = [
-      ...new Set(validItems.map((item) => item.beatId)),
-    ];
+    const beatIds = validItems.map(
+      (item) => item.beatId,
+    );
 
-    // --------------------------------------------------
-    // 3. Load real licenses from DB
-    // --------------------------------------------------
-
-    const {
-      data: licenses,
-      error: licensesError,
-    } = await supabase
-      .from("beat_licenses")
-      .select(
-        "id, beat_id, license_type, price, currency, is_active, includes_stems, terms",
-      )
-      .in("id", licenseIds)
-      .eq("is_active", true);
+    const { data: licenses, error: licensesError } =
+      await supabase
+        .from("beat_licenses")
+        .select(
+          "id, beat_id, license_type, price, currency, is_active, includes_stems",
+        )
+        .in("id", licenseIds)
+        .eq("is_active", true);
 
     if (licensesError) {
       return NextResponse.json(
@@ -127,16 +128,13 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------
-    // 4. Load real beats from DB
+    // 5. Load real beats from DB
     // --------------------------------------------------
 
-    const {
-      data: beats,
-      error: beatsError,
-    } = await supabase
+    const { data: beats, error: beatsError } = await supabase
       .from("beats")
       .select(
-        "id, title, producer_id, stems_key, exclusive_sold_at",
+        "id, title, producer_id, stems_key, is_published, discount_percent",
       )
       .in("id", beatIds);
 
@@ -150,81 +148,21 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!beats || beats.length !== beatIds.length) {
+    if (!beats || beats.length !== new Set(beatIds).size) {
       return NextResponse.json(
         {
           success: false,
-          error: "One or more beats no longer exist.",
+          error: "One or more beats are no longer available.",
         },
         { status: 400 },
       );
     }
 
-    // A beat that has already been sold exclusively
-    // must not be available for another purchase.
-    const soldBeat = beats.find(
-      (beat) => beat.exclusive_sold_at !== null,
-    );
-
-    if (soldBeat) {
+    if (beats.some((beat) => beat.is_published !== true)) {
       return NextResponse.json(
         {
           success: false,
-          error:
-            `"${soldBeat.title}" is no longer available for purchase.`,
-        },
-        { status: 409 },
-      );
-    }
-
-    // --------------------------------------------------
-    // 5. Check exclusive availability
-    // --------------------------------------------------
-    // This checks both completed exclusive sales and
-    // active reservations made by other pending orders.
-
-    const availabilityChecks = await Promise.all(
-      beatIds.map(async (beatId) => {
-        const { data, error } = await supabase.rpc(
-          "is_exclusive_beat_available",
-          {
-            p_beat_id: beatId,
-          },
-        );
-
-        return {
-          beatId,
-          available: data,
-          error,
-        };
-      }),
-    );
-
-    const availabilityError = availabilityChecks.find(
-      (result) => result.error,
-    );
-
-    if (availabilityError?.error) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Could not verify beat availability. Please try again.",
-        },
-        { status: 500 },
-      );
-    }
-
-    const unavailableBeat = availabilityChecks.find(
-      (result) => result.available !== true,
-    );
-
-    if (unavailableBeat) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "A beat in your cart is sold exclusively or temporarily reserved. Please refresh your cart.",
+          error: "One or more beats are OFF and cannot be purchased right now.",
         },
         { status: 409 },
       );
@@ -270,37 +208,25 @@ export async function POST(request: Request) {
         );
       }
 
-      const unitPrice = Number(license.price);
-
-      if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-        throw new Error(
-          `Invalid price for "${beat.title}".`,
-        );
-      }
+      const originalUnitPrice = roundMoney(Number(license.price));
+      const discountPercent = normalizeDiscountPercent(beat.discount_percent);
+      const unitPrice = applyDiscount(originalUnitPrice, discountPercent);
 
       return {
         beat_id: beat.id,
         producer_id: beat.producer_id,
         title_snapshot: beat.title,
+        original_unit_price: originalUnitPrice,
         unit_price: unitPrice,
+        discount_percent: discountPercent,
         license_type: license.license_type,
-        currency:
-          typeof license.currency === "string"
-            ? license.currency.trim().toUpperCase()
-            : "",
+        currency: license.currency,
         includes_stems: Boolean(license.includes_stems),
-
-        // Preserve the effective terms as they were
-        // when the order was created.
-        license_terms: resolveTerms(
-          license.license_type,
-          license.terms,
-        ),
       };
     });
 
     // --------------------------------------------------
-    // 7. Validate order currency
+    // 7. Make sure all currencies match
     // --------------------------------------------------
 
     const currencies = new Set(
@@ -320,36 +246,31 @@ export async function POST(request: Request) {
 
     const currency = verifiedItems[0].currency;
 
-    if (currency !== "TOMAN") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Only TOMAN orders are currently supported.",
-        },
-        { status: 400 },
-      );
-    }
+    const subtotal = roundMoney(verifiedItems.reduce(
+      (sum, item) => sum + item.original_unit_price,
+      0,
+    ));
 
-    const subtotal = verifiedItems.reduce(
+    const total = roundMoney(verifiedItems.reduce(
       (sum, item) => sum + item.unit_price,
       0,
-    );
+    ));
+
+    const discountTotal = roundMoney(subtotal - total);
 
     // --------------------------------------------------
-    // 8. Create pending order
+    // 8. Create order
     // --------------------------------------------------
 
-    const {
-      data: order,
-      error: orderError,
-    } = await supabase
+    const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
         buyer_id: user.id,
         status: "pending",
         currency,
         subtotal,
-        total: subtotal,
+        discount_total: discountTotal,
+        total,
       })
       .select("id")
       .single();
@@ -366,10 +287,8 @@ export async function POST(request: Request) {
     }
 
     // --------------------------------------------------
-    // 9. Create order items and snapshot license terms
+    // 9. Create order items
     // --------------------------------------------------
-
-    const capturedAt = new Date().toISOString();
 
     const orderItems = verifiedItems.map((item) => ({
       order_id: order.id,
@@ -377,16 +296,10 @@ export async function POST(request: Request) {
       producer_id: item.producer_id,
       title_snapshot: item.title_snapshot,
       unit_price: item.unit_price,
+      original_unit_price: item.original_unit_price,
+      discount_percent: item.discount_percent,
       license_type: item.license_type,
       includes_stems: item.includes_stems,
-
-      // Immutable copy of the terms at purchase time.
-      license_terms_snapshot: {
-        license_type: item.license_type,
-        terms: item.license_terms,
-        includes_stems: item.includes_stems,
-        captured_at: capturedAt,
-      },
     }));
 
     const { error: itemsError } = await supabase
@@ -394,7 +307,7 @@ export async function POST(request: Request) {
       .insert(orderItems);
 
     if (itemsError) {
-      // Best-effort cleanup.
+      // Best-effort cleanup
       await supabase
         .from("orders")
         .delete()
@@ -409,69 +322,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // --------------------------------------------------
-    // 10. Reserve Exclusive licenses
-    // --------------------------------------------------
-    // Reservation happens only after the order and its
-    // items exist, so the database can validate the order.
-    // The reservation RPC must enforce exclusivity atomically.
-
-    const needsExclusiveReservation = verifiedItems.some(
-      (item) =>
-        item.license_type.trim().toLowerCase() === "exclusive",
-    );
-
-    if (needsExclusiveReservation) {
-      const {
-        data: reservationData,
-        error: reservationError,
-      } = await supabase.rpc("reserve_exclusive_order", {
-        p_order_id: order.id,
-      });
-
-      const reservationReportedFailure =
-        reservationData === false ||
-        (typeof reservationData === "object" &&
-          reservationData !== null &&
-          "success" in reservationData &&
-          reservationData.success === false);
-
-      if (
-        reservationError ||
-        reservationReportedFailure
-      ) {
-        // Best-effort cleanup if the reservation fails.
-        await supabase
-          .from("order_items")
-          .delete()
-          .eq("order_id", order.id);
-
-        await supabase
-          .from("orders")
-          .delete()
-          .eq("id", order.id)
-          .eq("buyer_id", user.id);
-
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "This Exclusive license is no longer available. Please refresh your cart and try again.",
-          },
-          { status: 409 },
-        );
-      }
-    }
-
-    // --------------------------------------------------
-    // 11. Return order information
-    // --------------------------------------------------
-
     return NextResponse.json({
       success: true,
       orderId: order.id,
       subtotal,
-      total: subtotal,
+      discountTotal,
+      total,
       currency,
     });
   } catch (error) {
