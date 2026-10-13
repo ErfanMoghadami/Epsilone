@@ -11,7 +11,7 @@ export default function EpsiloneLogo({
       src={logo}
       alt="Epsilone"
       priority
-      className={`h-auto w-full ${className}`}
+      className={`logo-adaptive h-auto w-full ${className}`}
     />
   );
 }

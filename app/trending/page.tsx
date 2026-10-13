@@ -120,7 +120,7 @@ export default function TrendingPage() {
   const selectedTab = TABS.find((tab) => tab.id === mode) ?? TABS[0];
 
   return (
-    <main className="min-h-screen bg-black px-5 py-10 text-white sm:px-8 sm:py-14">
+    <main className="min-h-screen --ep-fg px-5 py-10 text-white sm:px-8 sm:py-14">
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>

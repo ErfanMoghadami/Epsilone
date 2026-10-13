@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { resolveTerms, getLicenseTerms } from "@/lib/licenses";
+import { formatMoney } from "@/lib/currency";
 
 type License = {
   id: string;
@@ -29,7 +30,7 @@ type CartItem = {
   includesStems: boolean;
 };
 
-const CART_KEY = "epsilone-cart";
+const CART_KEY = "epsilone-cart-v2";
 
 export default function AddToCartButton({
   beatId,
@@ -67,7 +68,9 @@ export default function AddToCartButton({
         }
       } catch (error) {
         setError(
-          error instanceof Error ? error.message : "Failed to load licenses.",
+          error instanceof Error
+            ? error.message
+            : "Failed to load licenses.",
         );
       } finally {
         setLoading(false);
@@ -78,7 +81,9 @@ export default function AddToCartButton({
   }, [beatId]);
 
   function addToCart() {
-    const license = licenses.find((item) => item.id === selectedLicense);
+    const license = licenses.find(
+      (item) => item.id === selectedLicense,
+    );
 
     if (!license) {
       return;
@@ -87,7 +92,9 @@ export default function AddToCartButton({
     let existingCart: CartItem[] = [];
 
     try {
-      const storedCart = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]");
+      const storedCart = JSON.parse(
+        localStorage.getItem(CART_KEY) ?? "[]",
+      );
 
       if (Array.isArray(storedCart)) {
         existingCart = storedCart;
@@ -97,7 +104,9 @@ export default function AddToCartButton({
     }
 
     const alreadyExists = existingCart.some(
-      (item) => item.beatId === beatId && item.licenseId === license.id,
+      (item) =>
+        item.beatId === beatId &&
+        item.licenseId === license.id,
     );
 
     if (alreadyExists) {
@@ -117,7 +126,10 @@ export default function AddToCartButton({
       includesStems: license.includes_stems,
     };
 
-    localStorage.setItem(CART_KEY, JSON.stringify([...existingCart, cartItem]));
+    localStorage.setItem(
+      CART_KEY,
+      JSON.stringify([...existingCart, cartItem]),
+    );
 
     setAdded(true);
     setAlreadyInCart(false);
@@ -126,24 +138,37 @@ export default function AddToCartButton({
     window.dispatchEvent(new Event("cart-updated"));
   }
 
-  // حالت compact: تا لایسنس‌ها لود نشدن یه placeholder کوچیک
-  if (variant === "compact" && (loading || error || licenses.length === 0)) {
-    return <div className="h-9 w-24 animate-pulse rounded-full bg-white/10" />;
+  // Compact variant: show a small placeholder while licenses load.
+  if (
+    variant === "compact" &&
+    (loading || error || licenses.length === 0)
+  ) {
+    return (
+      <div className="h-9 w-24 animate-pulse rounded-full bg-white/10" />
+    );
   }
 
   if (loading) {
     return (
-      <div className="mt-3 text-sm text-zinc-500">Loading licenses...</div>
+      <div className="mt-3 text-sm text-zinc-500">
+        Loading licenses...
+      </div>
     );
   }
 
   if (error) {
-    return <div className="mt-3 text-sm text-red-400">{error}</div>;
+    return (
+      <div className="mt-3 text-sm text-red-400">
+        {error}
+      </div>
+    );
   }
 
   if (licenses.length === 0) {
     return (
-      <div className="mt-3 text-sm text-zinc-500">No licenses available.</div>
+      <div className="mt-3 text-sm text-zinc-500">
+        No licenses available.
+      </div>
     );
   }
 
@@ -174,6 +199,7 @@ export default function AddToCartButton({
             <circle cx="19" cy="21" r="1" />
             <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
           </svg>
+
           {added ? "اضافه شد" : "خرید"}
         </button>
       ) : (
@@ -190,7 +216,8 @@ export default function AddToCartButton({
             >
               {licenses.map((license) => (
                 <option key={license.id} value={license.id}>
-                  {license.license_type} — ${license.price}
+                  {license.license_type} —{" "}
+                  {formatMoney(license.price, license.currency)}
                   {license.includes_stems ? " + Stems" : ""}
                 </option>
               ))}
@@ -213,6 +240,7 @@ export default function AddToCartButton({
               ).map((term) => (
                 <li key={term}>✓ {term}</li>
               ))}
+
               {selectedLicenseData.includes_stems && (
                 <li>✓ Stems pack included</li>
               )}
@@ -241,16 +269,26 @@ export default function AddToCartButton({
                     : "Beat added to your cart"}
                 </h2>
 
-                <p className="mt-1 text-sm text-zinc-400">{title}</p>
+                <p className="mt-1 text-sm text-zinc-400">
+                  {title}
+                </p>
 
                 <div className="mt-2 space-y-1 text-xs text-zinc-500">
                   <p>
-                    {selectedLicenseData.license_type} · $
-                    {Number(selectedLicenseData.price).toFixed(2)}
+                    {selectedLicenseData.license_type} ·{" "}
+                    {formatMoney(
+                      selectedLicenseData.price,
+                      selectedLicenseData.currency,
+                    )}
                   </p>
 
                   <p>
-                    {getLicenseTerms(selectedLicenseData.license_type).tagline}
+                    {
+                      getLicenseTerms(
+                        selectedLicenseData.license_type,
+                      ).tagline
+                    }
+
                     {selectedLicenseData.includes_stems
                       ? " · Stems included"
                       : ""}

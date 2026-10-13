@@ -122,29 +122,26 @@ export default function UsernameAvailabilityInput() {
           status === "invalid" ||
           status === "error"
         ? "text-red-400"
-        : "text-zinc-500";
+        : "text-ep-muted";
 
   return (
     <div>
-      <label
-        htmlFor="username"
-        className="mb-2 block text-sm font-medium text-zinc-300"
-      >
-        Username
+      <label htmlFor="username" className="sr-only">
+        نام کاربری
       </label>
 
       <div
-        className={`flex items-center rounded-xl border bg-black/40 px-4 transition ${
+        className={`flex h-14 items-center rounded-2xl border bg-ep-field px-4 transition ${
           status === "available"
-            ? "border-emerald-500/40"
+            ? "border-emerald-500/50"
             : status === "taken" ||
                 status === "invalid" ||
                 status === "error"
-              ? "border-red-500/40"
-              : "border-white/10 focus-within:border-white/30"
+              ? "border-red-500/50"
+              : "border-ep-border focus-within:border-brand"
         }`}
       >
-        <span className="mr-2 text-zinc-500">@</span>
+        <span className="mr-2 text-ep-muted">@</span>
 
         <input
           id="username"
@@ -158,11 +155,12 @@ export default function UsernameAvailabilityInput() {
           autoComplete="username"
           placeholder="narciboi"
           maxLength={20}
-          className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-zinc-700"
+          dir="ltr"
+          className="w-full bg-transparent py-3 text-sm text-ep-fg outline-none placeholder:text-ep-muted"
         />
 
         {status === "checking" && (
-          <span className="ml-3 text-xs text-zinc-500">
+          <span className="ml-3 text-xs text-ep-muted">
             ...
           </span>
         )}
@@ -187,7 +185,7 @@ export default function UsernameAvailabilityInput() {
         className={`mt-2 text-xs leading-5 ${messageClass}`}
       >
         {message ||
-          "3–20 characters · letters, numbers, _ and -"}
+          "۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد، _ و -"}
       </p>
     </div>
   );

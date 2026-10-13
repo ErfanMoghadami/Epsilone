@@ -1,5 +1,8 @@
 "use client";
 
+import AuthShell from "@/components/auth/AuthShell";
+import { authFieldClass, authPrimaryButtonClass, authErrorClass, authSuccessClass, authLinkClass } from "@/components/auth/authStyles";
+
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -94,128 +97,50 @@ export default function UpdatePasswordPage() {
 
   if (initializing) {
     return (
-      <main className="min-h-screen bg-black text-white">
-        <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
-          <div className="w-full">
-            <p className="text-sm text-white/50">
-              Verifying your password reset link...
-            </p>
-          </div>
+      <AuthShell>
+        <div className="space-y-4">
+          <div className="h-2 w-16 animate-pulse rounded-full bg-brand/70" />
+          <p className="text-sm text-ep-muted">در حال بررسی لینک بازیابی رمز عبور...</p>
         </div>
-      </main>
+      </AuthShell>
     );
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
-        <div className="w-full">
-          <div className="mb-8">
-            <Link
-              href="/login"
-              className="text-sm text-white/50 transition hover:text-white"
-            >
-              ← Back to login
-            </Link>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Set a new password
-            </h1>
-
-            <p className="mt-3 text-sm leading-6 text-white/50">
-              Enter your new password below.
-            </p>
-          </div>
-
-          {!sessionReady ? (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                {error || "This password reset link is invalid or expired."}
-              </div>
-
-              <Link
-                href="/forgot-password"
-                className="block text-center text-sm text-white/50 transition hover:text-white"
-              >
-                Request a new reset link
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="password"
-                  className="mb-2 block text-sm font-medium text-white/80"
-                >
-                  New password
-                </label>
-
-                <input
-                  id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Enter your new password"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="confirm-password"
-                  className="mb-2 block text-sm font-medium text-white/80"
-                >
-                  Confirm password
-                </label>
-
-                <input
-                  id="confirm-password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(event) =>
-                    setConfirmPassword(event.target.value)
-                  }
-                  placeholder="Confirm your new password"
-                  className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
-                />
-              </div>
-
-              {error && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                  {error}
-                </div>
-              )}
-
-              {message && (
-                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
-                  {message}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading ? "Updating..." : "Update password"}
-              </button>
-
-              {message && (
-                <Link
-                  href="/login"
-                  className="block text-center text-sm text-white/50 transition hover:text-white"
-                >
-                  Back to login
-                </Link>
-              )}
-            </form>
-          )}
-        </div>
+    <AuthShell>
+      <div className="mb-8">
+        <Link href="/login" className={authLinkClass}>← بازگشت به ورود</Link>
+        <h1 className="mt-6 text-3xl font-bold tracking-tight">ساخت رمز عبور جدید</h1>
+        <p className="mt-3 text-sm leading-7 text-ep-muted">رمز عبور جدیدت رو وارد کن.</p>
       </div>
-    </main>
+
+      {!sessionReady ? (
+        <div className="space-y-4">
+          <div role="alert" className={authErrorClass}>{error || "This password reset link is invalid or expired."}</div>
+          <Link href="/forgot-password" className="block text-center text-sm text-ep-brand-text transition hover:opacity-80">درخواست لینک جدید</Link>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="password" className="sr-only">رمز عبور جدید</label>
+            <input id="password" type="password" dir="ltr" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="رمز عبور جدید (حداقل ۸ کاراکتر)" minLength={8} required disabled={loading} className={authFieldClass} />
+          </div>
+
+          <div>
+            <label htmlFor="confirm-password" className="sr-only">تکرار رمز عبور</label>
+            <input id="confirm-password" type="password" dir="ltr" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} placeholder="تکرار رمز عبور" minLength={8} required disabled={loading} className={authFieldClass} />
+          </div>
+
+          {error && <div role="alert" className={authErrorClass}>{error}</div>}
+          {message && <div role="status" className={authSuccessClass}>{message}</div>}
+
+          <button type="submit" disabled={loading} className={authPrimaryButtonClass}>
+            {loading ? "در حال ذخیره..." : "تغییر رمز عبور"}
+          </button>
+
+          {message && <Link href="/login" className="block text-center text-sm text-ep-brand-text transition hover:opacity-80">بازگشت به ورود</Link>}
+        </form>
+      )}
+    </AuthShell>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { formatMoney } from "@/lib/currency";
 
 type CartItem = {
   beatId: string;
@@ -27,7 +28,7 @@ type BeatMeta = {
   producer: Producer | null;
 };
 
-const CART_KEY = "epsilone-cart";
+const CART_KEY = "epsilone-cart-v2";
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -38,10 +39,7 @@ export default function CartPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
-  // --------------------------------------------------------
-  // Load cart
-  // --------------------------------------------------------
-
+  // Load cart.
   useEffect(() => {
     function loadCart() {
       try {
@@ -74,10 +72,7 @@ export default function CartPage() {
     };
   }, []);
 
-  // --------------------------------------------------------
-  // Load beat metadata
-  // --------------------------------------------------------
-
+  // Load beat metadata.
   useEffect(() => {
     if (!loaded || items.length === 0) {
       setBeatMeta({});
@@ -123,10 +118,7 @@ export default function CartPage() {
     loadBeatMeta();
   }, [items, loaded]);
 
-  // --------------------------------------------------------
-  // Remove item
-  // --------------------------------------------------------
-
+  // Remove item.
   function removeItem(beatId: string, licenseId: string) {
     const updatedItems = items.filter(
       (item) =>
@@ -148,10 +140,7 @@ export default function CartPage() {
     window.dispatchEvent(new Event("cart-updated"));
   }
 
-  // --------------------------------------------------------
-  // Clear cart
-  // --------------------------------------------------------
-
+  // Clear cart.
   function clearCart() {
     setItems([]);
     setBeatMeta({});
@@ -162,10 +151,7 @@ export default function CartPage() {
     window.dispatchEvent(new Event("cart-updated"));
   }
 
-  // --------------------------------------------------------
-  // Totals
-  // --------------------------------------------------------
-
+  // Totals.
   const subtotal = useMemo(() => {
     return items.reduce(
       (sum, item) => sum + Number(item.price),
@@ -176,20 +162,28 @@ export default function CartPage() {
   const total = subtotal;
 
   const currency =
-    items.length > 0 ? items[0].currency : "USD";
+    items.length > 0 ? items[0].currency : "TOMAN";
+
+  const hasMixedCurrencies = items.some(
+    (item) => item.currency !== currency,
+  );
 
   const hasMissingBeats = items.some(
     (item) => !beatMeta[item.beatId],
   );
 
-  // --------------------------------------------------------
-  // Checkout
-  // --------------------------------------------------------
-
+  // Checkout.
   async function handleCheckout() {
     setCheckoutError(null);
 
     if (items.length === 0) {
+      return;
+    }
+
+    if (hasMixedCurrencies) {
+      setCheckoutError(
+        "Your cart contains different currencies. Remove the old items and add the licenses again.",
+      );
       return;
     }
 
@@ -239,10 +233,7 @@ export default function CartPage() {
     }
   }
 
-  // --------------------------------------------------------
-  // Loading
-  // --------------------------------------------------------
-
+  // Loading.
   if (!loaded) {
     return (
       <main className="mx-auto max-w-6xl px-5 py-12 text-white sm:px-6">
@@ -251,10 +242,7 @@ export default function CartPage() {
     );
   }
 
-  // --------------------------------------------------------
-  // Empty cart
-  // --------------------------------------------------------
-
+  // Empty cart.
   if (items.length === 0) {
     return (
       <main className="mx-auto max-w-6xl px-5 py-12 text-white sm:px-6">
@@ -292,10 +280,7 @@ export default function CartPage() {
     );
   }
 
-  // --------------------------------------------------------
-  // Cart
-  // --------------------------------------------------------
-
+  // Cart.
   return (
     <main className="mx-auto max-w-6xl px-5 py-12 text-white sm:px-6">
       {/* Header */}
@@ -433,10 +418,10 @@ export default function CartPage() {
                         </p>
 
                         <p className="mt-1 font-semibold">
-                          {item.currency === "USD"
-                            ? "$"
-                            : item.currency}{" "}
-                          {Number(item.price).toFixed(2)}
+                          {formatMoney(
+                            item.price,
+                            item.currency,
+                          )}
                         </p>
                       </div>
                     </div>
@@ -455,15 +440,10 @@ export default function CartPage() {
 
           <div className="mt-6 space-y-3 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-zinc-500">
-                Subtotal
-              </span>
+              <span className="text-zinc-500">Subtotal</span>
 
               <span className="font-medium">
-                {currency === "USD"
-                  ? "$"
-                  : currency}{" "}
-                {subtotal.toFixed(2)}
+                {formatMoney(subtotal, currency)}
               </span>
             </div>
 
@@ -473,7 +453,7 @@ export default function CartPage() {
               </span>
 
               <span className="text-zinc-400">
-                $0.00
+                {formatMoney(0, currency)}
               </span>
             </div>
           </div>
@@ -481,17 +461,19 @@ export default function CartPage() {
           <div className="my-6 border-t border-zinc-800" />
 
           <div className="flex items-center justify-between">
-            <span className="text-zinc-400">
-              Total
-            </span>
+            <span className="text-zinc-400">Total</span>
 
             <span className="text-2xl font-bold">
-              {currency === "USD"
-                ? "$"
-                : currency}{" "}
-              {total.toFixed(2)}
+              {formatMoney(total, currency)}
             </span>
           </div>
+
+          {hasMixedCurrencies && (
+            <div className="mt-5 rounded-xl border border-yellow-900/50 bg-yellow-950/20 p-4 text-sm text-yellow-500">
+              Your cart contains different currencies. Remove
+              the old items and add the licenses again.
+            </div>
+          )}
 
           {checkoutError && (
             <div className="mt-5 rounded-xl border border-red-900/50 bg-red-950/20 p-4 text-sm text-red-400">
@@ -521,7 +503,8 @@ export default function CartPage() {
             disabled={
               checkoutLoading ||
               metaLoading ||
-              hasMissingBeats
+              hasMissingBeats ||
+              hasMixedCurrencies
             }
             className="mt-6 w-full rounded-xl bg-white px-5 py-3.5 font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
           >

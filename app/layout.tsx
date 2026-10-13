@@ -62,8 +62,7 @@ export const viewport: Viewport = {
 const themeInitScript = `
 (function () {
   try {
-    var mode =
-      localStorage.getItem("epsilone-theme-mode") || "system";
+  var mode = localStorage.getItem("epsilone-theme-mode");
 
     var dark = false;
 
@@ -104,9 +103,7 @@ const themeInitScript = `
 })();
 `;
 
-export default function RootLayout({
-  children,
-}: LayoutProps<"/">) {
+export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"

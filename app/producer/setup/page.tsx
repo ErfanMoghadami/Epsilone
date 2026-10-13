@@ -1,3 +1,5 @@
+import AuthShell from "@/components/auth/AuthShell";
+import { authFieldClass, authPrimaryButtonClass, authErrorClass } from "@/components/auth/authStyles";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import UsernameAvailabilityInput from "@/components/producer/username-availability-input";
@@ -175,10 +177,32 @@ export default async function ProducerSetupPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex min-h-[calc(100vh-64px)] items-center justify-center">
-      <div className="mt-6">
-        <UsernameAvailabilityInput />
+    <AuthShell>
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ep-brand-text">Producer</p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight">تکمیل حساب پرودیوسر</h1>
+        <p className="mt-3 text-sm leading-7 text-ep-muted">نام کاربری و رمز عبورت رو تنظیم کن تا پنلت آماده بشه.</p>
       </div>
-    </main>
+
+      {error && <div role="alert" className={`${authErrorClass} mb-4`}>{error}</div>}
+
+      <form action={completeProducerSetup} className="space-y-4">
+        <UsernameAvailabilityInput />
+
+        <div>
+          <label htmlFor="password" className="sr-only">رمز عبور</label>
+          <input id="password" name="password" type="password" dir="ltr" autoComplete="new-password" minLength={8} required placeholder="رمز عبور (حداقل ۸ کاراکتر)" className={authFieldClass} />
+        </div>
+
+        <div>
+          <label htmlFor="confirmPassword" className="sr-only">تکرار رمز عبور</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" dir="ltr" autoComplete="new-password" minLength={8} required placeholder="تکرار رمز عبور" className={authFieldClass} />
+        </div>
+
+        <button type="submit" className={authPrimaryButtonClass}>
+          تکمیل حساب
+        </button>
+      </form>
+    </AuthShell>
   );
 }

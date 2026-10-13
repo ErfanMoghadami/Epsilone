@@ -27,6 +27,7 @@ type Beat = {
   cover_url: string | null;
   cover_key: string | null;
   producer_id: string | null;
+  exclusive_sold_at: string | null;
 };
 
 type Producer = {
@@ -49,24 +50,29 @@ export default async function BeatDetailPage({ params }: PageProps) {
     .from("beats")
     .select(
       `
-        id,
-        title,
-        bpm,
-        key,
-        genre,
-        subgenre,
-        moods,
-        preview_url,
-        preview_key,
-        cover_url,
-        cover_key,
-        producer_id
-        `,
+      id,
+      title,
+      bpm,
+      key,
+      genre,
+      subgenre,
+      moods,
+      preview_url,
+      preview_key,
+      cover_url,
+      cover_key,
+      producer_id,
+      exclusive_sold_at
+    `,
     )
     .eq("id", id)
     .single();
 
   if (beatError || !beatData) {
+    notFound();
+  }
+
+  if (beatData.exclusive_sold_at) {
     notFound();
   }
 
@@ -118,9 +124,7 @@ export default async function BeatDetailPage({ params }: PageProps) {
         {/* Back */}
         {/* ------------------------------------------------ */}
 
-        <BackButton
-          className="mb-8 inline-flex text-sm text-zinc-500 transition hover:text-white"
-        />
+        <BackButton className="mb-8 inline-flex text-sm text-zinc-500 transition hover:text-white" />
 
         {/* ------------------------------------------------ */}
         {/* Main Beat */}
@@ -205,7 +209,11 @@ export default async function BeatDetailPage({ params }: PageProps) {
                 <p className="text-xs text-zinc-600">Genre</p>
 
                 <p className="mt-1 font-semibold">{beat.genre ?? "-"}</p>
-                {beat.subgenre && <p className="mt-1 text-xs text-violet-300">{beat.subgenre}</p>}
+                {beat.subgenre && (
+                  <p className="mt-1 text-xs text-violet-300">
+                    {beat.subgenre}
+                  </p>
+                )}
               </div>
             </div>
 

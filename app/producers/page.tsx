@@ -29,7 +29,7 @@ export default async function ProducersPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-12 text-white">
+    <main className="min-h-screen --ep-fg px-6 py-12 text-white">
       <div className="mx-auto max-w-6xl">
         <div className="mb-10">
           <p className="mb-2 text-sm text-zinc-500">

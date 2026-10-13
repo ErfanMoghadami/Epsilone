@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -75,13 +76,13 @@ export default async function ProducerProfilePage({
 
   // --------------------------------------------------------
   // Producer beats
+  // Sold Exclusive beats are hidden from the public profile.
   // --------------------------------------------------------
 
   const { data: beats, error: beatsError } =
     await supabase
       .from("beats")
-      .select(
-        `
+      .select(`
         id,
         title,
         bpm,
@@ -91,10 +92,10 @@ export default async function ProducerProfilePage({
         preview_key,
         cover_url,
         cover_key
-        `,
-      )
+      `)
       .eq("producer_id", producerId)
       .eq("analysis_status", "completed")
+      .is("exclusive_sold_at", null)
       .order("created_at", {
         ascending: false,
       });

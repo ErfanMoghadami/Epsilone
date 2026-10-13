@@ -1,8 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-
 import CheckoutPaymentButton from "@/components/CheckoutPaymentButton";
+import { formatMoney } from "@/lib/currency";
 
 type CheckoutPageProps = {
   params: Promise<{
@@ -10,7 +10,9 @@ type CheckoutPageProps = {
   }>;
 };
 
-export default async function CheckoutPage({ params }: CheckoutPageProps) {
+export default async function CheckoutPage({
+  params,
+}: CheckoutPageProps) {
   const { orderId } = await params;
 
   const supabase = await createClient();
@@ -65,9 +67,13 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   return (
     <main className="mx-auto max-w-4xl px-6 py-16 text-white">
       <div className="mb-10">
-        <p className="mb-2 text-sm text-zinc-500">Order #{order.id}</p>
+        <p className="mb-2 text-sm text-zinc-500">
+          Order #{order.id}
+        </p>
 
-        <h1 className="text-3xl font-bold">Checkout</h1>
+        <h1 className="text-3xl font-bold">
+          Checkout
+        </h1>
 
         <p className="mt-2 text-zinc-500">
           Review your order before continuing to payment.
@@ -81,7 +87,9 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             className="flex items-center justify-between gap-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5"
           >
             <div>
-              <h2 className="font-semibold">{item.title_snapshot}</h2>
+              <h2 className="font-semibold">
+                {item.title_snapshot}
+              </h2>
 
               <p className="mt-1 text-sm text-zinc-500">
                 {item.license_type} License
@@ -89,8 +97,10 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             </div>
 
             <div className="font-medium">
-              {order.currency === "USD" ? "$" : order.currency}{" "}
-              {Number(item.unit_price).toFixed(2)}
+              {formatMoney(
+                item.unit_price,
+                order.currency,
+              )}
             </div>
           </div>
         ))}
@@ -98,20 +108,28 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
 
       <div className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-zinc-500">Subtotal</span>
+          <span className="text-zinc-500">
+            Subtotal
+          </span>
 
           <span>
-            {order.currency === "USD" ? "$" : order.currency}{" "}
-            {Number(order.subtotal).toFixed(2)}
+            {formatMoney(
+              order.subtotal,
+              order.currency,
+            )}
           </span>
         </div>
 
         <div className="mt-4 flex items-center justify-between border-t border-zinc-800 pt-4">
-          <span className="text-lg font-semibold">Total</span>
+          <span className="text-lg font-semibold">
+            Total
+          </span>
 
           <span className="text-2xl font-bold">
-            {order.currency === "USD" ? "$" : order.currency}{" "}
-            {Number(order.total).toFixed(2)}
+            {formatMoney(
+              order.total,
+              order.currency,
+            )}
           </span>
         </div>
 

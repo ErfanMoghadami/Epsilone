@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import Link from "next/link";
 import BeatResultCard, { type Beat } from "@/components/BeatResultCard";
 import HomeMenu from "@/components/HomeMenu";
 import EpsiloneLogo from "@/components/EpsiloneLogo";
@@ -213,30 +212,15 @@ export default function Page() {
   return (
     <main
       dir="rtl"
-      className={`font-fa relative flex flex-col overflow-hidden bg-ink text-white ${
+      className={`font-fa relative flex flex-col overflow-hidden bg-ep-bg text-white ${
         hasActivity ? "min-h-svh" : "h-svh"
       }`}
     >
       {/* Top bar */}
-      <header className="relative z-20 m-2 flex items-center justify-between px-5 pt-5 sm:px-12 sm:pt-7">
-        <HomeMenu />
 
-        <div className="flex items-center gap-4">
-          <Link
-            href="/login"
-            className="rounded-full border border-brand/70 px-8 py-2 text-xs font-bold text-white transition hover:bg-brand/10"
-          >
-            ورود
-          </Link>
+      <HomeMenu />
 
-          <Link
-            href="/signup"
-            className="hidden text-xs text-white/90 transition hover:text-brand sm:block"
-          >
-            ثبت نام
-          </Link>
-        </div>
-      </header>
+    
 
       {/* Hero */}
       <section

@@ -72,7 +72,7 @@ export default function StreakPage() {
   return (
     <main
       dir="rtl"
-      className="font-fa min-h-[calc(100svh-64px)] overflow-x-hidden bg-ink px-5 py-8 text-white sm:py-16"
+      className="font-fa min-h-[calc(100svh-64px)] overflow-x-hidden bg-ep-bg px-5 py-8 text-white sm:py-16"
     >
       <div className="mx-auto flex max-w-6xl flex-col-reverse items-center gap-8 md:flex-row md:gap-24">
         {/* متن + مراحل */}
@@ -106,7 +106,7 @@ export default function StreakPage() {
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-bold sm:h-11 sm:w-11 sm:text-base ${
                       filled
                         ? "border-brand bg-brand text-ink shadow-[0_4px_14px_rgba(255,127,92,0.4)]"
-                        : "border-white/10 bg-gradient-to-b from-white/10 to-ink text-white"
+                        : "border-white/10 bg-gradient-to-b from-white/10 to-ep-bg text-white"
                     }`}
                   >
                     {fa(i + 1)}

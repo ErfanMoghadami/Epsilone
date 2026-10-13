@@ -56,7 +56,8 @@ function parseUserTags(value: unknown): string[] | null {
     if (typeof item !== "string") return null;
     const tag = item.trim().replace(/^#/, "").replace(/\s+/g, " ");
     if (tag.length < 2 || tag.length > 40) return null;
-    if (tags.some((existing) => existing.toLowerCase() === tag.toLowerCase())) return null;
+    if (tags.some((existing) => existing.toLowerCase() === tag.toLowerCase()))
+      return null;
     tags.push(tag);
   }
   return tags;
@@ -150,7 +151,8 @@ export async function POST(request: Request) {
     const key = typeof body.key === "string" ? body.key.trim() : "";
 
     const genre = typeof body.genre === "string" ? body.genre.trim() : "";
-    const subgenre = typeof body.subgenre === "string" ? body.subgenre.trim() : "";
+    const subgenre =
+      typeof body.subgenre === "string" ? body.subgenre.trim() : "";
     const moods = parseTaxonomyArray(body.moods, MOODS, 5);
     const atmosphere = parseTaxonomyArray(body.atmosphere, ATMOSPHERES, 4);
     const instruments = parseTaxonomyArray(body.instruments, INSTRUMENTS, 8);
@@ -216,22 +218,35 @@ export async function POST(request: Request) {
       );
     }
 
-    if (subgenre && !(GENRE_TAXONOMY[genre as Genre] as readonly string[]).includes(subgenre)) {
+    if (
+      subgenre &&
+      !(GENRE_TAXONOMY[genre as Genre] as readonly string[]).includes(subgenre)
+    ) {
       return NextResponse.json(
-        { success: false, error: "Subgenre does not belong to the selected genre." },
+        {
+          success: false,
+          error: "Subgenre does not belong to the selected genre.",
+        },
         { status: 400 },
       );
     }
 
     if (!moods || !atmosphere || !instruments || !scenes || !tags) {
       return NextResponse.json(
-        { success: false, error: "One or more metadata values are invalid or exceed the allowed limit." },
+        {
+          success: false,
+          error:
+            "One or more metadata values are invalid or exceed the allowed limit.",
+        },
         { status: 400 },
       );
     }
 
     const semanticTags = [...tags, ...(subgenre ? [subgenre] : [])].filter(
-      (tag, index, all) => all.findIndex((candidate) => candidate.toLowerCase() === tag.toLowerCase()) === index,
+      (tag, index, all) =>
+        all.findIndex(
+          (candidate) => candidate.toLowerCase() === tag.toLowerCase(),
+        ) === index,
     );
 
     if (
@@ -394,24 +409,24 @@ export async function POST(request: Request) {
       {
         beat_id: beat.id,
         license_type: "Basic",
-        price: 10,
-        currency: "USD",
+        price: 2_600_000,
+        currency: "TOMAN",
         is_active: true,
         includes_stems: false,
       },
       {
         beat_id: beat.id,
         license_type: "Premium",
-        price: 25,
-        currency: "USD",
+        price: 6_500_000,
+        currency: "TOMAN",
         is_active: true,
         includes_stems: Boolean(stemsKey),
       },
       {
         beat_id: beat.id,
         license_type: "Exclusive",
-        price: 50,
-        currency: "USD",
+        price: 13_000_000,
+        currency: "TOMAN",
         is_active: true,
         includes_stems: Boolean(stemsKey),
       },

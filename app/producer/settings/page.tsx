@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import AvatarUploader from "@/components/producer/avatar-uploader";
+import ChangeUsernameForm from "@/components/producer/change-username-form";
 
 import { createClient } from "@/lib/supabase/client";
 import ChangeEmailForm from "@/components/auth/change-email-form";
@@ -111,6 +112,9 @@ export default function ProducerSettingsPage() {
         </p>
       </div>
       <AvatarUploader initialAvatarUrl={avatarUrl} />
+      <div className="mt-6">
+        <ChangeUsernameForm />
+      </div>
       <div className="space-y-6">
         {/* User ID */}
         <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">

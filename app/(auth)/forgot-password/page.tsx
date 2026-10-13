@@ -1,5 +1,8 @@
 "use client";
 
+import AuthShell from "@/components/auth/AuthShell";
+import { authFieldClass, authPrimaryButtonClass, authErrorClass, authSuccessClass, authLinkClass } from "@/components/auth/authStyles";
+
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -47,71 +50,26 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-12">
-        <div className="w-full">
-          <div className="mb-8">
-            <Link
-              href="/login"
-              className="text-sm text-white/50 transition hover:text-white"
-            >
-              ← Back to login
-            </Link>
-          </div>
-
-          <div className="mb-8">
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Forgot your password?
-            </h1>
-
-            <p className="mt-3 text-sm leading-6 text-white/50">
-              Enter your email and we&apos;ll send you a link to reset your
-              password.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-white/80"
-              >
-                Email
-              </label>
-
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/70">
-                {message}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? "Sending..." : "Send reset link"}
-            </button>
-          </form>
-        </div>
+    <AuthShell>
+      <div className="mb-8">
+        <Link href="/login" className={authLinkClass}>← بازگشت به ورود</Link>
+        <h1 className="mt-6 text-3xl font-bold tracking-tight">رمز عبورت رو فراموش کردی؟</h1>
+        <p className="mt-3 text-sm leading-7 text-ep-muted">ایمیلت رو وارد کن تا لینک ساخت رمز عبور جدید رو برات بفرستیم.</p>
       </div>
-    </main>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="sr-only">ایمیل</label>
+          <input id="email" type="email" dir="ltr" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="ایمیل" required disabled={loading} className={authFieldClass} />
+        </div>
+
+        {error && <div role="alert" className={authErrorClass}>{error}</div>}
+        {message && <div role="status" className={authSuccessClass}>{message}</div>}
+
+        <button type="submit" disabled={loading} className={authPrimaryButtonClass}>
+          {loading ? "در حال ارسال..." : "ارسال لینک بازیابی"}
+        </button>
+      </form>
+    </AuthShell>
   );
 }

@@ -46,7 +46,7 @@ export default function DiscoverPage() {
       : "Beats available for listening and purchase without AI analysis.";
 
   return (
-    <main className="min-h-screen bg-black px-5 py-10 text-white sm:px-6 sm:py-12">
+    <main className="min-h-screen --ep-fg px-5 py-10 text-white sm:px-6 sm:py-12">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-10">

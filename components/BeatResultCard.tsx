@@ -113,7 +113,8 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
             barWidth={2}
             barSpacing={2}
             barRadius={1}
-            waveformColor="rgba(255,255,255,0.28)"
+            // waveformColor="rgba(255,255,255,0.28)"
+            waveformColor="rgba(128,128,128,0.45)"
             progressColor="#ff7f5c"
             buttonSize={40}
             showInfo={false}

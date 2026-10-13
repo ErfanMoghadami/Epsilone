@@ -1,5 +1,8 @@
 "use client";
 
+import AuthShell, { GoogleIcon } from "@/components/auth/AuthShell";
+import { authFieldClass, authPrimaryButtonClass, authSecondaryButtonClass, authErrorClass, authDividerLineClass } from "@/components/auth/authStyles";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -121,135 +124,53 @@ export default function ProducerLoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] text-white">
-      <div className="flex min-h-screen items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl font-bold text-black">
-              E
-            </div>
+    <AuthShell>
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ep-brand-text">Producer</p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight">ورود پرودیوسر</h1>
+        <p className="mt-3 text-sm leading-7 text-ep-muted">برای مدیریت بیت‌ها و حساب پرودیوسرت وارد شو.</p>
+      </div>
 
-            <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-              Producer
-            </p>
+      <form onSubmit={handleLogin} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="sr-only">ایمیل</label>
+          <input id="email" type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ایمیل" autoComplete="email" required disabled={loading} className={authFieldClass} />
+        </div>
 
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Welcome back
-            </h1>
-
-            <p className="mt-2 text-sm text-neutral-500">
-              Log in to manage your beats and producer account.
-            </p>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">
-            <form onSubmit={handleLogin} className="space-y-5">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="mb-2 block text-sm font-medium text-neutral-300"
-                >
-                  Email
-                </label>
-
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  required
-                  disabled={loading}
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600 transition focus:border-white/30 focus:bg-black/60 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label
-                    htmlFor="password"
-                    className="text-sm font-medium text-neutral-300"
-                  >
-                    Password
-                  </label>
-                </div>
-
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  required
-                  disabled={loading}
-                  className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600 transition focus:border-white/30 focus:bg-black/60 disabled:cursor-not-allowed disabled:opacity-50"
-                />
-
-                <div className="flex justify-end">
-                  <Link
-                    href="/producer/forgot-password"
-                    className="text-sm text-white/50 transition hover:text-white"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-400">
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading ? "Logging in..." : "Log in as producer"}
-              </button>
-            </form>
-
-            <div className="my-6 flex items-center gap-3">
-              <div className="h-px flex-1 bg-white/10" />
-              <span className="text-xs text-neutral-600">OR</span>
-              <div className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Continue with Google
-            </button>
-          </div>
-
-          <div className="mt-6 space-y-3 text-center text-sm">
-            <p className="text-neutral-500">
-              Don&apos;t have a producer account?{" "}
-              <button
-                type="button"
-                onClick={() => router.push("/producer/signup")}
-                className="font-medium text-white transition hover:text-neutral-300"
-              >
-                Become a producer
-              </button>
-            </p>
-
-            <button
-              type="button"
-              onClick={() => router.push("/login")}
-              className="text-neutral-600 transition hover:text-neutral-300"
-            >
-              ← Back to client login
-            </button>
+        <div>
+          <label htmlFor="password" className="sr-only">رمز عبور</label>
+          <input id="password" type="password" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="رمز عبور" autoComplete="current-password" required disabled={loading} className={authFieldClass} />
+          <div className="mt-3 flex justify-start">
+            <Link href="/producer/forgot-password" className="text-xs text-ep-brand-text transition hover:opacity-80">رمز عبورت رو فراموش کردی؟</Link>
           </div>
         </div>
+
+        {error && <div role="alert" className={authErrorClass}>{error}</div>}
+
+        <button type="submit" disabled={loading} className={authPrimaryButtonClass}>
+          {loading ? "در حال ورود..." : "ورود به پنل پرودیوسر"}
+        </button>
+      </form>
+
+      <div className="my-6 flex items-center gap-4" aria-hidden="true">
+        <div className={authDividerLineClass} />
+        <span className="text-xs text-ep-muted">یا</span>
+        <div className={authDividerLineClass} />
       </div>
-    </main>
+
+      <button type="button" onClick={handleGoogleLogin} disabled={loading} className={authSecondaryButtonClass}>
+        <GoogleIcon />
+        ادامه با گوگل
+      </button>
+
+      <p className="mt-6 text-center text-xs text-ep-muted">
+        حساب پرودیوسر نداری؟{" "}
+        <Link href="/producer/signup" className="text-ep-brand-text transition hover:opacity-80">ساخت حساب</Link>
+      </p>
+
+      <Link href="/login" className="mt-8 flex h-12 w-full items-center justify-center rounded-2xl border border-ep-border bg-ep-field text-sm text-ep-fg transition hover:border-brand/60">
+        بازگشت به ورود کاربران
+      </Link>
+    </AuthShell>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import AuthShell, { GoogleIcon } from "@/components/auth/AuthShell";
+import { authFieldClass, authPrimaryButtonClass, authSecondaryButtonClass, authErrorClass, authSuccessClass, authDividerLineClass } from "@/components/auth/authStyles";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -78,126 +81,51 @@ export default function SignupPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#080808] text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-black text-xl font-bold">
-            E
-          </div>
-
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Create your account
-          </h1>
-
-          <p className="mt-2 text-sm text-neutral-500">
-            Start discovering beats with Epsilone.
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl">
-          <form onSubmit={handleSignup} className="space-y-5">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-2 block text-sm font-medium text-neutral-300"
-              >
-                Email
-              </label>
-
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                required
-                disabled={loading}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600 transition focus:border-white/30 focus:bg-black/60 disabled:opacity-50"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-2 block text-sm font-medium text-neutral-300"
-              >
-                Password
-              </label>
-
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="new-password"
-                required
-                minLength={8}
-                disabled={loading}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white outline-none placeholder:text-neutral-600 transition focus:border-white/30 focus:bg-black/60 disabled:opacity-50"
-              />
-            </div>
-
-            {error && (
-              <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-                {error}
-              </div>
-            )}
-
-            {message && (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
-                {message}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? "Creating account..." : "Create account"}
-            </button>
-          </form>
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/10" />
-            <span className="text-xs text-neutral-600">OR</span>
-            <div className="h-px flex-1 bg-white/10" />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleSignup}
-            disabled={loading}
-            className="w-full rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-white transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Continue with Google
-          </button>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-neutral-500">
-          Already have an account?{" "}
-          <button
-            type="button"
-            onClick={() => router.push("/login")}
-            className="text-white transition hover:text-neutral-300"
-          >
-            Log in
-          </button>
-        </p>
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-4 text-center">
-          <p className="text-sm text-neutral-500">Are you a producer?</p>
-
-          <button
-            type="button"
-            onClick={() => router.push("/producer/signup")}
-            className="mt-2 text-sm font-medium text-white transition hover:text-neutral-300"
-          >
-            Become a producer →
-          </button>
-        </div>
+    <AuthShell>
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ep-brand-text">Epsilone</p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight">ساخت حساب کاربری</h1>
+        <p className="mt-3 text-sm leading-7 text-ep-muted">برای کشف بیت‌های مناسب حال‌وهوات ثبت‌نام کن.</p>
       </div>
-    </main>
+
+      <form onSubmit={handleSignup} className="space-y-4">
+        <div>
+          <label htmlFor="email" className="sr-only">ایمیل</label>
+          <input id="email" type="email" dir="ltr" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ایمیل" autoComplete="email" required disabled={loading} className={authFieldClass} />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="sr-only">رمز عبور</label>
+          <input id="password" type="password" dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="رمز عبور (حداقل ۸ کاراکتر)" autoComplete="new-password" required minLength={8} disabled={loading} className={authFieldClass} />
+        </div>
+
+        {error && <div role="alert" className={authErrorClass}>{error}</div>}
+        {message && <div role="status" className={authSuccessClass}>{message}</div>}
+
+        <button type="submit" disabled={loading} className={authPrimaryButtonClass}>
+          {loading ? "در حال ساخت حساب..." : "ثبت نام"}
+        </button>
+      </form>
+
+      <div className="my-6 flex items-center gap-4" aria-hidden="true">
+        <div className={authDividerLineClass} />
+        <span className="text-xs text-ep-muted">یا</span>
+        <div className={authDividerLineClass} />
+      </div>
+
+      <button type="button" onClick={handleGoogleSignup} disabled={loading} className={authSecondaryButtonClass}>
+        <GoogleIcon />
+        ادامه با گوگل
+      </button>
+
+      <p className="mt-6 text-center text-xs text-ep-muted">
+        قبلاً حساب ساختی؟{" "}
+        <Link href="/login" className="text-ep-brand-text transition hover:opacity-80">ورود</Link>
+      </p>
+
+      <Link href="/producer/signup" className="mt-8 flex h-12 w-full items-center justify-center rounded-2xl border border-ep-border bg-ep-field text-sm text-ep-fg transition hover:border-brand/60">
+        پرودیوسری؟ ساخت حساب فروشنده
+      </Link>
+    </AuthShell>
   );
 }

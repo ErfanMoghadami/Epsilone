@@ -131,7 +131,7 @@ export default function StreakWidget() {
       {toast && (
         <div
           role="status"
-          className="flex w-72 items-start gap-3 rounded-2xl border border-white/10 bg-ink/95 p-4 text-sm text-white shadow-xl backdrop-blur"
+          className="flex w-72 items-start gap-3 rounded-2xl border border-white/10 bg-ep-bg/95 p-4 text-sm text-white shadow-xl backdrop-blur"
         >
           <Link
             href="/streak"
@@ -155,9 +155,9 @@ export default function StreakWidget() {
       <Link
         href="/streak"
         aria-label={`Daily play streak ${label}`}
-        className="group flex items-center gap-2 rounded-full border border-white/10 bg-ink/90 py-1.5 pl-4 pr-2 text-sm font-medium text-white shadow-lg backdrop-blur transition hover:border-brand/60"
+        className="group flex items-center rounded-full border border-white/10 bg-ep-bg/90 py-1.5 pl-4 pr-2 text-sm font-medium text-white shadow-lg backdrop-blur transition hover:border-brand/0"
       >
-        <span>{label}</span>
+        {/*<span>{label}</span>*/}
 
         <Image
           src="/streak-cd.webp"

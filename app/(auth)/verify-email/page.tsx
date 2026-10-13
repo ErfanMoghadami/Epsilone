@@ -1,5 +1,8 @@
 "use client";
 
+import AuthShell from "@/components/auth/AuthShell";
+import { authFieldClass, authPrimaryButtonClass, authErrorClass, authSuccessClass, authLinkClass } from "@/components/auth/authStyles";
+
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -162,123 +165,60 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#080808] px-6 text-white">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-xl font-bold text-black">
-            E
-          </div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-            Email verification
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Check your inbox
-          </h1>
-          <p className="mt-3 text-sm leading-6 text-neutral-400">
-            Enter the six-digit code sent to{" "}
-            {email ? (
-              <span className="text-white">{email}</span>
-            ) : (
-              "your email address"
-            )}
-            .
-          </p>
-        </div>
-
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 shadow-2xl">
-          <form onSubmit={handleVerify} className="space-y-5">
-            <div>
-              <label
-                htmlFor="otp"
-                className="mb-2 block text-sm font-medium text-neutral-300"
-              >
-                Verification code
-              </label>
-              <input
-                id="otp"
-                type="text"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                pattern="[0-9]{8}"
-                maxLength={8}
-                value={otp}
-                onChange={(event) =>
-                  setOtp(event.target.value.replace(/\D/g, "").slice(0, 8))
-                }
-                placeholder="00000000"
-                required
-                disabled={loading}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-4 py-4 text-center text-2xl tracking-[0.35em] text-white outline-none placeholder:text-neutral-700 focus:border-white/30 disabled:opacity-50"
-              />
-            </div>
-
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-400"
-              >
-                {error}
-              </div>
-            )}
-            {message && (
-              <div
-                role="status"
-                className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm leading-6 text-emerald-400"
-              >
-                {message}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading || otp.length !== 8}
-              className="w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {loading ? "Verifying..." : "Verify email"}
-            </button>
-          </form>
-
-          <div className="mt-5 text-center">
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resending || loading || cooldown > 0}
-              className="text-sm font-medium text-white/70 transition hover:text-white disabled:opacity-50"
-            >
-              {resending
-                ? "Sending new code..."
-                : cooldown > 0
-                  ? `Resend code in ${cooldown}s`
-                  : "Resend code"}
-            </button>
-          </div>
-
-          <p className="mt-4 text-center text-xs leading-5 text-neutral-600">
-            Didn&apos;t get a code? You may already have an account —{" "}
-            <Link
-              href={
-                nextPath === "/producer/setup" ? "/producer/login" : "/login"
-              }
-              className="text-neutral-400 hover:text-white"
-            >
-              try logging in
-            </Link>
-            .
-          </p>
-        </div>
-
-        <p className="mt-6 text-center text-sm text-neutral-500">
-          Wrong email?{" "}
-          <Link
-            href={
-              nextPath === "/producer/setup" ? "/producer/signup" : "/signup"
-            }
-            className="text-white hover:text-neutral-300"
-          >
-            Go back to sign up
-          </Link>
+    <AuthShell>
+      <div className="mb-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ep-brand-text">Email verification</p>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight">ایمیلت رو بررسی کن</h1>
+        <p className="mt-3 text-sm leading-7 text-ep-muted">
+          کد ۸ رقمی ارسال‌شده به{" "}
+          {email ? <span dir="ltr" className="break-all font-medium text-ep-fg">{email}</span> : "ایمیل شما"}
+          {" "}رو وارد کن.
         </p>
       </div>
-    </main>
+
+      <form onSubmit={handleVerify} className="space-y-4">
+        <div>
+          <label htmlFor="otp" className="sr-only">کد تأیید</label>
+          <input
+            id="otp"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]{8}"
+            maxLength={8}
+            value={otp}
+            onChange={(event) => setOtp(event.target.value.replace(/\D/g, "").slice(0, 8))}
+            placeholder="۰۰۰۰۰۰۰۰"
+            required
+            disabled={loading}
+            dir="ltr"
+            className={`${authFieldClass} text-center text-2xl tracking-[0.35em]`}
+          />
+        </div>
+
+        {error && <div role="alert" className={authErrorClass}>{error}</div>}
+        {message && <div role="status" className={authSuccessClass}>{message}</div>}
+
+        <button type="submit" disabled={loading || otp.length !== 8} className={authPrimaryButtonClass}>
+          {loading ? "در حال بررسی..." : "تأیید ایمیل"}
+        </button>
+      </form>
+
+      <div className="mt-5 text-center">
+        <button type="button" onClick={handleResend} disabled={resending || loading || cooldown > 0} className="text-sm font-medium text-ep-brand-text transition hover:opacity-80 disabled:opacity-50">
+          {resending ? "در حال ارسال کد جدید..." : cooldown > 0 ? `ارسال دوباره تا ${cooldown} ثانیه` : "ارسال دوباره کد"}
+        </button>
+      </div>
+
+      <p className="mt-5 text-center text-xs leading-6 text-ep-muted">
+        قبلاً حساب ساختی؟{" "}
+        <Link href={nextPath === "/producer/setup" ? "/producer/login" : "/login"} className="text-ep-brand-text hover:opacity-80">وارد شو</Link>
+      </p>
+
+      <p className="mt-4 text-center text-xs text-ep-muted">
+        ایمیل اشتباهه؟{" "}
+        <Link href={nextPath === "/producer/setup" ? "/producer/signup" : "/signup"} className={authLinkClass}>بازگشت به ثبت‌نام</Link>
+      </p>
+    </AuthShell>
   );
 }

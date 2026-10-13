@@ -55,51 +55,71 @@ function getSavedMode(): ThemeMode {
     return saved;
   }
 
-  return "system";
+  return "dark";
 }
 
 export default function ThemeControls() {
-  const [mode, setMode] = useState<ThemeMode>("system");
+  const [mode, setMode] = useState<ThemeMode>("dark");
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const syncTheme = () => {
-      const savedMode = getSavedMode();
-
-      setMode(savedMode);
-      setIsDark(applyTheme(savedMode));
-    };
-
-    syncTheme();
-
-    const media = window.matchMedia(
-      "(prefers-color-scheme: dark)"
+    const root = document.documentElement;
+    const mediaQuery = window.matchMedia(
+      "(prefers-color-scheme: dark)",
     );
-
-    const onSystemChange = () => {
-      if (getSavedMode() === "system") {
-        setIsDark(applyTheme("system"));
-      }
+  
+    const syncButtonState = () => {
+     setIsDark(document.documentElement.classList.contains("dark"));
     };
-
+  
+    const applyPreferredTheme = () => {
+      let mode: string | null = null;
+  
+      try {
+        mode = localStorage.getItem(STORAGE_KEY);
+      } catch {
+        // Use the system preference if storage is unavailable.
+      }
+  
+      // Preserve the existing Iran-time theme mode.
+      if (mode === "iran-time") return;
+  
+      const dark =
+        mode === "dark"
+          ? true
+          : mode === "light"
+            ? false
+            : mediaQuery.matches;
+  
+      root.classList.toggle("dark", dark);
+      root.style.colorScheme = dark ? "dark" : "light";
+      setIsDark(dark);
+    };
+  
+    applyPreferredTheme();
+  
+    const observer = new MutationObserver(syncButtonState);
+  
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  
+    // Follow OS theme changes unless the user chose a manual theme.
+    mediaQuery.addEventListener("change", applyPreferredTheme);
+  
+    // Sync theme changes made in another tab.
     const onStorage = (event: StorageEvent) => {
       if (event.key === STORAGE_KEY) {
-        syncTheme();
+        applyPreferredTheme();
       }
     };
-
-    const timer = window.setInterval(() => {
-      if (getSavedMode() === "iran-time") {
-        setIsDark(applyTheme("iran-time"));
-      }
-    }, 60_000);
-
-    media.addEventListener("change", onSystemChange);
+  
     window.addEventListener("storage", onStorage);
-
+  
     return () => {
-      window.clearInterval(timer);
-      media.removeEventListener("change", onSystemChange);
+      observer.disconnect();
+      mediaQuery.removeEventListener("change", applyPreferredTheme);
       window.removeEventListener("storage", onStorage);
     };
   }, []);

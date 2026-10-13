@@ -10,20 +10,36 @@ const RESERVED_USERNAMES = new Set([
   "beats",
   "upload",
   "settings",
+  "producers",
+  "producer",
+  "api",
+  "auth",
+  "cart",
+  "checkout",
+  "dashboard",
+  "discover",
+  "favorites",
+  "purchases",
+  "payment",
+  "payments",
+  "about",
+  "privacy",
+  "terms",
+  "contact",
+  "support",
+  "admin",
+  "root",
+  "www",
 ]);
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
 
   const username = (
-    url.searchParams.get("username") || ""
+    url.searchParams.get("username") ?? ""
   )
     .trim()
     .toLowerCase();
-
-  // --------------------------------------------------------
-  // Validate format
-  // --------------------------------------------------------
 
   if (!/^[a-z0-9_-]{3,20}$/.test(username)) {
     return NextResponse.json(
@@ -36,27 +52,21 @@ export async function GET(request: Request) {
     );
   }
 
-  // --------------------------------------------------------
-  // Reserved usernames
-  // --------------------------------------------------------
-
   if (RESERVED_USERNAMES.has(username)) {
     return NextResponse.json({
       available: false,
+      error: "This username is reserved.",
     });
   }
-
-  // --------------------------------------------------------
-  // Check authentication
-  // --------------------------------------------------------
 
   const supabase = await createClient();
 
   const {
     data: { user },
+    error: authError,
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (authError || !user) {
     return NextResponse.json(
       {
         available: false,
@@ -66,17 +76,18 @@ export async function GET(request: Request) {
     );
   }
 
-  // --------------------------------------------------------
-  // Check producer role
-  // --------------------------------------------------------
+  const { data: profile, error: profileError } =
+    await supabase
+      .from("profiles")
+      .select("id, username, role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile || profile.role !== "producer") {
+  if (
+    profileError ||
+    !profile ||
+    profile.role !== "producer"
+  ) {
     return NextResponse.json(
       {
         available: false,
@@ -85,12 +96,6 @@ export async function GET(request: Request) {
       { status: 403 },
     );
   }
-
-  // --------------------------------------------------------
-  // Use service role for username lookup
-  // because RLS should not expose every producer profile
-  // to the client.
-  // --------------------------------------------------------
 
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -115,34 +120,71 @@ export async function GET(request: Request) {
   const supabaseAdmin = createAdminClient(
     supabaseUrl,
     serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    },
   );
 
+  // Check the currently active username.
   const {
-    data: existingUsername,
-    error: usernameLookupError,
+    data: existingProfile,
+    error: existingProfileError,
   } = await supabaseAdmin
     .from("profiles")
     .select("id")
     .eq("username", username)
     .maybeSingle();
 
-  if (usernameLookupError) {
+  if (existingProfileError) {
     console.error(
-      "Username lookup error:",
-      usernameLookupError,
+      "Username lookup failed:",
+      existingProfileError,
     );
 
     return NextResponse.json(
       {
         available: false,
-        error:
-          "Could not check username availability.",
+        error: "Could not check username availability.",
       },
       { status: 500 },
     );
   }
 
+  // Check whether this name is reserved as an old username.
+  const {
+    data: alias,
+    error: aliasError,
+  } = await supabaseAdmin
+    .from("producer_username_aliases")
+    .select("producer_id")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (aliasError) {
+    console.error("Username alias lookup failed:", aliasError);
+
+    return NextResponse.json(
+      {
+        available: false,
+        error: "Could not check username availability.",
+      },
+      { status: 500 },
+    );
+  }
+
+  const activeNameAvailable =
+    !existingProfile ||
+    existingProfile.id === user.id;
+
+  const aliasAvailable =
+    !alias ||
+    alias.producer_id === user.id;
+
   return NextResponse.json({
-    available: !existingUsername,
+    available:
+      activeNameAvailable && aliasAvailable,
   });
 }
