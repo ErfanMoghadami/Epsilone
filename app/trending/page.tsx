@@ -1,13 +1,383 @@
+// "use client";
+
+// import Link from "next/link";
+// import { useEffect, useState } from "react";
+// import { useRouter } from "next/navigation";
+// import type { MouseEvent } from "react";
+// import AddToCartButton from "@/components/AddToCartButton";
+// import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
+// import FavoriteButton from "@/components/FavoriteButton";
+// import { formatPriceAmount } from "@/lib/format-price";
+
+// type RankingMode =
+//   | "trending"
+//   | "popular_new"
+//   | "most_favorited"
+//   | "most_played";
+
+// type RankedBeat = {
+//   id: string;
+//   title: string | null;
+//   preview_url: string | null;
+//   cover_url: string | null;
+//   bpm: number | null;
+//   key: string | null;
+//   genre: string | null;
+//   moods: string[] | null;
+//   producer_id: string | null;
+//   producer_username: string | null;
+//   producer_display_name: string | null;
+//   favorite_count: number | null;
+//   recent_favorite_count: number | null;
+//   play_count: number | null;
+//   recent_play_count: number | null;
+//   trend_score: number | null;
+//   created_at: string | null;
+//   discount_percent?: number;
+//   starting_price?: number | null;
+//   original_starting_price?: number | null;
+//   currency?: string | null;
+// };
+
+// const TABS: Array<{
+//   id: RankingMode;
+//   label: string;
+//   description: string;
+// }> = [
+//   {
+//     id: "trending",
+//     label: "Trending",
+//     description: "Beats getting attention this week.",
+//   },
+//   {
+//     id: "popular_new",
+//     label: "New & Rising",
+//     description: "New releases gaining real activity in their first 30 days.",
+//   },
+//   {
+//     id: "most_favorited",
+//     label: "Most Favorited",
+//     description: "Beats saved by listeners over time.",
+//   },
+//   {
+//     id: "most_played",
+//     label: "Most Played",
+//     description: "Beats with the highest recorded play-event totals.",
+//   },
+// ];
+
+// function formatCount(value: number | null | undefined): string {
+//   return Number(value ?? 0).toLocaleString();
+// }
+
+// function formatDate(value: string | null): string | null {
+//   if (!value) return null;
+//   const date = new Date(value);
+//   if (Number.isNaN(date.getTime())) return null;
+//   return new Intl.DateTimeFormat("en", {
+//     month: "short",
+//     day: "numeric",
+//   }).format(date);
+// }
+
+// export default function TrendingPage() {
+//   const router = useRouter();
+//   const [mode, setMode] = useState<RankingMode>("trending");
+//   const [beats, setBeats] = useState<RankedBeat[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState("");
+
+//   useEffect(() => {
+//     const controller = new AbortController();
+
+//     async function loadRanking() {
+//       setLoading(true);
+//       setError("");
+
+//       try {
+//         const response = await fetch(
+//           `/api/trending?mode=${encodeURIComponent(mode)}&limit=24`,
+//           {
+//             cache: "no-store",
+//             signal: controller.signal,
+//           },
+//         );
+//         const data = await response.json();
+
+//         if (!response.ok || !data.success) {
+//           throw new Error(data.error || "Could not load trending beats.");
+//         }
+
+//         setBeats(Array.isArray(data.results) ? data.results : []);
+//       } catch (loadError) {
+//         if (controller.signal.aborted) return;
+//         setError(
+//           loadError instanceof Error
+//             ? loadError.message
+//             : "Could not load trending beats.",
+//         );
+//       } finally {
+//         if (!controller.signal.aborted) setLoading(false);
+//       }
+//     }
+
+//     void loadRanking();
+//     return () => controller.abort();
+//   }, [mode]);
+
+//   function handleCardClick(event: MouseEvent<HTMLElement>, beatId: string) {
+//     const target = event.target;
+
+//     if (!(target instanceof Element)) return;
+
+//     // Preserve all nested navigation/actions and audio controls.
+//     if (
+//       target.closest(
+//         "a, button, input, select, textarea, [role='button'], .beat-preview-player, [role='dialog']",
+//       )
+//     ) {
+//       return;
+//     }
+
+//     router.push(`/beat/${beatId}`);
+//   }
+
+//   const selectedTab = TABS.find((tab) => tab.id === mode) ?? TABS[0];
+
+//   return (
+//     <main className="min-h-screen --ep-fg px-5 py-10 text-white sm:px-8 sm:py-14">
+//       <div className="mx-auto max-w-7xl">
+//         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+//           <div>
+//             <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">
+//               Discover what matters
+//             </p>
+//             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
+//               Trending
+//             </h1>
+//             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base">
+//               Find beats listeners are playing and saving across Epsilone.
+//               Rankings update from recorded activity.
+//             </p>
+//           </div>
+//           <Link
+//             href="/discover"
+//             className="inline-flex w-fit items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 text-sm text-zinc-200 transition hover:border-white/30 hover:bg-white/5"
+//           >
+//             Explore all beats <span className="ml-2" aria-hidden="true">↗</span>
+//           </Link>
+//         </header>
+
+//         <div className="mb-7 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Beat rankings">
+//           {TABS.map((tab) => (
+//             <button
+//               key={tab.id}
+//               type="button"
+//               role="tab"
+//               aria-selected={mode === tab.id}
+//               onClick={() => setMode(tab.id)}
+//               className={`shrink-0 rounded-xl border px-4 py-2.5 text-sm transition ${
+//                 mode === tab.id
+//                   ? "border-orange-300/50 bg-orange-300/10 text-orange-100"
+//                   : "border-white/10 bg-white/[0.02] text-zinc-400 hover:border-white/20 hover:text-white"
+//               }`}
+//             >
+//               {tab.label}
+//             </button>
+//           ))}
+//         </div>
+
+//         <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+//           <p className="text-sm text-zinc-400">{selectedTab.description}</p>
+//           <p className="text-xs text-zinc-600">
+//             {loading ? "Updating rankings…" : `${beats.length} beats`}
+//           </p>
+//         </div>
+
+//         {error && (
+//           <div className="mb-6 rounded-xl border border-red-900/70 bg-red-950/30 p-4 text-sm text-red-300">
+//             {error}
+//           </div>
+//         )}
+
+//         {loading && (
+//           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+//             {Array.from({ length: 8 }).map((_, index) => (
+//               <div
+//                 key={index}
+//                 className="glass-card overflow-hidden rounded-2xl"
+//               >
+//                 <div className="aspect-square animate-pulse bg-white/[0.05]" />
+//                 <div className="space-y-3 p-4">
+//                   <div className="h-4 w-2/3 animate-pulse rounded bg-white/[0.06]" />
+//                   <div className="h-3 w-1/3 animate-pulse rounded bg-white/[0.04]" />
+//                   <div className="h-10 animate-pulse rounded-xl bg-white/[0.04]" />
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         )}
+
+//         {!loading && !error && beats.length === 0 && (
+//           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-16 text-center">
+//             <h2 className="text-lg font-medium text-white">Not enough activity yet</h2>
+//             <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-zinc-500">
+//               As listeners play and favorite more beats, this ranking will fill in.
+//               Try another category or explore all available beats.
+//             </p>
+//             <Link
+//               href="/discover"
+//               className="mt-5 inline-flex rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200"
+//             >
+//               Explore Discover
+//             </Link>
+//           </div>
+//         )}
+
+//         {!loading && !error && beats.length > 0 && (
+//           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+//             {beats.map((beat, index) => {
+//               const producerLabel =
+//                 beat.producer_display_name?.trim() ||
+//                 beat.producer_username?.trim() ||
+//                 "Producer";
+//               const activityWindow = mode === "popular_new" ? "30d" : "7d";
+
+//               return (
+//                 <article
+//                   key={beat.id}
+//                   onClick={(event) => handleCardClick(event, beat.id)}
+//                   className="glass-card cursor-pointer overflow-hidden rounded-2xl"
+//                 >
+//                   <div className="relative">
+//                     {beat.cover_url ? (
+//                       // eslint-disable-next-line @next/next/no-img-element
+//                       <img
+//                         src={beat.cover_url}
+//                         alt={beat.title ? `${beat.title} cover` : "Beat cover"}
+//                         className="aspect-square w-full object-cover"
+//                         loading={index > 3 ? "lazy" : "eager"}
+//                       />
+//                     ) : (
+//                       <div className="flex aspect-square w-full items-center justify-center bg-white/5 text-sm text-zinc-500">
+//                         Epsilone
+//                       </div>
+//                     )}
+//                     <div className="absolute left-3 top-3 rounded-lg border border-white/10 bg-black/70 px-2.5 py-1 text-xs text-zinc-200 backdrop-blur">
+//                       #{index + 1}
+//                     </div>
+//                     <div className="absolute right-3 top-3">
+//                       <FavoriteButton beatId={beat.id} />
+//                     </div>
+//                   </div>
+
+//                   <div className="p-4">
+//                     <div className="flex items-start justify-between gap-3">
+//                       <div className="min-w-0">
+//                         <div className="flex flex-wrap items-center gap-2">
+//                           <h2 className="max-w-full truncate text-lg font-semibold">
+//                             {beat.title ?? "Untitled Beat"}
+//                           </h2>
+//                           {Number(beat.discount_percent ?? 0) > 0 && (
+//                             <span className="shrink-0 rounded-full bg-orange-300/15 px-2 py-0.5 text-[10px] font-bold text-orange-200">
+//                               {Number(beat.discount_percent)}% OFF
+//                             </span>
+//                           )}
+//                         </div>
+//                         {beat.producer_username ? (
+//                           <Link
+//                             href={`/producers/${encodeURIComponent(beat.producer_username)}`}
+//                             className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-brand"
+//                           >
+//                             @{beat.producer_username}
+//                           </Link>
+//                         ) : (
+//                           <p className="mt-1 text-sm text-zinc-500">{producerLabel}</p>
+//                         )}
+//                       </div>
+//                       <span className="shrink-0 text-xs text-zinc-500">
+//                         {formatDate(beat.created_at) ?? "On Epsilone"}
+//                       </span>
+//                     </div>
+
+//                     <p className="mt-3 text-sm text-zinc-500">
+//                       {beat.genre ?? "Unknown genre"}
+//                       {" • "}{beat.bpm ?? "-"} BPM
+//                       {" • "}{beat.key ?? "-"}
+//                     </p>
+
+//                     {beat.starting_price != null && (
+//                       <div className="mt-3 flex items-baseline gap-2">
+//                         <span className={`font-semibold ${Number(beat.discount_percent ?? 0) > 0 ? "text-orange-300" : "text-zinc-200"}`}>
+//                           From {formatPriceAmount(beat.starting_price)}
+//                         </span>
+//                         {Number(beat.discount_percent ?? 0) > 0 && beat.original_starting_price != null && (
+//                           <span className="text-xs text-zinc-600 line-through">
+//                             {formatPriceAmount(beat.original_starting_price)}
+//                           </span>
+//                         )}
+//                       </div>
+//                     )}
+
+//                     <div className="mt-4 grid grid-cols-2 gap-2">
+//                       <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+//                         <p className="text-[11px] text-zinc-600">
+//                           {mode === "trending" || mode === "popular_new" ? `Plays · ${activityWindow}` : "Total plays"}
+//                         </p>
+//                         <p className="mt-1 text-sm font-medium text-zinc-200">
+//                           {formatCount(mode === "trending" || mode === "popular_new" ? beat.recent_play_count : beat.play_count)}
+//                         </p>
+//                       </div>
+//                       <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+//                         <p className="text-[11px] text-zinc-600">
+//                           {mode === "trending" || mode === "popular_new" ? `Favorites · ${activityWindow}` : "Total favorites"}
+//                         </p>
+//                         <p className="mt-1 text-sm font-medium text-zinc-200">
+//                           {formatCount(mode === "trending" || mode === "popular_new" ? beat.recent_favorite_count : beat.favorite_count)}
+//                         </p>
+//                       </div>
+//                     </div>
+
+//                     {beat.preview_url && (
+//                       <div className="beat-preview-player mt-4">
+//                         <BeatPreviewPlayer
+//                           url={beat.preview_url}
+//                           title={beat.title ?? "Untitled Beat"}
+//                         />
+//                       </div>
+//                     )}
+
+//                     <div className="mt-4 grid gap-2">
+//                       <Link
+//                         href={`/beat/${beat.id}`}
+//                         className="flex w-full items-center justify-center rounded-xl border border-brand/60 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand/10"
+//                       >
+//                         View Beat <span className="ml-2" aria-hidden="true">→</span>
+//                       </Link>
+//                       <AddToCartButton
+//                         beatId={beat.id}
+//                         title={beat.title ?? "Untitled Beat"}
+//                       />
+//                     </div>
+//                   </div>
+//                 </article>
+//               );
+//             })}
+//           </div>
+//         )}
+//       </div>
+//     </main>
+//   );
+// }
+
 "use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import type { MouseEvent } from "react";
-import AddToCartButton from "@/components/AddToCartButton";
-import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
-import FavoriteButton from "@/components/FavoriteButton";
-import { formatPriceAmount } from "@/lib/format-price";
+
+import BeatCard from "@/components/discover/BeatCard";
+import BeatGridSkeleton from "@/components/discover/BeatGridSkeleton";
+import { BEAT_GRID_CLASS } from "@/lib/discover";
 
 type RankingMode =
   | "trending"
@@ -46,42 +416,40 @@ const TABS: Array<{
 }> = [
   {
     id: "trending",
-    label: "Trending",
-    description: "Beats getting attention this week.",
+    label: "ترند",
+    description: "بیت‌هایی که این هفته بیشترین توجه را گرفته‌اند.",
   },
   {
     id: "popular_new",
-    label: "New & Rising",
-    description: "New releases gaining real activity in their first 30 days.",
+    label: "جدید و در حال صعود",
+    description: "انتشارهای جدید که در ۳۰ روز اول فعالیت واقعی داشته‌اند.",
   },
   {
     id: "most_favorited",
-    label: "Most Favorited",
-    description: "Beats saved by listeners over time.",
+    label: "بیشترین علاقه‌مندی",
+    description: "بیت‌هایی که شنونده‌ها در طول زمان ذخیره کرده‌اند.",
   },
   {
     id: "most_played",
-    label: "Most Played",
-    description: "Beats with the highest recorded play-event totals.",
+    label: "بیشترین پخش",
+    description: "بیت‌هایی با بیشترین تعداد پخش ثبت‌شده.",
   },
 ];
 
 function formatCount(value: number | null | undefined): string {
-  return Number(value ?? 0).toLocaleString();
+  return Number(value ?? 0).toLocaleString("en-US");
 }
 
-function formatDate(value: string | null): string | null {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-  }).format(date);
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+      <p className="text-[11px] text-zinc-600">{label}</p>
+      <p className="mt-1 text-sm font-medium text-zinc-200">{value}</p>
+    </div>
+  );
 }
 
 export default function TrendingPage() {
-  const router = useRouter();
   const [mode, setMode] = useState<RankingMode>("trending");
   const [beats, setBeats] = useState<RankedBeat[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +473,7 @@ export default function TrendingPage() {
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.error || "Could not load trending beats.");
+          throw new Error(data.error || "بارگذاری ترندها ممکن نشد.");
         }
 
         setBeats(Array.isArray(data.results) ? data.results : []);
@@ -114,7 +482,7 @@ export default function TrendingPage() {
         setError(
           loadError instanceof Error
             ? loadError.message
-            : "Could not load trending beats.",
+            : "بارگذاری ترندها ممکن نشد.",
         );
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -125,50 +493,40 @@ export default function TrendingPage() {
     return () => controller.abort();
   }, [mode]);
 
-  function handleCardClick(event: MouseEvent<HTMLElement>, beatId: string) {
-    const target = event.target;
-
-    if (!(target instanceof Element)) return;
-
-    // Preserve all nested navigation/actions and audio controls.
-    if (
-      target.closest(
-        "a, button, input, select, textarea, [role='button'], .beat-preview-player, [role='dialog']",
-      )
-    ) {
-      return;
-    }
-
-    router.push(`/beat/${beatId}`);
-  }
-
   const selectedTab = TABS.find((tab) => tab.id === mode) ?? TABS[0];
+  const isRecentMode = mode === "trending" || mode === "popular_new";
+  const activityWindow = mode === "popular_new" ? "۳۰ روز" : "۷ روز";
 
   return (
-    <main className="min-h-screen --ep-fg px-5 py-10 text-white sm:px-8 sm:py-14">
+    <main
+      dir="rtl"
+      className="min-h-screen --ep-fg px-5 py-10 text-white sm:px-8 sm:py-14"
+    >
       <div className="mx-auto max-w-7xl">
         <header className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">
-              Discover what matters
+            <p className="mb-3 text-xs font-semibold text-orange-300">
+              ببین چی داغه
             </p>
-            <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-              Trending
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400 sm:text-base">
-              Find beats listeners are playing and saving across Epsilone.
-              Rankings update from recorded activity.
+            <h1 className="text-4xl font-semibold sm:text-5xl">ترندها</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
+              بیت‌هایی را که شنونده‌ها در Epsilone بیشتر پخش و ذخیره می‌کنند پیدا
+              کنید. رتبه‌ها بر اساس فعالیت ثبت‌شده به‌روز می‌شوند.
             </p>
           </div>
           <Link
             href="/discover"
             className="inline-flex w-fit items-center justify-center rounded-xl border border-white/15 px-4 py-2.5 text-sm text-zinc-200 transition hover:border-white/30 hover:bg-white/5"
           >
-            Explore all beats <span className="ml-2" aria-hidden="true">↗</span>
+            همه‌ی بیت‌ها <span className="mr-2" aria-hidden="true">↖</span>
           </Link>
         </header>
 
-        <div className="mb-7 flex gap-2 overflow-x-auto pb-2" role="tablist" aria-label="Beat rankings">
+        <div
+          className="mb-7 flex gap-2 overflow-x-auto pb-2"
+          role="tablist"
+          aria-label="رتبه‌بندی بیت‌ها"
+        >
           {TABS.map((tab) => (
             <button
               key={tab.id}
@@ -190,7 +548,7 @@ export default function TrendingPage() {
         <div className="mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-zinc-400">{selectedTab.description}</p>
           <p className="text-xs text-zinc-600">
-            {loading ? "Updating rankings…" : `${beats.length} beats`}
+            {loading ? "در حال به‌روزرسانی رتبه‌ها…" : `${beats.length} بیت`}
           </p>
         </div>
 
@@ -200,169 +558,60 @@ export default function TrendingPage() {
           </div>
         )}
 
-        {loading && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div
-                key={index}
-                className="glass-card overflow-hidden rounded-2xl"
-              >
-                <div className="aspect-square animate-pulse bg-white/[0.05]" />
-                <div className="space-y-3 p-4">
-                  <div className="h-4 w-2/3 animate-pulse rounded bg-white/[0.06]" />
-                  <div className="h-3 w-1/3 animate-pulse rounded bg-white/[0.04]" />
-                  <div className="h-10 animate-pulse rounded-xl bg-white/[0.04]" />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        {loading && <BeatGridSkeleton />}
 
         {!loading && !error && beats.length === 0 && (
           <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-16 text-center">
-            <h2 className="text-lg font-medium text-white">Not enough activity yet</h2>
-            <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-zinc-500">
-              As listeners play and favorite more beats, this ranking will fill in.
-              Try another category or explore all available beats.
+            <h2 className="text-lg font-medium text-white">
+              هنوز فعالیت کافی ثبت نشده
+            </h2>
+            <p className="mx-auto mt-2 max-w-lg text-sm leading-7 text-zinc-500">
+              با پخش و علاقه‌مندی بیشتر شنونده‌ها، این رتبه‌بندی پر می‌شود. دسته‌ی
+              دیگری را امتحان کنید یا همه‌ی بیت‌ها را ببینید.
             </p>
             <Link
               href="/discover"
               className="mt-5 inline-flex rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200"
             >
-              Explore Discover
+              کشف همه‌ی بیت‌ها
             </Link>
           </div>
         )}
 
         {!loading && !error && beats.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {beats.map((beat, index) => {
-              const producerLabel =
-                beat.producer_display_name?.trim() ||
-                beat.producer_username?.trim() ||
-                "Producer";
-              const activityWindow = mode === "popular_new" ? "30d" : "7d";
-
-              return (
-                <article
-                  key={beat.id}
-                  onClick={(event) => handleCardClick(event, beat.id)}
-                  className="glass-card cursor-pointer overflow-hidden rounded-2xl"
-                >
-                  <div className="relative">
-                    {beat.cover_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={beat.cover_url}
-                        alt={beat.title ? `${beat.title} cover` : "Beat cover"}
-                        className="aspect-square w-full object-cover"
-                        loading={index > 3 ? "lazy" : "eager"}
-                      />
-                    ) : (
-                      <div className="flex aspect-square w-full items-center justify-center bg-white/5 text-sm text-zinc-500">
-                        Epsilone
-                      </div>
-                    )}
-                    <div className="absolute left-3 top-3 rounded-lg border border-white/10 bg-black/70 px-2.5 py-1 text-xs text-zinc-200 backdrop-blur">
-                      #{index + 1}
-                    </div>
-                    <div className="absolute right-3 top-3">
-                      <FavoriteButton beatId={beat.id} />
-                    </div>
+          <div className={BEAT_GRID_CLASS}>
+            {beats.map((beat, index) => (
+              <BeatCard
+                key={beat.id}
+                beat={beat}
+                rank={index + 1}
+                eager={index < 4}
+                extra={
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <StatBox
+                      label={
+                        isRecentMode ? `پخش · ${activityWindow}` : "کل پخش‌ها"
+                      }
+                      value={formatCount(
+                        isRecentMode ? beat.recent_play_count : beat.play_count,
+                      )}
+                    />
+                    <StatBox
+                      label={
+                        isRecentMode
+                          ? `علاقه‌مندی · ${activityWindow}`
+                          : "کل علاقه‌مندی‌ها"
+                      }
+                      value={formatCount(
+                        isRecentMode
+                          ? beat.recent_favorite_count
+                          : beat.favorite_count,
+                      )}
+                    />
                   </div>
-
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h2 className="max-w-full truncate text-lg font-semibold">
-                            {beat.title ?? "Untitled Beat"}
-                          </h2>
-                          {Number(beat.discount_percent ?? 0) > 0 && (
-                            <span className="shrink-0 rounded-full bg-orange-300/15 px-2 py-0.5 text-[10px] font-bold text-orange-200">
-                              {Number(beat.discount_percent)}% OFF
-                            </span>
-                          )}
-                        </div>
-                        {beat.producer_username ? (
-                          <Link
-                            href={`/producers/${encodeURIComponent(beat.producer_username)}`}
-                            className="mt-1 inline-block text-sm text-zinc-500 transition hover:text-brand"
-                          >
-                            @{beat.producer_username}
-                          </Link>
-                        ) : (
-                          <p className="mt-1 text-sm text-zinc-500">{producerLabel}</p>
-                        )}
-                      </div>
-                      <span className="shrink-0 text-xs text-zinc-500">
-                        {formatDate(beat.created_at) ?? "On Epsilone"}
-                      </span>
-                    </div>
-
-                    <p className="mt-3 text-sm text-zinc-500">
-                      {beat.genre ?? "Unknown genre"}
-                      {" • "}{beat.bpm ?? "-"} BPM
-                      {" • "}{beat.key ?? "-"}
-                    </p>
-
-                    {beat.starting_price != null && (
-                      <div className="mt-3 flex items-baseline gap-2">
-                        <span className={`font-semibold ${Number(beat.discount_percent ?? 0) > 0 ? "text-orange-300" : "text-zinc-200"}`}>
-                          From {formatPriceAmount(beat.starting_price)}
-                        </span>
-                        {Number(beat.discount_percent ?? 0) > 0 && beat.original_starting_price != null && (
-                          <span className="text-xs text-zinc-600 line-through">
-                            {formatPriceAmount(beat.original_starting_price)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="mt-4 grid grid-cols-2 gap-2">
-                      <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-[11px] text-zinc-600">
-                          {mode === "trending" || mode === "popular_new" ? `Plays · ${activityWindow}` : "Total plays"}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-zinc-200">
-                          {formatCount(mode === "trending" || mode === "popular_new" ? beat.recent_play_count : beat.play_count)}
-                        </p>
-                      </div>
-                      <div className="rounded-xl border border-white/10 bg-white/5 p-3">
-                        <p className="text-[11px] text-zinc-600">
-                          {mode === "trending" || mode === "popular_new" ? `Favorites · ${activityWindow}` : "Total favorites"}
-                        </p>
-                        <p className="mt-1 text-sm font-medium text-zinc-200">
-                          {formatCount(mode === "trending" || mode === "popular_new" ? beat.recent_favorite_count : beat.favorite_count)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {beat.preview_url && (
-                      <div className="beat-preview-player mt-4">
-                        <BeatPreviewPlayer
-                          url={beat.preview_url}
-                          title={beat.title ?? "Untitled Beat"}
-                        />
-                      </div>
-                    )}
-
-                    <div className="mt-4 grid gap-2">
-                      <Link
-                        href={`/beat/${beat.id}`}
-                        className="flex w-full items-center justify-center rounded-xl border border-brand/60 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand/10"
-                      >
-                        View Beat <span className="ml-2" aria-hidden="true">→</span>
-                      </Link>
-                      <AddToCartButton
-                        beatId={beat.id}
-                        title={beat.title ?? "Untitled Beat"}
-                      />
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+                }
+              />
+            ))}
           </div>
         )}
       </div>

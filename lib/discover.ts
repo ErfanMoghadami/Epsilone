@@ -131,10 +131,16 @@ export function buildQueryString(filters: Filters, offset = 0) {
   return params.toString();
 }
 
-export function formatPrice(price: number | null, _currency: string | null) {
+export const BEAT_GRID_CLASS =
+  "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+
+export function formatPrice(
+  price: number | null | undefined,
+  _currency?: string | null,
+) {
   if (price === null || price === undefined) {
-    return "Price unavailable";
+    return "قیمت نامشخص";
   }
 
-  return `From ${formatPriceAmount(price)}`;
+  return `از ${formatPriceAmount(price)}`;
 }

@@ -33,12 +33,18 @@
     --ep-nav: rgba(18, 22, 32, 0.82);
     --ep-brand-text: #ff7f5c;
     --ep-orbit: rgba(255, 127, 92, 0.4);
+
+    /* Night surfaces: به‌جای مشکی خالص، سرمه‌ای هماهنگ با پس‌زمینه */
+    --color-black: #0e121b;
+    --color-zinc-950: #181d2a;
+    --color-zinc-900: #1f2536;
+    --color-zinc-800: #2c344a;
 }
 
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
-    --font-sans: var(--font-geist-sans);
+    --font-sans: var(--font-vazirmatn);
     --font-mono: var(--font-geist-mono);
     --font-fa: var(--font-vazirmatn);
     --font-logo: var(--font-jura);
@@ -57,7 +63,7 @@
 body {
     background: var(--background);
     color: var(--foreground);
-    font-family: Arial, Helvetica, sans-serif;
+    font-family: var(--font-vazirmatn), Tahoma, Arial, sans-serif;
 }
 
 .font-fa {
@@ -320,4 +326,160 @@ body {
 /* Hamburger icon: black in day mode, white in night mode */
 :root:not(.dark) .home-menu-hamburger {
     filter: brightness(0);
+}
+
+/* ------------------------------------------------------------------
+   پنجره‌ی شیشه‌ای (مودال): هماهنگ با تم شب و روز
+   ------------------------------------------------------------------ */
+.glass-modal {
+    position: relative;
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 127, 92, 0.07) 0%,
+            rgba(255, 255, 255, 0.02) 100%
+        ),
+        #181d2a;
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.12),
+        0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* بوردر گرادیانی، مثل glass-card */
+.glass-modal::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.22),
+        rgba(255, 255, 255, 0.03) 50%,
+        rgba(255, 127, 92, 0.22)
+    );
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.glass-modal-backdrop {
+    background: rgba(18, 22, 32, 0.6);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+/* تم روز */
+:root:not(.dark) .glass-modal {
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 127, 92, 0.06) 0%,
+            rgba(255, 255, 255, 0.7) 100%
+        ),
+        #ffffff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 24px 60px rgba(22, 26, 36, 0.2);
+}
+
+:root:not(.dark) .glass-modal::before {
+    background: linear-gradient(
+        180deg,
+        rgba(22, 26, 36, 0.14),
+        rgba(22, 26, 36, 0.03) 50%,
+        rgba(255, 127, 92, 0.3)
+    );
+}
+
+:root:not(.dark) .glass-modal-backdrop {
+    background: rgba(22, 26, 36, 0.35);
+}
+
+/* ------------------------------------------------------------------
+   دراپ‌داون اختصاصی (components/ui/Select.tsx)
+   ------------------------------------------------------------------ */
+.select-menu {
+    position: absolute;
+    inset-inline: 0;
+    top: calc(100% + 8px);
+    z-index: 30;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 127, 92, 0.07) 0%,
+            rgba(255, 255, 255, 0.02) 100%
+        ),
+        #181d2a;
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    backdrop-filter: blur(22px) saturate(160%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 18px 40px rgba(0, 0, 0, 0.5);
+    transform-origin: top center;
+    animation: select-pop 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes select-pop {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.select-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.select-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.select-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.select-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+}
+
+:root:not(.dark) .select-menu {
+    border-color: rgba(22, 26, 36, 0.14);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255, 127, 92, 0.06) 0%,
+            rgba(255, 255, 255, 0.7) 100%
+        ),
+        #ffffff;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 18px 40px rgba(22, 26, 36, 0.18);
+}
+
+:root:not(.dark) .select-scroll {
+    scrollbar-color: rgba(22, 26, 36, 0.25) transparent;
+}
+
+:root:not(.dark) .select-scroll::-webkit-scrollbar-thumb {
+    background: rgba(22, 26, 36, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .select-menu {
+        animation: none;
+    }
 }
