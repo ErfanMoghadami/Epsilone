@@ -317,4 +317,7 @@ body {
         drop-shadow(0 0 48px rgba(255, 127, 92, 0.3));
 }
 
-
+/* Hamburger icon: black in day mode, white in night mode */
+:root:not(.dark) .home-menu-hamburger {
+    filter: brightness(0);
+}
