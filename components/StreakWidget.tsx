@@ -155,16 +155,14 @@ export default function StreakWidget() {
       <Link
         href="/streak"
         aria-label={`Daily play streak ${label}`}
-        className="group flex items-center rounded-full border border-white/10 bg-ep-bg/90 py-1.5 pl-4 pr-2 text-sm font-medium text-white shadow-lg backdrop-blur transition hover:border-brand/0"
+        className="group inline-flex items-center justify-center"
       >
-        {/*<span>{label}</span>*/}
-
         <Image
           src="/streak-cd.webp"
           alt=""
           width={36}
           height={31}
-          className="h-8 w-auto transition group-hover:-rotate-6"
+          className="h-8 w-auto origin-center transition-transform duration-300 ease-in-out group-hover:rotate-90"
         />
       </Link>
     </div>

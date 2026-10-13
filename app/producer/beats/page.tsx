@@ -169,6 +169,40 @@ const router = useRouter();
         return;
       }
 
+      // Home keeps its last recommendation results in sessionStorage. Remove
+      // this beat from that saved state as well, so navigating back home does
+      // not render a player pointing at media that has just been deleted.
+      try {
+        const storageKey = "epsilone-search-state";
+        const rawSavedSearch = sessionStorage.getItem(storageKey);
+
+        if (rawSavedSearch) {
+          const savedValue: unknown = JSON.parse(rawSavedSearch);
+
+          if (savedValue && typeof savedValue === "object") {
+            const saved = savedValue as Record<string, unknown>;
+            const removeDeletedBeat = (items: unknown) =>
+              Array.isArray(items)
+                ? items.filter((item) => {
+                    if (!item || typeof item !== "object") return true;
+                    return !("id" in item) || item.id !== beat.id;
+                  })
+                : [];
+
+            sessionStorage.setItem(
+              storageKey,
+              JSON.stringify({
+                ...saved,
+                results: removeDeletedBeat(saved.results),
+                alternatives: removeDeletedBeat(saved.alternatives),
+              }),
+            );
+          }
+        }
+      } catch (cacheError) {
+        console.warn("Could not update saved home search results:", cacheError);
+      }
+
       setBeats((currentBeats) =>
         currentBeats.filter((currentBeat) => currentBeat.id !== beat.id),
       );

@@ -218,7 +218,7 @@ export default function Page() {
     >
       {/* Top bar */}
 
-      <HomeMenu />
+      <HomeMenu showMobileLogo={false} />
 
     
 

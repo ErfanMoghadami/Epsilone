@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { deleteFromR2 } from "@/lib/r2";
+import { revalidatePath } from "next/cache";
 
 type DeleteBeatResult =
   | {
@@ -62,11 +63,16 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
     };
   }
 
-  const { error: deleteError } = await supabase
+  // Request the deleted row back. Supabase can return no error when RLS
+  // prevents a DELETE from affecting any rows, so checking only deleteError
+  // could otherwise remove the R2 files while the database row remains.
+  const { data: deletedBeat, error: deleteError } = await supabase
     .from("beats")
     .delete()
     .eq("id", beat.id)
-    .eq("producer_id", user.id);
+    .eq("producer_id", user.id)
+    .select("id")
+    .maybeSingle();
 
   if (deleteError) {
     console.error("Failed to delete beat:", deleteError);
@@ -75,6 +81,19 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
       success: false,
       error:
         "Failed to delete this beat. It may be linked to existing marketplace data such as an order.",
+    };
+  }
+
+  if (!deletedBeat) {
+    console.error("Beat DELETE affected zero rows. Check the beats DELETE RLS policy.", {
+      beatId: beat.id,
+      producerId: user.id,
+    });
+
+    return {
+      success: false,
+      error:
+        "The beat was not removed from the database. Check the Supabase DELETE policy; its media files were left untouched.",
     };
   }
 
@@ -99,6 +118,16 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
       cleanupResults,
     });
   }
+
+  // Invalidate affected pages so listings do not keep stale beat data.
+  revalidatePath("/");
+  revalidatePath("/discover");
+  revalidatePath("/trending");
+  revalidatePath("/producers");
+  revalidatePath("/producer/beats");
+  revalidatePath("/producers/[username]", "page");
+  revalidatePath("/producer/[username]", "page");
+  revalidatePath("/beat/[id]", "page");
 
   return {
     success: true,

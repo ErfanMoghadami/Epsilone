@@ -234,9 +234,7 @@ type NavProfile = {
 
 function getCartCount() {
   try {
-    const storedCart = JSON.parse(
-      localStorage.getItem(CART_KEY) ?? "[]",
-    );
+    const storedCart = JSON.parse(localStorage.getItem(CART_KEY) ?? "[]");
 
     return Array.isArray(storedCart) ? storedCart.length : 0;
   } catch {
@@ -278,7 +276,11 @@ function CartIcon() {
   );
 }
 
-export default function HomeMenu() {
+export default function HomeMenu({
+  showMobileLogo = true,
+}: {
+  showMobileLogo?: boolean;
+}) {
   const pathname = usePathname();
 
   const [supabase] = useState(() => createClient());
@@ -470,28 +472,18 @@ export default function HomeMenu() {
 
         <Link href="/" aria-label="Epsilone" className="hidden md:block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/l.svg"
-            alt="Epsilone"
-            className="h-10 w-auto"
-          />
+          <img src="/l.svg" alt="Epsilone" className="h-10 w-auto" />
         </Link>
       </div>
 
       {/* Center: logo on mobile, navigation links on desktop */}
       <div className="flex min-w-0 items-center justify-center">
-        <Link
-          href="/"
-          aria-label="Epsilone"
-          className="md:hidden"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/l.svg"
-            alt="Epsilone"
-            className="h-9 w-auto sm:h-10"
-          />
-        </Link>
+        {showMobileLogo && (
+          <Link href="/" aria-label="Epsilone" className="md:hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/l.svg" alt="Epsilone" className="h-9 w-auto sm:h-10" />
+          </Link>
+        )}
 
         <nav className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (
@@ -516,19 +508,14 @@ export default function HomeMenu() {
           <CartIcon />
 
           {cartCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5">
-              {cartBadge}
-            </span>
+            <span className="absolute -right-0.5 -top-0.5">{cartBadge}</span>
           )}
         </Link>
 
         <ThemeToggle />
 
         {!ready ? (
-          <span
-            className="block h-10 w-10 shrink-0"
-            aria-hidden="true"
-          />
+          <span className="block h-10 w-10 shrink-0" aria-hidden="true" />
         ) : loggedIn ? (
           <Link
             href={panelHref}
