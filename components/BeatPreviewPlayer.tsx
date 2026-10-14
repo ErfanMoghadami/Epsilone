@@ -15,7 +15,7 @@ export default function BeatPreviewPlayer({
     <WaveformPlayer
       url={url}
       title={title}
-      waveformStyle="line"
+      waveformStyle="seekbar"
     />
   );
 }

@@ -416,8 +416,8 @@ export default function HomeMenu({
             className="flex h-10 w-10 items-center justify-center rounded-full text-white transition hover:text-brand"
           >
             <Image
-              width={29}
-              height={24}
+              width={25}
+              height={20}
               src={hamburger}
               alt=""
               aria-hidden="true"

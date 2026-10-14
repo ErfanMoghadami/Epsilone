@@ -29,7 +29,7 @@ export function useDiscover() {
   const [error, setError] = useState("");
   const [hasMorePages, setHasMorePages] = useState(false);
   const [nextOffset, setNextOffset] = useState(0);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   // Ignores responses of older requests (fast typing / double clicks).
   const requestIdRef = useRef(0);
