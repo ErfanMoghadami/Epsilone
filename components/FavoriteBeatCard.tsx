@@ -84,7 +84,7 @@ export default function FavoriteBeatCard({
           <WaveformPlayer
             url={beat.preview_url ?? beat.audio_url ?? ""}
             title={beat.title ?? "Untitled Beat"}
-            waveformStyle="seekbar"
+            waveformStyle="line"
           />
         </div>
       )}

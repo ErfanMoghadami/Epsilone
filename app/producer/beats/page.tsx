@@ -499,7 +499,7 @@ const router = useRouter();
                     <WaveformPlayer
                       url={beat.preview_url ?? beat.audio_url ?? ""}
                       title={beat.title ?? "Untitled Beat"}
-                      waveformStyle="seekbar"
+                      waveformStyle="line"
                     />
                   </div>
                 )}
