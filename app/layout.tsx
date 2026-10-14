@@ -3,6 +3,7 @@ import "./globals.css";
 import "@arraypress/waveform-player/dist/waveform-player.css";
 
 import GlobalNav from "@/components/GlobalNav";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import PlayTracker from "@/components/PlayTracker";
 import StreakWidget from "@/components/StreakWidget";
 import PWARegister from "@/components/PWARegister";
@@ -128,6 +129,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 
         {children}
 
+        <MobileBottomNav />
         <PlayTracker />
         <StreakWidget />
         <PWARegister />

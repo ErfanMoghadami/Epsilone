@@ -1,61 +1,32 @@
-import Link from "next/link";
 import { ReactNode } from "react";
+
 import SignOutButton from "@/components/auth/sign-out-button";
+import PanelShell from "@/components/panel/PanelShell";
+import type { PanelNavItem } from "@/components/panel/PanelNav";
+
+const ITEMS: PanelNavItem[] = [
+  { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
+  { href: "/dashboard/favorites", label: "Favorites", icon: "heart" },
+  { href: "/dashboard/purchases", label: "Purchases", icon: "bag" },
+];
+
 export default function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="flex min-h-screen">
-        <aside className="w-64 shrink-0 border-r border-white/10 bg-zinc-950 p-5">
-          <div className="mb-8">
-            <h1 className="text-xl font-bold">
-              Epsilone
-            </h1>
-
-            <p className="mt-1 text-xs text-zinc-500">
-              Your account
-            </p>
-          </div>
-
-          <nav className="space-y-1">
-            <Link
-              href="/dashboard"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-            >
-              Overview
-            </Link>
-
-            <Link
-              href="/dashboard/favorites"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-            >
-              Favorites
-            </Link>
-
-            <Link
-              href="/dashboard/purchases"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-            >
-              Purchases
-            </Link>
-
-            <Link
-              href="/dashboard/settings"
-              className="block rounded-lg px-3 py-2 text-sm text-zinc-300 hover:bg-white/5 hover:text-white"
-            >
-              Settings
-            </Link>
-            <SignOutButton />
-          </nav>
-        </aside>
-
-        <main className="flex-1 p-8">
-          {children}
-        </main>
-      </div>
-    </div>
+    <PanelShell
+      title="Your account"
+      items={ITEMS}
+      settings={{
+        href: "/dashboard/settings",
+        label: "Settings",
+        icon: "settings",
+      }}
+      signOut={<SignOutButton />}
+    >
+      {children}
+    </PanelShell>
   );
 }

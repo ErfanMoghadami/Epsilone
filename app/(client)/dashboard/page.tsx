@@ -394,7 +394,7 @@ export default async function DashboardPage() {
       {/* Recently Played */}
       {/* ---------------------------------------------------- */}
 
-      <section className="mb-8 rounded-2xl border border-white/10 bg-zinc-950 p-6">
+      <section className="mb-8 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">
@@ -484,7 +484,7 @@ export default async function DashboardPage() {
       {/* Recent Purchases */}
       {/* ---------------------------------------------------- */}
 
-      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+      <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">

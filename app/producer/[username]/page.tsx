@@ -8,6 +8,7 @@ type ProducerPanelPageProps = {
     username: string;
   }>;
 };
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type PaidOrder = {
   id: string;
@@ -119,68 +120,84 @@ export default async function ProducerPanelPage({
         beat.analysis_status === "failed",
     ).length ?? 0;
 
+  
   // --------------------------------------------------------
-  // Paid orders
+  // Producer sales — server-side, scoped to this Producer
   // --------------------------------------------------------
 
+  const supabaseAdmin = createAdminClient();
+
   const {
-    data: paidOrders,
-    error: paidOrdersError,
-  } = await supabase
-    .from("orders")
-    .select(
-      `
+    data: candidateSales,
+    error: candidateSalesError,
+  } = await supabaseAdmin
+    .from("order_items")
+    .select(`
+      id,
+      order_id,
+      title_snapshot,
+      unit_price,
+      license_type,
+      created_at
+    `)
+    .eq("producer_id", user.id)
+    .order("created_at", { ascending: false });
+
+  let paidOrders: PaidOrder[] = [];
+  let paidOrdersError: { message: string } | null = null;
+  let producerSales: ProducerSale[] = [];
+
+  if (candidateSalesError) {
+    console.error(
+      "Could not load Producer order items:",
+      candidateSalesError,
+    );
+
+    paidOrdersError = {
+      message: candidateSalesError.message,
+    };
+  } else if (candidateSales && candidateSales.length > 0) {
+    // Fetch only orders associated with this Producer's sales.
+    const candidateOrderIds = [
+      ...new Set(
+        candidateSales.map((sale) => sale.order_id),
+      ),
+    ];
+
+    const {
+      data: matchingPaidOrders,
+      error: matchingPaidOrdersError,
+    } = await supabaseAdmin
+      .from("orders")
+      .select(`
         id,
         currency,
         paid_at
-      `,
-    )
-    .eq("status", "paid");
+      `)
+      .eq("status", "paid")
+      .in("id", candidateOrderIds);
 
-  // --------------------------------------------------------
-  // Producer sales
-  // --------------------------------------------------------
-
-  let producerSales: ProducerSale[] = [];
-
-  if (
-    !paidOrdersError &&
-    paidOrders &&
-    paidOrders.length > 0
-  ) {
-    const paidOrderIds = paidOrders.map(
-      (order) => order.id,
-    );
-
-    const {
-      data: sales,
-      error: salesError,
-    } = await supabase
-      .from("order_items")
-      .select(
-        `
-          id,
-          order_id,
-          title_snapshot,
-          unit_price,
-          license_type,
-          created_at
-        `,
-      )
-      .eq("producer_id", user.id)
-      .in("order_id", paidOrderIds)
-      .order("created_at", {
-        ascending: false,
-      });
-
-    if (salesError) {
+    if (matchingPaidOrdersError) {
       console.error(
-        "Producer sales error:",
-        salesError,
+        "Could not load paid Producer orders:",
+        matchingPaidOrdersError,
       );
+
+      paidOrdersError = {
+        message: matchingPaidOrdersError.message,
+      };
     } else {
-      producerSales =
-        (sales ?? []) as ProducerSale[];
+      paidOrders = (matchingPaidOrders ?? []) as PaidOrder[];
+
+      const paidOrderIds = new Set(
+        paidOrders.map((order) => order.id),
+      );
+
+      producerSales = (
+        candidateSales.filter((sale) =>
+          paidOrderIds.has(sale.order_id),
+        ) ?? []
+      ) as ProducerSale[];
     }
   }
 
@@ -191,8 +208,7 @@ export default async function ProducerPanelPage({
   const totalSales = producerSales.length;
 
   const totalRevenue = producerSales.reduce(
-    (sum, sale) =>
-      sum + Number(sale.unit_price),
+    (sum, sale) => sum + Number(sale.unit_price),
     0,
   );
 
@@ -205,9 +221,100 @@ export default async function ProducerPanelPage({
 
   const orderMap = new Map<string, PaidOrder>();
 
-  for (const order of paidOrders ?? []) {
-    orderMap.set(order.id, order as PaidOrder);
+  for (const order of paidOrders) {
+    orderMap.set(order.id, order);
   }
+
+  
+  // // --------------------------------------------------------
+  // // Paid orders
+  // // --------------------------------------------------------
+
+  // const {
+  //   data: paidOrders,
+  //   error: paidOrdersError,
+  // } = await supabase
+  //   .from("orders")
+  //   .select(
+  //     `
+  //       id,
+  //       currency,
+  //       paid_at
+  //     `,
+  //   )
+  //   .eq("status", "paid");
+
+  // // --------------------------------------------------------
+  // // Producer sales
+  // // --------------------------------------------------------
+
+  // let producerSales: ProducerSale[] = [];
+
+  // if (
+  //   !paidOrdersError &&
+  //   paidOrders &&
+  //   paidOrders.length > 0
+  // ) {
+  //   const paidOrderIds = paidOrders.map(
+  //     (order) => order.id,
+  //   );
+
+  //   const {
+  //     data: sales,
+  //     error: salesError,
+  //   } = await supabase
+  //     .from("order_items")
+  //     .select(
+  //       `
+  //         id,
+  //         order_id,
+  //         title_snapshot,
+  //         unit_price,
+  //         license_type,
+  //         created_at
+  //       `,
+  //     )
+  //     .eq("producer_id", user.id)
+  //     .in("order_id", paidOrderIds)
+  //     .order("created_at", {
+  //       ascending: false,
+  //     });
+
+  //   if (salesError) {
+  //     console.error(
+  //       "Producer sales error:",
+  //       salesError,
+  //     );
+  //   } else {
+  //     producerSales =
+  //       (sales ?? []) as ProducerSale[];
+  //   }
+  // }
+
+  // // --------------------------------------------------------
+  // // Sales stats
+  // // --------------------------------------------------------
+
+  // const totalSales = producerSales.length;
+
+  // const totalRevenue = producerSales.reduce(
+  //   (sum, sale) =>
+  //     sum + Number(sale.unit_price),
+  //   0,
+  // );
+
+  // const averageSale =
+  //   totalSales > 0
+  //     ? totalRevenue / totalSales
+  //     : 0;
+
+  // const recentSales = producerSales.slice(0, 5);
+
+  // const orderMap = new Map<string, PaidOrder>();
+
+  // for (const order of paidOrders ?? []) {
+  //   orderMap.set(order.id, order as PaidOrder);
+  // }
 
   // --------------------------------------------------------
   // Display name
@@ -378,7 +485,7 @@ export default async function ProducerPanelPage({
       {/* Recent Sales */}
       {/* -------------------------------------------------- */}
 
-      <section className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+      <section className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">

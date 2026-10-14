@@ -619,7 +619,7 @@
   
     if (isLoading) {
       return (
-        <div className="min-h-screen bg-black p-8 text-white">
+        <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
           <p className="text-zinc-400">Loading license settings...</p>
         </div>
       );
@@ -631,7 +631,7 @@
   
     if (error && licenses.length === 0) {
       return (
-        <div className="min-h-screen bg-black p-8 text-white">
+        <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
           <div className="mx-auto max-w-3xl">
             <button
               type="button"
@@ -656,7 +656,7 @@
     const hasStemPack = Boolean(stem.key);
   
     return (
-      <div className="min-h-screen bg-black p-5 text-white sm:p-8">
+      <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
         <div className="mx-auto max-w-3xl">
           {/* Header */}
           <div className="mb-8">
@@ -674,7 +674,7 @@
           </div>
   
           {/* Beat-wide discount */}
-          <section className="mb-6 rounded-2xl border border-orange-300/20 bg-orange-300/[0.04] p-6">
+          <section className="mb-6 rounded-2xl border border-orange-300/20 bg-orange-300/[0.04] p-4 sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="max-w-xl">
                 <div className="flex items-center gap-2">
@@ -729,7 +729,7 @@
           </section>
 
           {/* Stem Pack */}
-          <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+          <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold">Stem Pack</h2>
@@ -821,10 +821,10 @@
             {licenses.map((license) => (
               <div
                 key={license.license_type}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
+                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6"
               >
-                <div className="flex items-start justify-between gap-6">
-                  <div>
+                <div className="flex items-start justify-between gap-4 sm:gap-6">
+                  <div className="min-w-0">
                     <h2 className="text-lg font-semibold">
                       {license.license_type}
                     </h2>

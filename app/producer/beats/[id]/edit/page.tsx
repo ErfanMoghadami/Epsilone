@@ -528,7 +528,7 @@ export default function Page() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black p-8 text-white">
+      <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
         <p className="text-sm text-zinc-400">
           Loading beat...
         </p>
@@ -542,7 +542,7 @@ export default function Page() {
 
   if (!beat) {
     return (
-      <div className="min-h-screen bg-black p-8 text-white">
+      <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
         <div className="mx-auto max-w-3xl">
           <Link
             href="/producer/beats"
@@ -565,7 +565,7 @@ export default function Page() {
   // --------------------------------------------------------
 
   return (
-    <div className="min-h-screen bg-black p-8 text-white">
+    <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
       <div className="mx-auto max-w-3xl">
         <Link
           href="/producer/beats"
@@ -594,7 +594,7 @@ export default function Page() {
 
         <form
           onSubmit={handleSubmit}
-          className="mb-6 space-y-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
+          className="mb-6 space-y-5 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6"
         >
           <div>
             <h2 className="text-lg font-semibold">
@@ -739,7 +739,7 @@ export default function Page() {
         {/* Master */}
         {/* ------------------------------------------------ */}
 
-        <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
               Master Audio
@@ -794,7 +794,7 @@ export default function Page() {
         {/* Cover */}
         {/* ------------------------------------------------ */}
 
-        <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
               Cover
@@ -848,7 +848,7 @@ export default function Page() {
         {/* Stem / Licenses */}
         {/* ------------------------------------------------ */}
 
-        <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
               Stem Pack & Licenses
@@ -906,7 +906,7 @@ export default function Page() {
         {/* Analysis */}
         {/* ------------------------------------------------ */}
 
-        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
               Analysis Status

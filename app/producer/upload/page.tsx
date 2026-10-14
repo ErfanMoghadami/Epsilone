@@ -654,7 +654,7 @@ export default function Page() {
 
       <form
         onSubmit={handleSubmit}
-        className="mx-auto flex max-w-2xl flex-col gap-4 p-6"
+        className="mx-auto flex max-w-2xl flex-col gap-4 p-0 sm:p-6"
       >
         <div className="mb-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-400">Beat metadata</p>
@@ -989,7 +989,7 @@ export default function Page() {
             step={0.1}
             value={zoom}
             onChange={(event) => setZoom(Number(event.target.value))}
-            className="mt-4 w-64"
+            className="mt-4 w-full max-w-64"
           />
 
           <div className="mt-4 flex gap-3">

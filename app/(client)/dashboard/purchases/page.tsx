@@ -91,7 +91,7 @@ export default async function PurchasesPage() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12 text-white">
+    <main className="mx-auto max-w-5xl px-0 py-4 text-white sm:py-12">
       <div className="mb-10">
         <h1 className="text-3xl font-bold">Purchases</h1>
 
@@ -108,7 +108,7 @@ export default async function PurchasesPage() {
             return (
               <section
                 key={order.id}
-                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6"
+                className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6"
               >
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 pb-5">
                   <div>
@@ -116,7 +116,7 @@ export default async function PurchasesPage() {
                       Order
                     </p>
 
-                    <p className="mt-1 font-mono text-sm text-zinc-400">
+                    <p className="mt-1 break-all font-mono text-sm text-zinc-400">
                       {order.id}
                     </p>
                   </div>

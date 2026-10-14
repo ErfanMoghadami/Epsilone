@@ -266,7 +266,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+        <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
           <p className="text-sm text-zinc-500">
             Loading account settings...
           </p>
@@ -295,7 +295,7 @@ export default function SettingsPage() {
 
       {/* Account */}
 
-      <section className="mb-6 rounded-2xl border border-white/10 bg-zinc-950 p-6">
+      <section className="mb-6 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-6">
           <h2 className="text-lg font-medium">
             Account
@@ -391,7 +391,7 @@ export default function SettingsPage() {
 
       {/* Password */}
 
-      <section className="mb-6 rounded-2xl border border-white/10 bg-zinc-950 p-6">
+      <section className="mb-6 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-6">
           <h2 className="text-lg font-medium">
             {hasPassword

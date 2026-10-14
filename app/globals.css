@@ -312,10 +312,7 @@ body {
         0 16px 40px rgba(22, 26, 36, 0.18);
 }
 
-/* white wordmark -> dark in day mode (keeps the orange accent orange) */
-:root:not(.dark) .logo-adaptive {
-    filter: invert(1) hue-rotate(170deg);
-}
+
 
 /* orange glow behind the L mark, night mode only */
 .dark .mark-glow {

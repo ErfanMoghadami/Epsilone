@@ -117,7 +117,7 @@ export default function ProducerSettingsPage() {
       </div>
       <div className="space-y-6">
         {/* User ID */}
-        <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+        <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-4">
             <h2 className="text-lg font-medium">User ID</h2>
 
@@ -138,7 +138,7 @@ export default function ProducerSettingsPage() {
         <ChangeEmailForm redirectPath="/producer/settings" />
 
         {/* Password */}
-        <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
+        <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-6">
             <h2 className="text-lg font-medium">Change password</h2>
 

@@ -344,7 +344,7 @@ const router = useRouter();
   }
 
   return (
-    <div className="min-h-screen bg-black p-8 text-white">
+    <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
       <h1 className="mb-6 text-2xl font-bold">My Beats</h1>
 
       {success && (
@@ -379,10 +379,10 @@ const router = useRouter();
             return (
               <div
                 key={beat.id}
-                className="rounded-xl border border-white/10 bg-zinc-950 px-5 py-4 transition hover:bg-white/5"
+                className="rounded-xl border border-white/10 bg-zinc-950 px-4 py-4 transition hover:bg-white/5 sm:px-5"
               >
-                <div className="flex items-center justify-between gap-6">
-                  <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <div className="min-w-0">
                     <p className="font-medium">
                       {beat.title ?? "Untitled Beat"}
                     </p>
@@ -395,7 +395,7 @@ const router = useRouter();
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${getAnalysisStatusClass(beat.analysis_status)}`}
                     >
@@ -504,7 +504,7 @@ const router = useRouter();
                   </div>
                 )}
 
-                <div className="mt-4 grid grid-cols-4 gap-3 border-t border-white/10 pt-4">
+                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4 sm:grid-cols-4">
                   <div>
                     <p className="text-xs text-zinc-500">Suggested</p>
 
