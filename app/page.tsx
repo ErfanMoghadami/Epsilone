@@ -316,7 +316,7 @@ export default function Page() {
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="مثلا : یه بیت گنگ میخوام"
+              placeholder="مثلا : یه بیت غمگین که از شدت غم سرمو بکوبم تو دیوار"
               className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
             />
 

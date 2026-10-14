@@ -349,11 +349,18 @@ export default function Page() {
     }
   }
 
-  function toggleTaxonomyValue(field: TaxonomyField, value: string, max: number) {
+  function toggleTaxonomyValue(
+    field: TaxonomyField,
+    value: string,
+    max: number,
+  ) {
     setForm((previous) => {
       const current = previous[field] as string[];
       if (current.includes(value)) {
-        return { ...previous, [field]: current.filter((item) => item !== value) } as UploadFormState;
+        return {
+          ...previous,
+          [field]: current.filter((item) => item !== value),
+        } as UploadFormState;
       }
       if (current.length >= max) return previous;
       return { ...previous, [field]: [...current, value] } as UploadFormState;
@@ -642,7 +649,7 @@ export default function Page() {
           {isLoading && (
             <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
               <div
-                className="h-full rounded-full bg-violet-600 transition-all"
+                className="h-full rounded-full bg-amber-400 transition-all"
                 style={{
                   width: `${uploadProgress}%`,
                 }}
@@ -657,29 +664,45 @@ export default function Page() {
         className="mx-auto flex max-w-2xl flex-col gap-4 p-0 sm:p-6"
       >
         <div className="mb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-400">Beat metadata</p>
-          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">Classify your beat</h2>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
+            Beat metadata
+          </p>
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">
+            Classify your beat
+          </h2>
           <p className="mt-1 text-sm leading-6 text-zinc-500">
-            Use consistent labels so artists can discover your beat through genre, mood, sound, and tags.
+            Use consistent labels so artists can discover your beat through
+            genre, mood, sound, and tags.
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm text-zinc-200 sm:col-span-2">
-            Title <span className="text-xs font-normal text-zinc-500">Required · max 150 characters</span>
+            Title{" "}
+            <span className="text-xs font-normal text-zinc-500">
+              Required · max 150 characters
+            </span>
             <input
               required
               disabled={isLoading}
               maxLength={150}
               value={form.title}
-              onChange={(event) => setForm((previous) => ({ ...previous, title: event.target.value }))}
+              onChange={(event) =>
+                setForm((previous) => ({
+                  ...previous,
+                  title: event.target.value,
+                }))
+              }
               placeholder="e.g. Coffe Player"
               className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-violet-600"
             />
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            BPM <span className="text-xs font-normal text-zinc-500">50–250 · whole number</span>
+            BPM{" "}
+            <span className="text-xs font-normal text-zinc-500">
+              50–250 · whole number
+            </span>
             <input
               required
               disabled={isLoading}
@@ -688,59 +711,84 @@ export default function Page() {
               max={250}
               step={1}
               value={form.bpm}
-              onChange={(event) => setForm((previous) => ({ ...previous, bpm: event.target.value }))}
+              onChange={(event) =>
+                setForm((previous) => ({
+                  ...previous,
+                  bpm: event.target.value,
+                }))
+              }
               placeholder="140"
               className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-violet-600"
             />
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            Key <span className="text-xs font-normal text-zinc-500">Required</span>
+            Key{" "}
+            <span className="text-xs font-normal text-zinc-500">Required</span>
             <Select
               ariaLabel="Key"
               disabled={isLoading}
               value={form.key}
-              onChange={(value) => setForm((previous) => ({ ...previous, key: value }))}
+              onChange={(value) =>
+                setForm((previous) => ({ ...previous, key: value }))
+              }
               options={musicalKey.map((item) => ({ value: item, label: item }))}
               buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
             />
-              {/*{musicalKey.map((item) => <option key={item} value={item}>{item}</option>)}
+            {/*{musicalKey.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>*/}
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            Genre <span className="text-xs font-normal text-zinc-500">Required · choose one</span>
+            Genre{" "}
+            <span className="text-xs font-normal text-zinc-500">
+              Required · choose one
+            </span>
             <Select
               ariaLabel="Genre"
               disabled={isLoading}
               value={form.genre}
               placeholder="Select a genre"
-              onChange={(value) => setForm((previous) => ({ ...previous, genre: value, subgenre: "" }))}
+              onChange={(value) =>
+                setForm((previous) => ({
+                  ...previous,
+                  genre: value,
+                  subgenre: "",
+                }))
+              }
               options={GENRES.map((item) => ({ value: item, label: item }))}
               buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
             />
-              {/*<option value="">Select a genre</option>
+            {/*<option value="">Select a genre</option>
               {GENRES.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>*/}
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            Subgenre <span className="text-xs font-normal text-zinc-500">Optional · depends on genre</span>
+            Subgenre{" "}
+            <span className="text-xs font-normal text-zinc-500">
+              Optional · depends on genre
+            </span>
             <Select
               ariaLabel="Subgenre"
               disabled={!form.genre || isLoading}
               value={form.subgenre}
-              onChange={(value) => setForm((previous) => ({ ...previous, subgenre: value }))}
+              onChange={(value) =>
+                setForm((previous) => ({ ...previous, subgenre: value }))
+              }
               options={[
                 { value: "", label: "No subgenre selected" },
-                ...(form.genre ? GENRE_TAXONOMY[form.genre as keyof typeof GENRE_TAXONOMY] : []).map((item) => ({
+                ...(form.genre
+                  ? GENRE_TAXONOMY[form.genre as keyof typeof GENRE_TAXONOMY]
+                  : []
+                ).map((item) => ({
                   value: item,
                   label: item,
                 })),
               ]}
               buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
             />
-              {/*<option value="">No subgenre selected</option>
+            {/*<option value="">No subgenre selected</option>
               {(form.genre ? GENRE_TAXONOMY[form.genre as keyof typeof GENRE_TAXONOMY] : []).map((item) => (
                 <option key={item} value={item}>{item}</option>
               ))}
@@ -750,8 +798,13 @@ export default function Page() {
 
         <div className="my-1 border-t border-zinc-800" />
         <div>
-          <h2 className="text-base font-semibold text-zinc-100">Sound & context</h2>
-          <p className="mt-1 text-sm leading-6 text-zinc-500">These are optional. Pick only values that genuinely describe the beat.</p>
+          <h2 className="text-base font-semibold text-zinc-100">
+            Sound & context
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-zinc-500">
+            These are optional. Pick only values that genuinely describe the
+            beat.
+          </p>
         </div>
 
         <TaxonomyPicker
@@ -795,9 +848,14 @@ export default function Page() {
           <div className="flex items-start justify-between gap-3">
             <div>
               <h3 className="text-sm font-medium text-zinc-100">Tags</h3>
-              <p className="mt-1 text-xs leading-5 text-zinc-500">Up to 3 search phrases, such as an artist influence, production style, or intended use.</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500">
+                Up to 3 search phrases, such as an artist influence, production
+                style, or intended use.
+              </p>
             </div>
-            <span className="shrink-0 rounded-full border border-zinc-800 px-2 py-1 text-xs tabular-nums text-zinc-400">{form.tags.length}/3</span>
+            <span className="shrink-0 rounded-full border border-zinc-800 px-2 py-1 text-xs tabular-nums text-zinc-400">
+              {form.tags.length}/3
+            </span>
           </div>
           <div className="mt-3 flex gap-2">
             <input
@@ -826,7 +884,12 @@ export default function Page() {
                   key={tag}
                   type="button"
                   disabled={isLoading}
-                  onClick={() => setForm((previous) => ({ ...previous, tags: previous.tags.filter((item) => item !== tag) }))}
+                  onClick={() =>
+                    setForm((previous) => ({
+                      ...previous,
+                      tags: previous.tags.filter((item) => item !== tag),
+                    }))
+                  }
                   aria-label={`Remove tag ${tag}`}
                   className="rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs text-violet-200 transition hover:border-red-500/50 hover:text-red-300 disabled:opacity-40"
                 >
@@ -835,13 +898,17 @@ export default function Page() {
               ))}
             </div>
           )}
-          <p className="mt-2 text-[11px] text-zinc-600">Press Enter or comma to add a tag. Duplicate tags are not allowed.</p>
+          <p className="mt-2 text-[11px] text-zinc-600">
+            Press Enter or comma to add a tag. Duplicate tags are not allowed.
+          </p>
         </section>
 
         <div className="my-1 border-t border-zinc-800" />
         <div>
           <h2 className="text-base font-semibold text-zinc-100">Files</h2>
-          <p className="mt-1 text-sm leading-6 text-zinc-500">Upload the master audio and square cover. A Stem Pack is optional.</p>
+          <p className="mt-1 text-sm leading-6 text-zinc-500">
+            Upload the master audio and square cover. A Stem Pack is optional.
+          </p>
         </div>
 
         <label className="text-zinc-100">Audio File</label>
@@ -912,39 +979,32 @@ export default function Page() {
         <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-zinc-100">
-                AI Beat Analysis
-              </p>
-        
+              <p className="font-medium text-zinc-100">AI Beat Analysis</p>
+
               <p className="mt-1 text-xs leading-5 text-zinc-500">
-                Let Epsilone analyze the audio. Your manual selections will be kept and combined with AI findings.
+                Let Epsilone analyze the audio. Your manual selections will be
+                kept and combined with AI findings.
               </p>
             </div>
-        
+
             <button
               type="button"
               role="switch"
               aria-checked={aiAnalysisEnabled}
-              onClick={() =>
-                setAiAnalysisEnabled((previous) => !previous)
-              }
+              onClick={() => setAiAnalysisEnabled((previous) => !previous)}
               disabled={isLoading}
               className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-                aiAnalysisEnabled
-                  ? "bg-violet-600"
-                  : "bg-zinc-700"
+                aiAnalysisEnabled ? "bg-amber-500" : "bg-zinc-700"
               } ${isLoading ? "cursor-not-allowed opacity-50" : ""}`}
             >
               <span
                 className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-                  aiAnalysisEnabled
-                    ? "left-6"
-                    : "left-1"
+                  aiAnalysisEnabled ? "left-6" : "left-1"
                 }`}
               />
             </button>
           </div>
-        
+
           <p className="mt-3 text-xs text-zinc-600">
             {aiAnalysisEnabled
               ? "AI analysis is enabled. Epsilone adds audio-based findings without discarding your selected taxonomy."
@@ -962,7 +1022,7 @@ export default function Page() {
         <button
           type="submit"
           disabled={isLoading}
-          className="mt-2 rounded-lg bg-violet-600 px-4 py-2.5 font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-2 rounded-lg bg-amber-500 px-4 py-2.5 font-medium text-white transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? "Uploading..." : "Upload"}
         </button>
@@ -1004,7 +1064,7 @@ export default function Page() {
             <button
               type="button"
               onClick={handleConfirmCrop}
-              className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-500"
+              className="rounded-lg bg-amber-400 px-4 py-2 font-medium text-white hover:bg-amber-400"
             >
               Confirm Crop
             </button>
