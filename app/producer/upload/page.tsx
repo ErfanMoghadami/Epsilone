@@ -18,7 +18,7 @@ import {
   SCENES,
 } from "@/lib/taxonomy";
 import { getCroppedImg } from "@/lib/cropImage";
-
+import Select from "@/components/ui/Select";
 type TaxonomyField = "moods" | "atmosphere" | "instruments" | "scenes";
 
 type TaxonomyPickerProps = {
@@ -696,44 +696,55 @@ export default function Page() {
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
             Key <span className="text-xs font-normal text-zinc-500">Required</span>
-            <select
-              required
+            <Select
+              ariaLabel="Key"
               disabled={isLoading}
               value={form.key}
-              onChange={(event) => setForm((previous) => ({ ...previous, key: event.target.value }))}
-              className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none transition focus:border-violet-600"
-            >
-              {musicalKey.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
+              onChange={(value) => setForm((previous) => ({ ...previous, key: value }))}
+              options={musicalKey.map((item) => ({ value: item, label: item }))}
+              buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
+            />
+              {/*{musicalKey.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>*/}
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
             Genre <span className="text-xs font-normal text-zinc-500">Required · choose one</span>
-            <select
-              required
+            <Select
+              ariaLabel="Genre"
               disabled={isLoading}
               value={form.genre}
-              onChange={(event) => setForm((previous) => ({ ...previous, genre: event.target.value, subgenre: "" }))}
-              className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none transition focus:border-violet-600"
-            >
-              <option value="">Select a genre</option>
+              placeholder="Select a genre"
+              onChange={(value) => setForm((previous) => ({ ...previous, genre: value, subgenre: "" }))}
+              options={GENRES.map((item) => ({ value: item, label: item }))}
+              buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
+            />
+              {/*<option value="">Select a genre</option>
               {GENRES.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
+            </select>*/}
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
             Subgenre <span className="text-xs font-normal text-zinc-500">Optional · depends on genre</span>
-            <select
-              value={form.subgenre}
+            <Select
+              ariaLabel="Subgenre"
               disabled={!form.genre || isLoading}
-              onChange={(event) => setForm((previous) => ({ ...previous, subgenre: event.target.value }))}
-              className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none transition focus:border-violet-600 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <option value="">No subgenre selected</option>
+              value={form.subgenre}
+              onChange={(value) => setForm((previous) => ({ ...previous, subgenre: value }))}
+              options={[
+                { value: "", label: "No subgenre selected" },
+                ...(form.genre ? GENRE_TAXONOMY[form.genre as keyof typeof GENRE_TAXONOMY] : []).map((item) => ({
+                  value: item,
+                  label: item,
+                })),
+              ]}
+              buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
+            />
+              {/*<option value="">No subgenre selected</option>
               {(form.genre ? GENRE_TAXONOMY[form.genre as keyof typeof GENRE_TAXONOMY] : []).map((item) => (
                 <option key={item} value={item}>{item}</option>
               ))}
-            </select>
+            </select>*/}
           </label>
         </div>
 

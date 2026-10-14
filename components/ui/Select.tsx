@@ -14,12 +14,20 @@ type SelectProps = {
   options: SelectOption[];
   placeholder?: string;
   disabled?: boolean;
+  /** برای اتصال با <label htmlFor> */
+  id?: string;
   /** کلاس‌های ظرف بیرونی (مثلاً عرض) */
   className?: string;
-  /** جایگزین شعاع و پدینگ پیش‌فرض دکمه */
+  /**
+   * ظاهر کامل دکمه (شعاع، بوردر، رنگ، پدینگ).
+   * اگه بدی، جایگزین ظاهر پیش‌فرض می‌شه.
+   */
   buttonClassName?: string;
   ariaLabel?: string;
 };
+
+const DEFAULT_BUTTON_SKIN =
+  "rounded-xl border-zinc-800 bg-black px-3 py-3 text-zinc-200 hover:border-white/25";
 
 export default function Select({
   value,
@@ -27,8 +35,9 @@ export default function Select({
   options,
   placeholder = "انتخاب کنید",
   disabled = false,
+  id,
   className = "",
-  buttonClassName = "rounded-xl px-3 py-3",
+  buttonClassName = DEFAULT_BUTTON_SKIN,
   ariaLabel,
 }: SelectProps) {
   const [open, setOpen] = useState(false);
@@ -134,6 +143,7 @@ export default function Select({
       className={`relative ${open ? "z-30" : ""} ${className}`}
     >
       <button
+        id={id}
         type="button"
         role="combobox"
         aria-label={ariaLabel}
@@ -144,14 +154,14 @@ export default function Select({
         disabled={disabled}
         onClick={() => (open ? setOpen(false) : openMenu())}
         onKeyDown={handleKeyDown}
-        className={`flex w-full items-center justify-between gap-2 border bg-black text-sm text-zinc-200 outline-none transition focus-visible:ring-2 focus-visible:ring-brand/25 disabled:cursor-not-allowed disabled:opacity-50 ${
-          open ? "border-brand/60" : "border-zinc-800 hover:border-white/25"
+        className={`flex w-full items-center justify-between gap-2 border text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-50 ${
+          open ? "ring-2 ring-brand/40" : ""
         } ${buttonClassName}`}
       >
         <span
           dir="auto"
           className={`min-w-0 flex-1 truncate text-right ${
-            selected ? "" : "text-zinc-600"
+            selected ? "" : "text-zinc-500"
           }`}
         >
           {selected ? selected.label : placeholder}
@@ -167,8 +177,8 @@ export default function Select({
           strokeLinecap="round"
           strokeLinejoin="round"
           aria-hidden="true"
-          className={`shrink-0 text-zinc-500 transition-transform duration-200 ${
-            open ? "rotate-180 text-brand" : ""
+          className={`shrink-0 transition-transform duration-200 ${
+            open ? "rotate-180 text-brand" : "text-zinc-500"
           }`}
         >
           <path d="m6 9 6 6 6-6" />
@@ -176,7 +186,11 @@ export default function Select({
       </button>
 
       {open && (
-        <div className="select-menu rounded-xl">
+        <div
+          className="select-menu rounded-xl"
+          // اگه Select داخل <label> باشه، کلیک روی گزینه‌ها نباید دوباره دکمه رو فعال کنه
+          onClick={(event) => event.preventDefault()}
+        >
           <ul
             ref={listRef}
             id={listId}

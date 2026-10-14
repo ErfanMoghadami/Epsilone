@@ -1,3 +1,5 @@
+
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
@@ -12,47 +14,38 @@ type TrackerPayload = {
   title?: string;
 };
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL;
+const MIN_PLAY_SECONDS = 3;
+const MAX_URL_LENGTH = 2048;
 
-const serviceRoleKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const r2PublicUrl =
-  process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const r2PublicUrl = process.env.R2_PUBLIC_URL?.replace(/\/$/, "");
 
 if (!supabaseUrl) {
-  throw new Error(
-    "NEXT_PUBLIC_SUPABASE_URL is not configured."
-  );
+  throw new Error("NEXT_PUBLIC_SUPABASE_URL is not configured.");
 }
 
 if (!serviceRoleKey) {
-  throw new Error(
-    "SUPABASE_SERVICE_ROLE_KEY is not configured."
-  );
+  throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured.");
 }
 
-const supabaseAdmin =
-  createAdminClient(
-    supabaseUrl,
-    serviceRoleKey
-  );
+const supabaseAdmin = createAdminClient(
+  supabaseUrl,
+  serviceRoleKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
 
-function getR2ObjectKey(
-  url: string
-): string | null {
-  if (!r2PublicUrl) {
+function getR2ObjectKey(url: string): string | null {
+  if (!r2PublicUrl || !url.startsWith(`${r2PublicUrl}/`)) {
     return null;
   }
 
-  if (!url.startsWith(`${r2PublicUrl}/`)) {
-    return null;
-  }
-
-  const key = url.slice(
-    r2PublicUrl.length + 1
-  );
+  const key = url.slice(r2PublicUrl.length + 1);
 
   if (!key) {
     return null;
@@ -68,16 +61,56 @@ function getR2ObjectKey(
   }
 }
 
-export async function POST(
-  request: Request
-) {
+/**
+ * Store the tracker session for diagnostics only.
+ * It must NOT be used to deduplicate plays.
+ */
+function getTrackerSessionId(session: unknown): string | null {
+  if (
+    typeof session !== "string" ||
+    !/^[a-zA-Z0-9_-]{6,128}$/.test(session)
+  ) {
+    return null;
+  }
+
+  return session;
+}
+
+export async function POST(request: Request) {
   try {
     // --------------------------------------------------------
-    // 1. Read tracker event
+    // 1. Validate the tracker payload
     // --------------------------------------------------------
 
-    const body =
-      (await request.json()) as TrackerPayload;
+    let payload: unknown;
+
+    try {
+      payload = await request.json();
+    } catch {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid JSON payload",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      Array.isArray(payload)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid tracker payload",
+        },
+        { status: 400 }
+      );
+    }
+
+    const body = payload as TrackerPayload;
 
     if (body.event !== "play") {
       return NextResponse.json({
@@ -86,60 +119,89 @@ export async function POST(
       });
     }
 
-    if (!body.url) {
+    if (
+      typeof body.url !== "string" ||
+      !body.url.trim() ||
+      body.url.length > MAX_URL_LENGTH
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "url is required",
+          error: "A valid audio URL is required",
         },
         { status: 400 }
       );
     }
 
+    const audioUrl = body.url.trim();
+
+    if (
+      typeof body.time !== "number" ||
+      !Number.isFinite(body.time) ||
+      body.time < 0
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "A valid playback time is required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // WaveformTracker should only send "play" after 3 seconds
+    // of accumulated media-time. Do not count shorter events.
+    if (body.time < MIN_PLAY_SECONDS) {
+      return NextResponse.json({
+        success: true,
+        ignored: true,
+        reason: "play_threshold_not_met",
+      });
+    }
+
+    // Keep this only as metadata. Repeated plays from the same
+    // session must still be inserted and counted independently.
+    const trackerSessionId = getTrackerSessionId(body.session);
+
     // --------------------------------------------------------
-    // 2. Get logged-in Supabase user
+    // 2. Get the logged-in Supabase user, if any
     // --------------------------------------------------------
 
-    const supabaseServer =
-      await createServerClient();
+    const supabaseServer = await createServerClient();
 
     const {
       data: { user },
-    } =
-      await supabaseServer.auth.getUser();
+      error: authError,
+    } = await supabaseServer.auth.getUser();
 
-    const userId =
-      user?.id ?? null;
+    if (authError) {
+      console.error("Play analytics auth lookup failed:", authError.message);
+    }
 
-    // --------------------------------------------------------
-    // 3. Identify storage source
-    // --------------------------------------------------------
-
-    const r2ObjectKey =
-      getR2ObjectKey(body.url);
+    const userId = user?.id ?? null;
 
     // --------------------------------------------------------
-    // 4. Find Beat
+    // 3. Identify the R2 object, if applicable
     // --------------------------------------------------------
 
-    let beat: {
-      id: string;
-    } | null = null;
+    const r2ObjectKey = getR2ObjectKey(audioUrl);
 
     // --------------------------------------------------------
-    // 4A. Legacy Supabase URL
+    // 4. Find the published Beat
     // --------------------------------------------------------
 
+    let beat: { id: string } | null = null;
+
+    // 4A. Legacy audio_url
     const {
       data: legacyBeat,
       error: legacyBeatError,
-    } =
-      await supabaseAdmin
-        .from("beats")
-        .select("id")
-        .eq("audio_url", body.url)
-        .eq("is_published", true)
-        .maybeSingle();
+    } = await supabaseAdmin
+      .from("beats")
+      .select("id")
+      .eq("audio_url", audioUrl)
+      .eq("is_published", true)
+      .maybeSingle();
 
     if (legacyBeatError) {
       console.error(
@@ -160,24 +222,17 @@ export async function POST(
       beat = legacyBeat;
     }
 
-    // --------------------------------------------------------
-    // 4B. R2 Preview URL
-    // --------------------------------------------------------
-
+    // 4B. R2 preview_key
     if (!beat && r2ObjectKey) {
       const {
         data: r2Beat,
         error: r2BeatError,
-      } =
-        await supabaseAdmin
-          .from("beats")
-          .select("id")
-          .eq(
-            "preview_key",
-            r2ObjectKey
-          )
-          .eq("is_published", true)
-          .maybeSingle();
+      } = await supabaseAdmin
+        .from("beats")
+        .select("id")
+        .eq("preview_key", r2ObjectKey)
+        .eq("is_published", true)
+        .maybeSingle();
 
       if (r2BeatError) {
         console.error(
@@ -199,24 +254,17 @@ export async function POST(
       }
     }
 
-    // --------------------------------------------------------
     // 4C. Legacy preview_url fallback
-    // --------------------------------------------------------
-
     if (!beat) {
       const {
         data: previewBeat,
         error: previewBeatError,
-      } =
-        await supabaseAdmin
-          .from("beats")
-          .select("id")
-          .eq(
-            "preview_url",
-            body.url
-          )
-          .eq("is_published", true)
-          .maybeSingle();
+      } = await supabaseAdmin
+        .from("beats")
+        .select("id")
+        .eq("preview_url", audioUrl)
+        .eq("is_published", true)
+        .maybeSingle();
 
       if (previewBeatError) {
         console.error(
@@ -242,28 +290,29 @@ export async function POST(
       return NextResponse.json(
         {
           success: false,
-          error: "Beat not found",
+          error: "Published beat not found",
         },
         { status: 404 }
       );
     }
 
     // --------------------------------------------------------
-    // 5. Store play event
+    // 5. Insert EVERY valid play event
     // --------------------------------------------------------
 
-    const {
-      error: insertError,
-    } = await supabaseAdmin
+    // Deliberately do not query for an existing play by user,
+    // beat, or tracker session. Each valid event is a new play,
+    // matching get_producer_beat_analytics().
+    const { error: insertError } = await supabaseAdmin
       .from("recommendation_events")
       .insert({
         beat_id: beat.id,
         user_id: userId,
-        request_id:
-          crypto.randomUUID(),
+        request_id: randomUUID(),
         event_type: "played",
         position: null,
         match_score: null,
+        tracker_session_id: trackerSessionId,
       });
 
     if (insertError) {
@@ -282,31 +331,32 @@ export async function POST(
     }
 
     console.log(
-      `Play tracked: beat=${beat.id}, user=${
-        userId ?? "anonymous"
-      }, source=${
-        r2ObjectKey
-          ? `r2:${r2ObjectKey}`
-          : "legacy"
-      }`
+      `Play tracked: beat=${beat.id}, user=${userId ?? "anonymous"}, ` +
+      `time=${body.time}, session=${trackerSessionId ?? "unavailable"}, ` +
+      `source=${r2ObjectKey ? `r2:${r2ObjectKey}` : "legacy"}`
     );
 
     // --------------------------------------------------------
-    // 6. Daily play streak (logged-in + verified email only)
+    // 6. Update the daily streak, if eligible
     // --------------------------------------------------------
 
     let streak: unknown = null;
 
     if (userId && user?.email_confirmed_at) {
-      const { data: streakData, error: streakError } =
-        await supabaseAdmin.rpc("streak_register_play", {
-          p_user_id: userId,
-          p_beat_id: beat.id,
-        });
+      const {
+        data: streakData,
+        error: streakError,
+      } = await supabaseAdmin.rpc("streak_register_play", {
+        p_user_id: userId,
+        p_beat_id: beat.id,
+      });
 
       if (streakError) {
-        // never fail the play event because of the streak
-        console.error("Streak register failed:", streakError.message);
+        // Do not fail the play event because of a streak error.
+        console.error(
+          "Streak register failed:",
+          streakError.message
+        );
       } else {
         streak = streakData;
       }
@@ -314,13 +364,11 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
+      counted: true,
       streak,
     });
   } catch (error) {
-    console.error(
-      "Play analytics error:",
-      error
-    );
+    console.error("Play analytics error:", error);
 
     return NextResponse.json(
       {

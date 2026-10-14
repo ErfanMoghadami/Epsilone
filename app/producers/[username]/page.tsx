@@ -1,11 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { applyDiscount, normalizeDiscountPercent } from "@/lib/discounts";
 
-import BeatPreviewPlayer from "@/components/BeatPreviewPlayer";
-import FavoriteButton from "@/components/FavoriteButton";
-import AddToCartButton from "@/components/AddToCartButton";
+import ProducerBeatCard from "@/components/producer/ProducerBeatCard";
 
 type ProducerProfilePageProps = {
   params: Promise<{
@@ -27,18 +25,13 @@ type ProducerBeat = {
 };
 
 function buildR2Url(key: string | null): string | null {
-  const r2PublicUrl = process.env.R2_PUBLIC_URL
-    ?.trim()
-    .replace(/\/+$/, "");
+  const r2PublicUrl = process.env.R2_PUBLIC_URL?.trim().replace(/\/+$/, "");
 
   if (!r2PublicUrl || !key) {
     return null;
   }
 
-  return `${r2PublicUrl}/${key
-    .split("/")
-    .map(encodeURIComponent)
-    .join("/")}`;
+  return `${r2PublicUrl}/${key.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 export default async function ProducerProfilePage({
@@ -52,20 +45,15 @@ export default async function ProducerProfilePage({
   // Producer profile
   // --------------------------------------------------------
 
-  const { data: producer, error: producerError } =
-    await supabase
-      .from("profiles")
-      .select(
-        "id, role, display_name, username, bio, avatar_url",
-      )
-      .eq("username", username.toLowerCase())
-      .eq("role", "producer")
-      .single();
+  const { data: producer, error: producerError } = await supabase
+    .from("profiles")
+    .select("id, role, display_name, username, bio, avatar_url")
+    .eq("username", username.toLowerCase())
+    .eq("role", "producer")
+    .maybeSingle();
 
   if (producerError) {
-    throw new Error(
-      `Producer query failed: ${producerError.message}`,
-    );
+    throw new Error(`Producer query failed: ${producerError.message}`);
   }
 
   if (!producer) {
@@ -78,11 +66,10 @@ export default async function ProducerProfilePage({
   // Producer beats
   // --------------------------------------------------------
 
-  const { data: beats, error: beatsError } =
-    await supabase
-      .from("beats")
-      .select(
-        `
+  const { data: beats, error: beatsError } = await supabase
+    .from("beats")
+    .select(
+      `
         id,
         title,
         bpm,
@@ -94,79 +81,120 @@ export default async function ProducerProfilePage({
         cover_key,
         discount_percent
         `,
-      )
-      .eq("producer_id", producerId)
-      .eq("analysis_status", "completed")
-      .eq("is_published", true)
-      .order("created_at", {
-        ascending: false,
-      });
+    )
+    .eq("producer_id", producerId)
+    .eq("analysis_status", "completed")
+    .eq("is_published", true)
+    .order("created_at", {
+      ascending: false,
+    });
 
   if (beatsError) {
-    throw new Error(
-      `Could not load producer beats: ${beatsError.message}`,
-    );
+    throw new Error(`Could not load producer beats: ${beatsError.message}`);
   }
 
   // --------------------------------------------------------
   // Build R2 public URLs
   // --------------------------------------------------------
 
-  const beatCards = (beats ?? []).map(
-    (beat: ProducerBeat) => {
-      const previewUrl =
-        beat.preview_url ??
-        buildR2Url(beat.preview_key);
+  // --------------------------------------------------------
+  // Lowest active license price per beat
+  // --------------------------------------------------------
 
-      const coverUrl =
-        beat.cover_url ??
-        buildR2Url(beat.cover_key);
+  const beatIds = (beats ?? []).map((beat: ProducerBeat) => beat.id);
+  const lowestPrice = new Map<string, number>();
 
-      return {
-        ...beat,
-        previewUrl,
-        coverUrl,
-      };
-    },
-  );
+  if (beatIds.length > 0) {
+    const { data: licenses, error: licensesError } = await supabase
+      .from("beat_licenses")
+      .select("beat_id, price")
+      .in("beat_id", beatIds)
+      .eq("is_active", true);
+
+    if (licensesError) {
+      console.error(
+        "Producer beat license price lookup failed:",
+        licensesError.message,
+      );
+    } else {
+      for (const license of licenses ?? []) {
+        const price = Number(license.price);
+        if (!Number.isFinite(price) || price < 0) continue;
+
+        const current = lowestPrice.get(license.beat_id);
+        if (current === undefined || price < current) {
+          lowestPrice.set(license.beat_id, price);
+        }
+      }
+    }
+  }
+
+  // --------------------------------------------------------
+  // Build card data (R2 public URLs + prices)
+  // --------------------------------------------------------
+
+  const beatCards = (beats ?? []).map((beat: ProducerBeat) => {
+    const discountPercent = normalizeDiscountPercent(beat.discount_percent);
+    const original = lowestPrice.get(beat.id);
+
+    return {
+      id: beat.id,
+      title: beat.title,
+      bpm: beat.bpm,
+      key: beat.key,
+      previewUrl: beat.preview_url ?? buildR2Url(beat.preview_key),
+      coverUrl: beat.cover_url ?? buildR2Url(beat.cover_key),
+      originalPrice: original ?? null,
+      price:
+        original === undefined
+          ? null
+          : applyDiscount(original, discountPercent),
+      discountPercent,
+    };
+  });
 
   const producerName =
-    producer.display_name?.trim() ||
-    producer.username?.trim() ||
-    "Producer";
+    producer.display_name?.trim() || producer.username?.trim() || "Producer";
 
-  const producerInitial =
-    producerName.charAt(0).toUpperCase();
+  const producerInitial = producerName.charAt(0).toUpperCase();
 
   return (
-    <main className="min-h-screen bg-black px-6 py-12 text-white">
+    <main
+      dir="rtl"
+      className="min-h-screen px-5 py-10 text-white sm:px-6 sm:py-12"
+    >
       <div className="mx-auto max-w-6xl">
-        {/* Producer Header */}
-        <section className="mb-12">
-          <div className="flex items-center gap-5">
+        {/* Producer header */}
+        <section className="mb-8 sm:mb-10">
+          <div className="flex items-center gap-4 sm:gap-5">
             {producer.avatar_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={producer.avatar_url}
                 alt={producerName}
-                className="h-24 w-24 rounded-full object-cover"
+                className="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-white/25 sm:h-24 sm:w-24"
               />
             ) : (
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-zinc-800 text-3xl font-semibold">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-3xl font-semibold ring-2 ring-white/25 sm:h-24 sm:w-24">
                 {producerInitial}
               </div>
             )}
 
-            <div>
-              <p className="mb-1 text-sm text-zinc-500">
-                Producer
-              </p>
+            <div className="min-w-0">
+              <p className="text-xs text-zinc-400">آهنگساز</p>
 
-              <h1 className="text-3xl font-bold">
+              <h1
+                dir="auto"
+                className="mt-0.5 truncate text-2xl font-bold sm:text-3xl"
+              >
                 {producerName}
               </h1>
 
               {producer.username && (
-                <p className="mt-1 text-sm text-zinc-500">
+                <p
+                  dir="ltr"
+                  className="mt-0.5 text-right text-xs text-zinc-500"
+                >
                   @{producer.username}
                 </p>
               )}
@@ -174,7 +202,7 @@ export default async function ProducerProfilePage({
           </div>
 
           {producer.bio && (
-            <p className="mt-5 max-w-2xl text-zinc-400">
+            <p dir="auto" className="mt-4 max-w-2xl text-sm text-white">
               {producer.bio}
             </p>
           )}
@@ -182,98 +210,18 @@ export default async function ProducerProfilePage({
 
         {/* Beats */}
         <section>
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-2xl font-semibold">
-              Beats
-            </h2>
-
-            <span className="text-sm text-zinc-500">
-              {beatCards.length} beat
-              {beatCards.length === 1 ? "" : "s"}
-            </span>
-          </div>
+          <h2 className="mb-4 text-lg font-semibold sm:mb-5">موزیک ها</h2>
 
           {beatCards.length === 0 ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-10 text-center">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
               <p className="text-zinc-500">
-                This producer has no published beats yet.
+                این هنرمند هنوز بیتی منتشر نکرده است.
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
               {beatCards.map((beat) => (
-                <article
-                  key={beat.id}
-                  className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4"
-                >
-                  <div className="mb-4 flex gap-4">
-                    {beat.coverUrl ? (
-                      <img
-                        src={beat.coverUrl}
-                        alt={beat.title ?? "Beat cover"}
-                        className="h-28 w-28 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="h-28 w-28 rounded-xl bg-zinc-900" />
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="truncate text-lg font-semibold">
-                              {beat.title ?? "Untitled Beat"}
-                            </h3>
-                            {Number(beat.discount_percent ?? 0) > 0 && (
-                              <span className="shrink-0 rounded-full bg-orange-300/15 px-2 py-0.5 text-[10px] font-bold text-orange-200">
-                                {Number(beat.discount_percent)}% OFF
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="mt-1 text-sm text-zinc-500">
-                            {beat.genre ?? "Unknown genre"}
-                            {beat.bpm
-                              ? ` • ${beat.bpm} BPM`
-                              : ""}
-                            {beat.key
-                              ? ` • ${beat.key}`
-                              : ""}
-                          </p>
-                        </div>
-
-                        <FavoriteButton beatId={beat.id} />
-                      </div>
-                    </div>
-                  </div>
-
-                  {beat.previewUrl && (
-                    <div className="mb-4">
-                      <BeatPreviewPlayer
-                        url={beat.previewUrl}
-                        title={
-                          beat.title ?? "Untitled Beat"
-                        }
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-3">
-                    <Link
-                      href={`/beat/${beat.id}`}
-                      className="flex w-full items-center justify-center rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:border-zinc-500 hover:bg-zinc-800"
-                    >
-                      View Beat →
-                    </Link>
-
-                    <AddToCartButton
-                      beatId={beat.id}
-                      title={
-                        beat.title ?? "Untitled Beat"
-                      }
-                    />
-                  </div>
-                </article>
+                <ProducerBeatCard key={beat.id} beat={beat} />
               ))}
             </div>
           )}

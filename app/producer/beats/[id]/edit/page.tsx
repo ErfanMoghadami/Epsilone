@@ -12,6 +12,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 import { musicalKey } from "@/lib/uploadConfig";
+import Select from "@/components/ui/Select";
 
 const supabase = createClient();
 
@@ -660,17 +661,14 @@ export default function Page() {
               Key
             </label>
 
-            <select
+            <Select
               id="key"
               value={key}
-              onChange={(event) =>
-                setKey(
-                  event.target.value,
-                )
-              }
-              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
-            >
-              {musicalKey.map(
+              onChange={setKey}
+              options={musicalKey.map((item) => ({ value: item, label: item }))}
+              buttonClassName="rounded-lg border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 hover:border-zinc-600"
+            />
+              {/*{musicalKey.map(
                 (item) => (
                   <option
                     key={item}
@@ -679,8 +677,8 @@ export default function Page() {
                     {item}
                   </option>
                 ),
-              )}
-            </select>
+              )}*/}
+           
           </div>
 
           <div>

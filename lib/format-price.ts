@@ -21,3 +21,17 @@ export function formatPriceAmount(
     maximumFractionDigits: 2,
   }).format(amount);
 }
+
+/** Persian-digit toman amount, e.g. ۳,۲۰۰ (no unit). */
+export function formatToman(
+  value: number | string | null | undefined,
+): string {
+  const amount = Number(value);
+  if (value === null || value === undefined || !Number.isFinite(amount)) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 })
+    .format(amount)
+    .replace(/٬/g, ",");
+}
