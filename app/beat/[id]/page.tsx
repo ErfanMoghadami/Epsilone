@@ -166,7 +166,7 @@ export default async function BeatDetailPage({ params }: PageProps) {
                 {beat.title ?? "Untitled Beat"}
               </h1>
 
-              <FavoriteButton beatId={beat.id} />
+              <FavoriteButton beatId={beat.id} minimal />
             </div>
 
             {Number(beat.discount_percent ?? 0) > 0 && (

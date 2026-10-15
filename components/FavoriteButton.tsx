@@ -83,7 +83,7 @@ export default function FavoriteButton({
       type="button"
       onClick={toggleFavorite}
       disabled={loading}
-      aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+      aria-label={favorited ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
       className={
         minimal
           ? "flex h-8 w-8 items-center justify-center text-zinc-400 transition hover:text-brand disabled:cursor-not-allowed disabled:opacity-50"

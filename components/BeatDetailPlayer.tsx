@@ -17,7 +17,8 @@ export default function BeatDetailPlayer({
       <WaveformPlayer
         url={url}
         title={title}
-        waveformStyle="bars"
+        waveformStyle="mirror"
+        buttonAlign="center"
         height={48}
         samples={240}
         barWidth={2}

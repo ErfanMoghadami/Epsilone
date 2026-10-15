@@ -14,7 +14,7 @@ export default function AuthShell({ children }: { children: ReactNode }) {
           aria-hidden="true"
           className="relative mx-auto hidden aspect-square w-full max-w-[34rem] lg:block"
         >
-          <div className="pointer-events-none absolute inset-[12%] rounded-full bg-brand/10 blur-3xl" />
+          <div className="pointer-events-none absolute inset-[12%] rounded-full  blur-3xl" />
 
           <div className="absolute inset-0 animate-[spin_90s_linear_infinite] motion-reduce:animate-none">
             <div className="absolute inset-[3%] rounded-full border border-[color:var(--ep-orbit)]" />

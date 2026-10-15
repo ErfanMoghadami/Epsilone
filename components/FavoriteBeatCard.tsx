@@ -72,6 +72,7 @@ export default function FavoriteBeatCard({
             </div>
 
             <FavoriteButton
+              minimal
               beatId={beat.id}
               onFavoriteChange={handleFavoriteChange}
             />
