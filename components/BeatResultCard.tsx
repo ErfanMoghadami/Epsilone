@@ -86,7 +86,7 @@ export default function BeatResultCard({ beat }: { beat: Beat }) {
             </Link>
           )}
           {Number(beat.discount_percent ?? 0) > 0 && (
-            <span className="mt-2 inline-flex rounded-full bg-orange-300/15 px-2.5 py-1 text-[10px] font-bold text-orange-200">
+            <span className="mt-2 inline-flex rounded-full bg-orange-500/15 text-orange-700 dark:bg-orange-300/15 dark:text-orange-200 px-2.5 py-1 text-[10px] font-bold">
               {Number(beat.discount_percent)}% OFF
             </span>
           )}

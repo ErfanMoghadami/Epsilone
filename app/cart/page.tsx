@@ -483,11 +483,11 @@ export default function CartPage() {
                             {formatPriceAmount(pricing.originalPrice)}
                           </p>
                         )}
-                        <p className={`mt-1 font-semibold ${pricing.discountPercent > 0 ? "text-orange-300" : ""}`}>
+                        <p className={`mt-1 font-semibold ${pricing.discountPercent > 0 ? "text-orange-600 dark:text-orange-300" : ""}`}>
                           {formatPriceAmount(pricing.finalPrice)}
                         </p>
                         {pricing.discountPercent > 0 && (
-                          <span className="mt-1 inline-flex rounded-full bg-orange-400/10 px-2 py-1 text-[10px] font-bold text-orange-300">
+                          <span className="mt-1 inline-flex rounded-full bg-orange-500/15 text-orange-700 dark:bg-orange-400/10 dark:text-orange-300 px-2 py-1 text-[10px] font-bold">
                             {pricing.discountPercent}% OFF
                           </span>
                         )}
@@ -519,8 +519,8 @@ export default function CartPage() {
 
             {discountTotal > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-orange-300">Discount</span>
-                <span className="font-medium text-orange-300">
+                <span className="text-orange-600 dark:text-orange-300">Discount</span>
+                <span className="font-medium text-orange-600 dark:text-orange-300">
                   − {formatPriceAmount(discountTotal)}
                 </span>
               </div>

@@ -40,7 +40,7 @@ type CartItem = {
 const CART_KEY = "epsilone-cart";
 
 const SOLD_LABEL = "فروخته شد";
-const UNAVAILABLE_LABEL = "فروخته شد";
+const UNAVAILABLE_LABEL = "در دسترس نیست";
 
 function discountLabel(percent: number) {
   return `${percent}٪ تخفیف`;

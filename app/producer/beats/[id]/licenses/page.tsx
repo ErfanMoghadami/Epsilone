@@ -1,4 +1,4 @@
-  "use client";
+"use client";
   
   import { useEffect, useRef, useState } from "react";
   import { useParams, useRouter } from "next/navigation";
@@ -686,7 +686,7 @@ function formatFileSize(bytes: number | null) {
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">تخفیف بیت</h2>
                   {discountPercent > 0 && (
-                    <span className="rounded-full bg-orange-300/15 px-2.5 py-1 text-xs font-bold text-orange-200">
+                    <span className="rounded-full bg-orange-500/15 text-orange-700 dark:bg-orange-300/15 dark:text-orange-200 px-2.5 py-1 text-xs font-bold">
                       {discountPercent}٪ تخفیف
                     </span>
                   )}

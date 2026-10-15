@@ -170,7 +170,7 @@ export default async function BeatDetailPage({ params }: PageProps) {
             </div>
 
             {Number(beat.discount_percent ?? 0) > 0 && (
-              <span className="mt-3 inline-flex w-fit rounded-full bg-orange-300/15 px-3 py-1 text-xs font-bold text-orange-200">
+              <span className="mt-3 inline-flex w-fit rounded-full bg-orange-500/15 text-orange-700 dark:bg-orange-300/15 dark:text-orange-200 px-3 py-1 text-xs font-bold">
                 {Number(beat.discount_percent)}٪ تخفیف روی همه‌ی لایسنس‌ها
               </span>
             )}
