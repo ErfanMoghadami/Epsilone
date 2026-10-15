@@ -132,7 +132,7 @@ export default function Page() {
         );
 
         setError(
-          "Beat not found or you do not have access to it.",
+          "بیت پیدا نشد یا دسترسی به اون رو نداری.",
         );
 
         setIsLoading(false);
@@ -181,7 +181,7 @@ export default function Page() {
 
     if (!title.trim()) {
       setError(
-        "Title is required.",
+        "عنوان الزامیه.",
       );
       return;
     }
@@ -192,14 +192,14 @@ export default function Page() {
       parsedBpm > 250
     ) {
       setError(
-        "BPM must be between 50 and 250.",
+        "BPM باید بین 50 تا 250 باشه.",
       );
       return;
     }
 
     if (!key) {
       setError(
-        "Key is required.",
+        "انتخاب گام الزامیه.",
       );
       return;
     }
@@ -214,7 +214,7 @@ export default function Page() {
 
     if (authError || !user) {
       setError(
-        "You must be logged in.",
+        "باید وارد حسابت بشی.",
       );
       setIsSaving(false);
       return;
@@ -275,7 +275,7 @@ export default function Page() {
     );
 
     setSuccess(
-      "Beat information updated successfully.",
+      "اطلاعات بیت با موفقیت به‌روزرسانی شد.",
     );
 
     setIsSaving(false);
@@ -313,7 +313,7 @@ export default function Page() {
 
       if (!allowed.includes(extension)) {
         setFileError(
-          "Only MP3, WAV, and FLAC files are supported.",
+          "فقط فایل‌های MP3، WAV و FLAC پشتیبانی می‌شن.",
         );
         return;
       }
@@ -323,7 +323,7 @@ export default function Page() {
         file.size > 100 * 1024 * 1024
       ) {
         setFileError(
-          "Audio file must be between 1 byte and 100 MB.",
+          "حجم فایل صوتی باید بین 1 بایت تا 100 MB باشه.",
         );
         return;
       }
@@ -345,7 +345,7 @@ export default function Page() {
 
       if (!allowed.includes(extension)) {
         setFileError(
-          "Only JPG, JPEG, and PNG cover files are supported.",
+          "فقط کاورهای JPG، JPEG و PNG پشتیبانی می‌شن.",
         );
         return;
       }
@@ -355,7 +355,7 @@ export default function Page() {
         file.size > 10 * 1024 * 1024
       ) {
         setFileError(
-          "Cover file must be between 1 byte and 10 MB.",
+          "حجم فایل کاور باید بین 1 بایت تا 10 MB باشه.",
         );
         return;
       }
@@ -399,7 +399,7 @@ export default function Page() {
       ) {
         throw new Error(
           presignData.error ||
-            "Failed to prepare file upload.",
+            "آماده‌سازی آپلود فایل ممکن نشد.",
         );
       }
 
@@ -422,7 +422,7 @@ export default function Page() {
 
       if (!uploadResponse.ok) {
         throw new Error(
-          "Failed to upload file to R2.",
+          "آپلود فایل در R2 ممکن نشد.",
         );
       }
 
@@ -459,7 +459,7 @@ export default function Page() {
       ) {
         throw new Error(
           finalizeData.error ||
-            "Failed to finalize file replacement.",
+            "نهایی کردن جایگزینی فایل ممکن نشد.",
         );
       }
 
@@ -469,13 +469,13 @@ export default function Page() {
 
       setFileSuccess(
         fileType === "audio"
-          ? "Master audio replaced successfully."
-          : "Cover replaced successfully.",
+          ? "فایل مستر با موفقیت جایگزین شد."
+          : "کاور با موفقیت جایگزین شد.",
       );
 
       if (fileType === "audio") {
         setSuccess(
-          "Master replaced. Beat analysis has been reset and will need to run again.",
+          "فایل مستر جایگزین شد. تحلیل بیت ریست شده و باید دوباره انجام بشه.",
         );
 
         if (audioInputRef.current) {
@@ -497,7 +497,7 @@ export default function Page() {
       setFileError(
         error instanceof Error
           ? error.message
-          : "Something went wrong while replacing the file.",
+          : "موقع جایگزینی فایل مشکلی پیش اومد.",
       );
     } finally {
       setFileBusy(null);
@@ -530,7 +530,7 @@ export default function Page() {
     return (
       <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
         <p className="text-sm text-zinc-400">
-          Loading beat...
+          در حال بارگذاری بیت...
         </p>
       </div>
     );
@@ -548,12 +548,12 @@ export default function Page() {
             href="/producer/beats"
             className="mb-6 inline-block text-sm text-zinc-400 transition hover:text-white"
           >
-            ← Back to My Beats
+            → بازگشت به بیت‌های من
           </Link>
 
           <div className="rounded-xl border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-400">
             {error ??
-              "Beat not found."}
+              "بیت پیدا نشد."}
           </div>
         </div>
       </div>
@@ -571,20 +571,20 @@ export default function Page() {
           href="/producer/beats"
           className="mb-6 inline-block text-sm text-zinc-400 transition hover:text-white"
         >
-          ← Back to My Beats
+          → بازگشت به بیت‌های من
         </Link>
 
         <div className="mb-8">
           <p className="text-sm text-zinc-500">
-            Producer Panel
+            پنل آهنگساز
           </p>
 
           <h1 className="mt-1 text-2xl font-bold">
-            Edit Beat
+            ویرایش بیت
           </h1>
 
           <p className="mt-2 text-sm text-zinc-400">
-            Update information and manage your beat files.
+            اطلاعات بیتت رو ویرایش کن و فایل‌هاش رو مدیریت کن.
           </p>
         </div>
 
@@ -598,11 +598,11 @@ export default function Page() {
         >
           <div>
             <h2 className="text-lg font-semibold">
-              Beat Information
+              اطلاعات بیت
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Update the basic information of your beat.
+              اطلاعات پایه‌ی بیتت رو ویرایش کن.
             </p>
           </div>
 
@@ -611,7 +611,7 @@ export default function Page() {
               htmlFor="title"
               className="mb-2 block text-sm font-medium text-zinc-200"
             >
-              Title
+              عنوان
             </label>
 
             <input
@@ -623,7 +623,7 @@ export default function Page() {
                   event.target.value,
                 )
               }
-              placeholder="Beat title"
+              placeholder="عنوان بیت"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
             />
           </div>
@@ -648,6 +648,7 @@ export default function Page() {
                   event.target.value,
                 )
               }
+              dir="ltr"
               placeholder="140"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
             />
@@ -658,7 +659,7 @@ export default function Page() {
               htmlFor="key"
               className="mb-2 block text-sm font-medium text-zinc-200"
             >
-              Key
+              گام
             </label>
 
             <Select
@@ -686,7 +687,7 @@ export default function Page() {
               htmlFor="genre"
               className="mb-2 block text-sm font-medium text-zinc-200"
             >
-              Genre
+              ژانر
             </label>
 
             <input
@@ -698,7 +699,7 @@ export default function Page() {
                   event.target.value,
                 )
               }
-              placeholder="Trap"
+              placeholder="تراپ"
               className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none focus:border-violet-600"
             />
           </div>
@@ -720,7 +721,7 @@ export default function Page() {
               href="/producer/beats"
               className="rounded-lg border border-zinc-800 px-4 py-2.5 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
             >
-              Cancel
+              انصراف
             </Link>
 
             <button
@@ -729,8 +730,8 @@ export default function Page() {
               className="rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving
-                ? "Saving..."
-                : "Save Changes"}
+                ? "در حال ذخیره..."
+                : "ذخیره تغییرات"}
             </button>
           </div>
         </form>
@@ -742,18 +743,18 @@ export default function Page() {
         <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
-              Master Audio
+              فایل مستر
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Replace the master audio file. Replacing the
-              master resets AI analysis and preview.
+              فایل مستر رو جایگزین کن. با جایگزینی مستر،
+              تحلیل هوش مصنوعی و پیش‌نمایش ریست می‌شن.
             </p>
           </div>
 
           <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
             <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Current file
+              فایل فعلی
             </p>
 
             <p className="mt-1 break-all text-sm text-zinc-300">
@@ -761,7 +762,7 @@ export default function Page() {
                 ? beat.audio_key
                     .split("/")
                     .pop()
-                : "No R2 master file found"}
+                : "فایل مستری در R2 پیدا نشد"}
             </p>
           </div>
 
@@ -779,13 +780,13 @@ export default function Page() {
             disabled={
               fileBusy !== null
             }
-            className="block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black hover:file:bg-zinc-200"
+            className="block w-full text-sm text-zinc-400 file:me-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black hover:file:bg-zinc-200"
           />
 
           {fileBusy ===
             "audio" && (
             <p className="mt-3 text-sm text-zinc-500">
-              Uploading master...
+              در حال آپلود مستر...
             </p>
           )}
         </section>
@@ -797,17 +798,17 @@ export default function Page() {
         <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
-              Cover
+              کاور
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Replace the cover image for this beat.
+              تصویر کاور این بیت رو جایگزین کن.
             </p>
           </div>
 
           <div className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-4">
             <p className="text-xs uppercase tracking-wide text-zinc-600">
-              Current file
+              فایل فعلی
             </p>
 
             <p className="mt-1 break-all text-sm text-zinc-300">
@@ -815,7 +816,7 @@ export default function Page() {
                 ? beat.cover_key
                     .split("/")
                     .pop()
-                : "No R2 cover file found"}
+                : "فایل کاوری در R2 پیدا نشد"}
             </p>
           </div>
 
@@ -833,13 +834,13 @@ export default function Page() {
             disabled={
               fileBusy !== null
             }
-            className="block w-full text-sm text-zinc-400 file:mr-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black hover:file:bg-zinc-200"
+            className="block w-full text-sm text-zinc-400 file:me-4 file:rounded-lg file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-black hover:file:bg-zinc-200"
           />
 
           {fileBusy ===
             "cover" && (
             <p className="mt-3 text-sm text-zinc-500">
-              Uploading cover...
+              در حال آپلود کاور...
             </p>
           )}
         </section>
@@ -851,12 +852,12 @@ export default function Page() {
         <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
-              Stem Pack & Licenses
+              Stem Pack و لایسنس‌ها
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Manage your Stem Pack and license settings from
-              the existing license manager.
+              Stem Pack و تنظیمات لایسنس‌هات رو از بخش
+              مدیریت لایسنس‌ها مدیریت کن.
             </p>
           </div>
 
@@ -889,7 +890,7 @@ export default function Page() {
               </>
             ) : (
               <p className="mt-1 text-sm text-zinc-500">
-                No Stem Pack uploaded.
+                هنوز Stem Pack آپلود نشده.
               </p>
             )}
           </div>
@@ -898,7 +899,7 @@ export default function Page() {
             href={`/producer/beats/${beat.id}/licenses`}
             className="inline-flex rounded-xl border border-zinc-700 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-900"
           >
-            Manage Stem Pack & Licenses →
+            مدیریت Stem Pack و لایسنس‌ها ←
           </Link>
         </section>
 
@@ -909,18 +910,18 @@ export default function Page() {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-5">
             <h2 className="text-lg font-semibold">
-              Analysis Status
+              وضعیت تحلیل
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Current AI analysis state for this beat.
+              وضعیت فعلی تحلیل هوش مصنوعی برای این بیت.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-300">
               {beat.analysis_status ??
-                "Unknown"}
+                "نامشخص"}
             </span>
 
             {beat.analysis_status ===
@@ -935,7 +936,7 @@ export default function Page() {
           {beat.analysis_status ===
             "pending" && (
             <p className="mt-3 text-xs text-zinc-600">
-              The Worker will analyze the master audio again.
+              ورکر فایل مستر رو دوباره تحلیل می‌کنه.
             </p>
           )}
         </section>

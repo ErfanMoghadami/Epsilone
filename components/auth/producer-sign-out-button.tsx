@@ -32,9 +32,9 @@ export default function ProducerSignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={loading}
-      className="w-full rounded-xl px-3 py-2 text-left text-sm text-white/50 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+      className="w-full rounded-xl px-3 py-2 text-start text-sm text-white/50 transition hover:bg-white/[0.05] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {loading ? "Signing out..." : "Sign out"}
+      {loading ? "در حال خروج..." : "خروج"}
     </button>
   );
 }

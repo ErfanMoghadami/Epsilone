@@ -50,7 +50,7 @@ export default async function PurchasesPage() {
     .order("created_at", { ascending: false });
 
   if (ordersError) {
-    throw new Error("Failed to load purchases");
+    throw new Error("بارگذاری خریدها انجام نشد");
   }
 
   const orderIds = (orders ?? []).map((order) => order.id);
@@ -74,7 +74,7 @@ export default async function PurchasesPage() {
       .in("order_id", orderIds);
 
     if (itemsError) {
-      throw new Error("Failed to load purchased beats");
+      throw new Error("بارگذاری بیت‌های خریداری‌شده انجام نشد");
     }
 
     orderItems = (items ?? []) as OrderItem[];
@@ -93,10 +93,10 @@ export default async function PurchasesPage() {
   return (
     <main className="mx-auto max-w-5xl px-0 py-4 text-white sm:py-12">
       <div className="mb-10">
-        <h1 className="text-3xl font-bold">Purchases</h1>
+        <h1 className="text-3xl font-bold">خریدها</h1>
 
         <p className="mt-2 text-zinc-500">
-          Your purchased beats and licenses.
+          بیت‌ها و لایسنس‌هایی که خریدی.
         </p>
       </div>
 
@@ -113,7 +113,7 @@ export default async function PurchasesPage() {
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800 pb-5">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-zinc-600">
-                      Order
+                      سفارش
                     </p>
 
                     <p className="mt-1 break-all font-mono text-sm text-zinc-400">
@@ -121,15 +121,15 @@ export default async function PurchasesPage() {
                     </p>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-end">
                     <p className="text-xs text-zinc-600">
-                      Purchased
+                      تاریخ خرید
                     </p>
 
                     <p className="mt-1 text-sm text-zinc-400">
                       {new Date(
                         order.paid_at ?? order.created_at,
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString("fa-IR")}
                     </p>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export default async function PurchasesPage() {
                         </h2>
 
                         <p className="mt-1 text-sm text-zinc-500">
-                          {item.license_type} License
+                          لایسنس {item.license_type}
                         </p>
 
                         <p
@@ -157,8 +157,8 @@ export default async function PurchasesPage() {
                           }`}
                         >
                           {item.includes_stems
-                            ? "✓ Stems included"
-                            : "Beat only · No stems"}
+                            ? "✓ شامل Stems"
+                            : "فقط بیت · بدون Stems"}
                         </p>
                       </div>
 
@@ -172,7 +172,7 @@ export default async function PurchasesPage() {
                             href={`/api/download/${item.beat_id}?type=master`}
                             className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-900"
                           >
-                            Download Master
+                            دانلود مستر
                           </a>
 
                           {item.includes_stems && (
@@ -180,7 +180,7 @@ export default async function PurchasesPage() {
                               href={`/api/download/${item.beat_id}?type=stems`}
                               className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-900"
                             >
-                              Download Stems
+                              دانلود Stems
                             </a>
                           )}
                         </div>
@@ -191,7 +191,7 @@ export default async function PurchasesPage() {
 
                 <div className="mt-5 flex items-center justify-between border-t border-zinc-800 pt-5">
                   <span className="text-zinc-500">
-                    Order Total
+                    جمع سفارش
                   </span>
 
                   <span className="text-xl font-bold">
@@ -205,11 +205,11 @@ export default async function PurchasesPage() {
       ) : (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-10 text-center">
           <h2 className="text-xl font-semibold">
-            No purchases yet
+            هنوز خریدی نداشتی
           </h2>
 
           <p className="mt-2 text-zinc-500">
-            Your purchased beats will appear here.
+            بیت‌هایی که بخری اینجا نمایش داده می‌شن.
           </p>
         </div>
       )}

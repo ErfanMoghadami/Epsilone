@@ -78,7 +78,7 @@ export default function ChangeUsernameForm() {
         } = await supabase.auth.getUser();
 
         if (authError || !user) {
-          throw new Error("Please sign in again.");
+          throw new Error("لطفاً دوباره وارد شو.");
         }
 
         const { data: profile, error: profileError } =
@@ -89,12 +89,12 @@ export default function ChangeUsernameForm() {
             .maybeSingle();
 
         if (profileError || !profile) {
-          throw new Error("Could not load your profile.");
+          throw new Error("بارگذاری پروفایل انجام نشد.");
         }
 
         if (profile.role !== "producer") {
           throw new Error(
-            "Username settings are available to producers only.",
+            "تنظیم نام کاربری فقط برای آهنگسازها در دسترس است.",
           );
         }
 
@@ -110,7 +110,7 @@ export default function ChangeUsernameForm() {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Could not load your profile.",
+              : "بارگذاری پروفایل انجام نشد.",
           );
         }
       } finally {
@@ -145,7 +145,7 @@ export default function ChangeUsernameForm() {
     if (!normalized) {
       setStatus("idle");
       setMessage(
-        "3–20 characters · letters, numbers, _ and -",
+        "۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد، _ و -",
       );
       return;
     }
@@ -153,14 +153,14 @@ export default function ChangeUsernameForm() {
     if (!/^[a-z0-9_-]{3,20}$/.test(normalized)) {
       setStatus("invalid");
       setMessage(
-        "Use 3–20 characters: letters, numbers, _ and -.",
+        "۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد، _ و - مجاز است.",
       );
       return;
     }
 
     if (RESERVED_USERNAMES.has(normalized)) {
       setStatus("taken");
-      setMessage("This username is reserved.");
+      setMessage("این نام کاربری رزرو شده است.");
       return;
     }
 
@@ -169,12 +169,12 @@ export default function ChangeUsernameForm() {
       normalized === currentUsername.toLowerCase()
     ) {
       setStatus("idle");
-      setMessage("This is your current username.");
+      setMessage("این همان نام کاربری فعلی توست.");
       return;
     }
 
     setStatus("checking");
-    setMessage("Checking username availability...");
+    setMessage("در حال بررسی نام کاربری...");
 
     const timeout = window.setTimeout(async () => {
       try {
@@ -195,19 +195,19 @@ export default function ChangeUsernameForm() {
         if (!response.ok) {
           setStatus("error");
           setMessage(
-            data?.error || "Could not check username.",
+            data?.error || "بررسی نام کاربری انجام نشد.",
           );
           return;
         }
 
         if (data.available) {
           setStatus("available");
-          setMessage("Username is available.");
+          setMessage("این نام کاربری آزاد است.");
         } else {
           setStatus("taken");
           setMessage(
             data?.error ||
-              "This username is already taken or reserved.",
+              "این نام کاربری قبلاً گرفته یا رزرو شده است.",
           );
         }
       } catch {
@@ -216,7 +216,7 @@ export default function ChangeUsernameForm() {
         }
 
         setStatus("error");
-        setMessage("Could not check username availability.");
+        setMessage("بررسی نام کاربری انجام نشد.");
       }
     }, 350);
 
@@ -241,19 +241,19 @@ export default function ChangeUsernameForm() {
 
     if (!/^[a-z0-9_-]{3,20}$/.test(normalized)) {
       setError(
-        "Username must be 3–20 characters and contain only letters, numbers, underscores, or hyphens.",
+        "نام کاربری باید ۳ تا ۲۰ کاراکتر و فقط شامل حروف انگلیسی، عدد، _ یا - باشد.",
       );
       return;
     }
 
     if (normalized === currentUsername.toLowerCase()) {
-      setError("This is already your username.");
+      setError("این همان نام کاربری فعلی توست.");
       return;
     }
 
     if (status !== "available") {
       setError(
-        "Choose a username marked as available before saving.",
+        "پیش از ذخیره، نام کاربری‌ای را انتخاب کن که آزاد بودنش تأیید شده باشد.",
       );
       return;
     }
@@ -278,7 +278,7 @@ export default function ChangeUsernameForm() {
 
       if (!response.ok || !data.success) {
         setError(
-          data.error || "Could not update your username.",
+          data.error || "تغییر نام کاربری انجام نشد.",
         );
         return;
       }
@@ -288,13 +288,13 @@ export default function ChangeUsernameForm() {
       setCurrentUsername(savedUsername);
       setUsername(savedUsername);
       setSavedMessage(
-        "Username updated. Your previous public profile URL is reserved and will redirect to this profile.",
+        "نام کاربری به‌روز شد. نشانی قبلی پروفایل عمومی‌ات برای خودت رزرو می‌ماند و به این پروفایل هدایت می‌شود.",
       );
     } catch (saveError) {
       console.error("Change username failed:", saveError);
 
       setError(
-        "Could not update your username. Please try again.",
+        "تغییر نام کاربری انجام نشد. لطفاً دوباره تلاش کن.",
       );
     } finally {
       setSaving(false);
@@ -321,19 +321,18 @@ export default function ChangeUsernameForm() {
     <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
       <div className="mb-5">
         <h2 className="text-lg font-medium">
-          Username
+          نام کاربری
         </h2>
 
         <p className="mt-1 text-sm text-zinc-500">
-          Your username is part of your public producer
-          profile URL. Previous usernames stay reserved
-          for you.
+          نام کاربری بخشی از نشانی پروفایل عمومی آهنگساز
+          توست. نام‌های کاربری قبلی برای خودت رزرو می‌مانند.
         </p>
       </div>
 
       {profileLoading ? (
         <p className="text-sm text-zinc-500">
-          Loading username...
+          در حال بارگذاری نام کاربری...
         </p>
       ) : (
         <form
@@ -345,10 +344,11 @@ export default function ChangeUsernameForm() {
               htmlFor="producer-username"
               className="mb-2 block text-sm font-medium text-white/80"
             >
-              Username
+              نام کاربری
             </label>
 
             <div
+              dir="ltr"
               className={`flex items-center rounded-xl border bg-white/[0.04] px-4 transition ${
                 status === "available"
                   ? "border-emerald-500/40"
@@ -406,16 +406,16 @@ export default function ChangeUsernameForm() {
               className={`mt-2 text-xs leading-5 ${messageClass}`}
             >
               {message ||
-                "3–20 characters · letters, numbers, _ and -"}
+                "۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد، _ و -"}
             </p>
           </div>
 
           <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
             <p className="text-xs text-zinc-500">
-              Public profile URL preview
+              پیش‌نمایش نشانی پروفایل عمومی
             </p>
 
-            <p className="mt-2 break-all text-sm text-white">
+            <p dir="ltr" className="mt-2 break-all text-start text-sm text-white">
               /producers/
               {normalizedUsername || currentUsername || "..."}
             </p>
@@ -427,7 +427,7 @@ export default function ChangeUsernameForm() {
                 rel="noreferrer"
                 className="mt-3 inline-block text-xs text-zinc-400 underline underline-offset-4 transition hover:text-white"
               >
-                Open current public profile →
+                باز کردن پروفایل عمومی فعلی ←
               </Link>
             )}
           </div>
@@ -460,8 +460,8 @@ export default function ChangeUsernameForm() {
             className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving
-              ? "Updating username..."
-              : "Save username"}
+              ? "در حال به‌روزرسانی..."
+              : "ذخیره نام کاربری"}
           </button>
         </form>
       )}

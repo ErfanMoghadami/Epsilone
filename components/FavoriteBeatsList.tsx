@@ -34,7 +34,7 @@ export default function FavoriteBeatsList({
     return (
       <div className="rounded-2xl border border-white/10 bg-zinc-950 p-10 text-center">
         <p className="text-zinc-400">
-          هنوز هیچ بیتی را Favorite نکردی.
+          هنوز هیچ بیتی را به علاقه‌مندی‌ها اضافه نکردی.
         </p>
       </div>
     );

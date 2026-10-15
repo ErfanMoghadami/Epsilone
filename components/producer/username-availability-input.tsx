@@ -41,7 +41,7 @@ export default function UsernameAvailabilityInput() {
     if (!/^[a-z0-9_-]{3,20}$/.test(normalized)) {
       setStatus("invalid");
       setMessage(
-        "3–20 characters · letters, numbers, _ and -",
+        "۳ تا ۲۰ کاراکتر؛ حروف انگلیسی، عدد، _ و -",
       );
       return;
     }
@@ -49,12 +49,12 @@ export default function UsernameAvailabilityInput() {
     // Reserved username
     if (RESERVED_USERNAMES.has(normalized)) {
       setStatus("taken");
-      setMessage("This username is reserved.");
+      setMessage("این نام کاربری رزرو شده است.");
       return;
     }
 
     setStatus("checking");
-    setMessage("Checking username...");
+    setMessage("در حال بررسی نام کاربری...");
 
     const timeout = window.setTimeout(async () => {
       const currentRequestId = ++requestId.current;
@@ -81,17 +81,17 @@ export default function UsernameAvailabilityInput() {
           setStatus("error");
           setMessage(
             data?.error ||
-              "Could not check username availability.",
+              "بررسی نام کاربری انجام نشد.",
           );
           return;
         }
 
         if (data.available) {
           setStatus("available");
-          setMessage("Username is available.");
+          setMessage("این نام کاربری آزاد است.");
         } else {
           setStatus("taken");
-          setMessage("This username is already taken.");
+          setMessage("این نام کاربری قبلاً گرفته شده است.");
         }
       } catch (error) {
         console.error(
@@ -105,7 +105,7 @@ export default function UsernameAvailabilityInput() {
 
         setStatus("error");
         setMessage(
-          "Could not check username availability.",
+          "بررسی نام کاربری انجام نشد.",
         );
       }
     }, 350);
@@ -131,6 +131,7 @@ export default function UsernameAvailabilityInput() {
       </label>
 
       <div
+        dir="ltr"
         className={`flex h-14 items-center rounded-2xl border bg-ep-field px-4 transition ${
           status === "available"
             ? "border-emerald-500/50"

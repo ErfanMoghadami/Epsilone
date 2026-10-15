@@ -46,7 +46,7 @@ export default function ProducerLoginPage() {
           return;
         }
 
-        setError("Invalid email or password.");
+        setError("ایمیل یا پسورد اشتباهه.");
         return;
       }
 
@@ -76,7 +76,7 @@ export default function ProducerLoginPage() {
 
       if (profile.role !== "producer") {
         await supabase.auth.signOut();
-        setError("This account is not registered as a producer.");
+        setError("این اکانت به عنوان یوزر عادی ثبت شده.");
         return;
       }
 

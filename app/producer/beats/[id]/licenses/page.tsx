@@ -53,7 +53,13 @@
     },
   ];
   
-  function formatFileSize(bytes: number | null) {
+  const LICENSE_LABELS: Record<LicenseType, string> = {
+  Basic: "بیسیک",
+  Premium: "پریمیوم",
+  Exclusive: "انحصاری",
+};
+
+function formatFileSize(bytes: number | null) {
     if (!bytes || bytes <= 0) {
       return "";
     }
@@ -131,13 +137,13 @@
           .single();
   
         if (beatError || !beat) {
-          setError("Beat not found or you do not have access to it.");
+          setError("بیت پیدا نشد یا به آن دسترسی نداری.");
   
           setIsLoading(false);
           return;
         }
   
-        setBeatTitle(beat.title ?? "Untitled Beat");
+        setBeatTitle(beat.title ?? "بیت بدون عنوان");
         setDiscountPercent(Number(beat.discount_percent ?? 0));
   
         setStem({
@@ -286,13 +292,13 @@
           .toLowerCase();
   
         if (extension !== ".zip" && extension !== ".rar") {
-          throw new Error("Stem Pack must be a ZIP or RAR file.");
+          throw new Error("پک Stem باید فایل ZIP یا RAR باشد.");
         }
   
         const maxSize = 1024 * 1024 * 1024;
   
         if (file.size > maxSize) {
-          throw new Error("Stem Pack must be 1GB or smaller.");
+          throw new Error("حجم پک Stem نباید بیشتر از ۱ گیگابایت باشد.");
         }
   
         // ----------------------------------------------------
@@ -322,7 +328,7 @@
   
         if (!presignResponse.ok || !presignData.success) {
           throw new Error(
-            presignData.error ?? "Failed to prepare Stem Pack upload.",
+            presignData.error ?? "آماده‌سازی آپلود پک Stem ممکن نشد.",
           );
         }
   
@@ -341,7 +347,7 @@
         });
   
         if (!uploadResponse.ok) {
-          throw new Error(`Stem Pack upload failed (${uploadResponse.status}).`);
+          throw new Error(`آپلود پک Stem ناموفق بود (${uploadResponse.status}).`);
         }
   
         // ----------------------------------------------------
@@ -367,7 +373,7 @@
         const finalizeData = await finalizeResponse.json();
   
         if (!finalizeResponse.ok || !finalizeData.success) {
-          throw new Error(finalizeData.error ?? "Failed to save Stem Pack.");
+          throw new Error(finalizeData.error ?? "ذخیره‌ی پک Stem ممکن نشد.");
         }
   
         // ----------------------------------------------------
@@ -388,8 +394,8 @@
         // Producer decides which ones include stems.
         setSuccess(
           stem.key
-            ? "Stem Pack replaced successfully."
-            : "Stem Pack added successfully.",
+            ? "پک Stem با موفقیت جایگزین شد."
+            : "پک Stem با موفقیت اضافه شد.",
         );
       } catch (uploadError) {
         console.error(uploadError);
@@ -397,7 +403,7 @@
         setError(
           uploadError instanceof Error
             ? uploadError.message
-            : "Failed to upload Stem Pack.",
+            : "آپلود پک Stem ممکن نشد.",
         );
       } finally {
         setIsStemUploading(false);
@@ -443,7 +449,7 @@
         const data = await response.json();
   
         if (!response.ok || !data.success) {
-          throw new Error(data.error ?? "Failed to remove Stem Pack.");
+          throw new Error(data.error ?? "حذف پک Stem ممکن نشد.");
         }
   
         setStem({
@@ -462,14 +468,14 @@
           })),
         );
   
-        setSuccess("Stem Pack removed successfully.");
+        setSuccess("پک Stem با موفقیت حذف شد.");
       } catch (removeError) {
         console.error(removeError);
   
         setError(
           removeError instanceof Error
             ? removeError.message
-            : "Failed to remove Stem Pack.",
+            : "حذف پک Stem ممکن نشد.",
         );
       } finally {
         setIsStemRemoving(false);
@@ -486,21 +492,21 @@
   
       for (const license of licenses) {
         if (!Number.isFinite(license.price) || license.price <= 0) {
-          setError(`${license.license_type} price must be greater than 0.`);
+          setError(`قیمت لایسنس ${LICENSE_LABELS[license.license_type]} باید بیشتر از ۰ باشد.`);
   
           return;
         }
   
         if (!stem.key && license.includes_stems) {
           setError(
-            "This beat does not have a Stem Pack, so no license can include stems.",
+            "این بیت پک Stem ندارد، پس هیچ لایسنسی نمی‌تواند شامل Stems باشد.",
           );
   
           return;
         }
   
         if (cleanTerms(license.terms).length === 0) {
-          setError(`${license.license_type} needs at least one term.`);
+          setError(`لایسنس ${LICENSE_LABELS[license.license_type]} حداقل به یک شرط نیاز دارد.`);
   
           return;
         }
@@ -515,7 +521,7 @@
         } = await supabase.auth.getUser();
   
         if (authError || !user) {
-          throw new Error("You must be logged in.");
+          throw new Error("باید وارد حساب‌ات شوی.");
         }
   
         const { data: beat, error: beatError } = await supabase
@@ -526,7 +532,7 @@
           .single();
   
         if (beatError || !beat) {
-          throw new Error("Beat not found or you do not have access to it.");
+          throw new Error("بیت پیدا نشد یا به آن دسترسی نداری.");
         }
   
         const hasStemPack = Boolean(
@@ -562,14 +568,14 @@
           throw new Error(upsertError.message);
         }
   
-        setSuccess("License settings saved successfully.");
+        setSuccess("تنظیمات لایسنس با موفقیت ذخیره شد.");
       } catch (saveError) {
         console.error(saveError);
   
         setError(
           saveError instanceof Error
             ? saveError.message
-            : "Failed to save license settings.",
+            : "ذخیره‌ی تنظیمات لایسنس ممکن نشد.",
         );
       } finally {
         setIsSaving(false);
@@ -585,7 +591,7 @@
       setSuccess(null);
 
       if (!Number.isInteger(discountPercent) || discountPercent < 0 || discountPercent > 90) {
-        setError("Discount must be a whole number from 0 to 90.");
+        setError("تخفیف باید یک عدد صحیح بین ۰ تا ۹۰ باشد.");
         return;
       }
 
@@ -599,15 +605,15 @@
         const data = await response.json();
 
         if (!response.ok || !data.success) {
-          throw new Error(data.error || "Could not save the discount.");
+          throw new Error(data.error || "ذخیره‌ی تخفیف ممکن نشد.");
         }
 
         setDiscountPercent(Number(data.discountPercent ?? discountPercent));
         setSuccess(discountPercent === 0
-          ? "Discount removed. This beat is back to its regular prices."
-          : `${discountPercent}% discount is now active on all active licenses.`);
+          ? "تخفیف برداشته شد. قیمت‌های این بیت به حالت عادی برگشت."
+          : `تخفیف ${discountPercent}٪ روی همه‌ی لایسنس‌های فعال اعمال شد.`);
       } catch (saveError) {
-        setError(saveError instanceof Error ? saveError.message : "Could not save the discount.");
+        setError(saveError instanceof Error ? saveError.message : "ذخیره‌ی تخفیف ممکن نشد.");
       } finally {
         setIsSavingDiscount(false);
       }
@@ -620,7 +626,7 @@
     if (isLoading) {
       return (
         <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
-          <p className="text-zinc-400">Loading license settings...</p>
+          <p className="text-zinc-400">در حال بارگذاری تنظیمات لایسنس...</p>
         </div>
       );
     }
@@ -638,7 +644,7 @@
               onClick={() => router.back()}
               className="mb-6 text-sm text-zinc-400 transition hover:text-white"
             >
-              ← Back
+              → بازگشت
             </button>
   
             <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-red-300">
@@ -665,10 +671,10 @@
               onClick={() => router.back()}
               className="mb-6 text-sm text-zinc-400 transition hover:text-white"
             >
-              ← Back
+              → بازگشت
             </button>
   
-            <h1 className="text-2xl font-bold">License & Pricing</h1>
+            <h1 className="text-2xl font-bold">لایسنس و قیمت‌گذاری</h1>
   
             <p className="mt-2 text-sm text-zinc-400">{beatTitle}</p>
           </div>
@@ -678,24 +684,24 @@
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="max-w-xl">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Beat Discount</h2>
+                  <h2 className="text-lg font-semibold">تخفیف بیت</h2>
                   {discountPercent > 0 && (
                     <span className="rounded-full bg-orange-300/15 px-2.5 py-1 text-xs font-bold text-orange-200">
-                      {discountPercent}% OFF
+                      {discountPercent}٪ تخفیف
                     </span>
                   )}
                 </div>
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
-                  Set one discount for every active license on this beat. Your regular prices stay unchanged; buyers see the discounted price. Set it to 0% to remove the discount.
+                  یک تخفیف برای همه‌ی لایسنس‌های فعال این بیت تعیین کن. قیمت‌های اصلی‌ات تغییری نمی‌کنند و خریدارها قیمت با تخفیف را می‌بینند. برای برداشتن تخفیف، عدد را روی ۰٪ بگذار.
                 </p>
               </div>
 
               <div className="w-full sm:max-w-xs">
                 <label htmlFor="beat-discount-percent" className="mb-2 block text-sm text-zinc-400">
-                  Discount percentage
+                  درصد تخفیف
                 </label>
                 <div className="flex gap-2">
-                  <div className="relative min-w-0 flex-1">
+                  <div dir="ltr" className="relative min-w-0 flex-1">
                     <input
                       id="beat-discount-percent"
                       type="number"
@@ -710,9 +716,9 @@
                         setSuccess(null);
                       }}
                       disabled={isSavingDiscount}
-                      className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 pr-10 text-white outline-none transition focus:border-orange-300/60 disabled:opacity-50"
+                      className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 pe-10 text-white outline-none transition focus:border-orange-300/60 disabled:opacity-50"
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
+                    <span className="absolute end-4 top-1/2 -translate-y-1/2 text-zinc-500">%</span>
                   </div>
                   <button
                     type="button"
@@ -720,10 +726,10 @@
                     disabled={isSavingDiscount}
                     className="shrink-0 rounded-lg bg-orange-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-orange-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {isSavingDiscount ? "Saving…" : "Save discount"}
+                    {isSavingDiscount ? "در حال ذخیره…" : "ذخیره‌ی تخفیف"}
                   </button>
                 </div>
-                <p className="mt-2 text-xs text-zinc-600">Choose 0–90%. The server recalculates all checkout prices.</p>
+                <p className="mt-2 text-xs text-zinc-600">عددی بین ۰ تا ۹۰ درصد انتخاب کن. قیمت‌های پرداخت به‌صورت خودکار روی سرور دوباره محاسبه می‌شوند.</p>
               </div>
             </div>
           </section>
@@ -732,17 +738,16 @@
           <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold">Stem Pack</h2>
+                <h2 className="text-lg font-semibold">پک Stem</h2>
   
                 <p className="mt-1 text-sm text-zinc-500">
-                  Upload the stems that buyers receive with licenses that include
-                  stems.
+                  فایل‌های Stem را آپلود کن تا خریدارانی که لایسنس شامل Stems دارند، آن را دریافت کنند.
                 </p>
               </div>
   
               {hasStemPack && (
                 <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-medium text-emerald-400">
-                  Available
+                  موجود
                 </span>
               )}
             </div>
@@ -752,7 +757,7 @@
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-zinc-200">
-                      {stem.fileName ?? "Stem Pack"}
+                      {stem.fileName ?? "پک Stem"}
                     </p>
   
                     <p className="mt-1 text-xs text-zinc-600">
@@ -767,7 +772,7 @@
                       disabled={isStemUploading || isStemRemoving}
                       className="rounded-lg border border-zinc-700 px-4 py-2.5 text-sm text-zinc-200 transition hover:bg-zinc-900 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {isStemUploading ? "Replacing..." : "Replace"}
+                      {isStemUploading ? "در حال جایگزینی..." : "جایگزینی"}
                     </button>
   
                     <button
@@ -776,17 +781,17 @@
                       disabled={isStemUploading || isStemRemoving}
                       className="rounded-lg border border-zinc-800 px-4 py-2.5 text-sm text-zinc-500 transition hover:border-red-900 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      {isStemRemoving ? "Removing..." : "Remove"}
+                      {isStemRemoving ? "در حال حذف..." : "حذف"}
                     </button>
                   </div>
                 </div>
               </div>
             ) : (
               <div className="mt-5 rounded-xl border border-dashed border-zinc-700 bg-black p-5">
-                <p className="text-sm text-zinc-400">No Stem Pack uploaded.</p>
+                <p className="text-sm text-zinc-400">هنوز پک Stem آپلود نشده.</p>
   
                 <p className="mt-1 text-xs text-zinc-600">
-                  ZIP or RAR, up to 1 GB.
+                  ZIP یا RAR، حداکثر ۱ گیگابایت.
                 </p>
   
                 <button
@@ -795,7 +800,7 @@
                   disabled={isStemUploading}
                   className="mt-4 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isStemUploading ? "Uploading..." : "Add Stem Pack"}
+                  {isStemUploading ? "در حال آپلود..." : "افزودن پک Stem"}
                 </button>
               </div>
             )}
@@ -810,8 +815,7 @@
   
             {!hasStemPack && (
               <p className="mt-4 text-xs text-zinc-600">
-                Until you upload a Stem Pack, all "Includes Stems" options remain
-                disabled.
+                تا وقتی پک Stem آپلود نکنی، همه‌ی گزینه‌های «شامل Stems» غیرفعال می‌مانند.
               </p>
             )}
           </section>
@@ -826,7 +830,7 @@
                 <div className="flex items-start justify-between gap-4 sm:gap-6">
                   <div className="min-w-0">
                     <h2 className="text-lg font-semibold">
-                      {license.license_type}
+                      {LICENSE_LABELS[license.license_type]}
                     </h2>
   
                     <p className="mt-1 text-sm text-zinc-500">
@@ -849,7 +853,7 @@
                         : "bg-zinc-800 text-zinc-500"
                     }`}
                   >
-                    {license.is_active ? "Active" : "Inactive"}
+                    {license.is_active ? "فعال" : "غیرفعال"}
                   </button>
                 </div>
   
@@ -859,11 +863,11 @@
                     htmlFor={`price-${license.license_type}`}
                     className="mb-2 block text-sm text-zinc-400"
                   >
-                    Price
+                    قیمت
                   </label>
   
-                  <div className="relative max-w-xs">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">
+                  <div dir="ltr" className="relative max-w-xs">
+                    <span className="absolute start-4 top-1/2 -translate-y-1/2 text-zinc-500">
                       $
                     </span>
   
@@ -880,7 +884,7 @@
                           Number(event.target.value),
                         )
                       }
-                      className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 pl-8 text-white outline-none transition focus:border-zinc-600"
+                      className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 ps-8 text-white outline-none transition focus:border-zinc-600"
                     />
                   </div>
                 </div>
@@ -891,12 +895,11 @@
                     <div className="flex items-center justify-between gap-4">
                       <div>
                         <p className="text-sm font-medium text-zinc-200">
-                          Allow as free streak reward
+                          اجازه‌ی استفاده به‌عنوان جایزه‌ی رایگان استریک
                         </p>
   
                         <p className="mt-1 text-xs text-zinc-600">
-                          Buyers who complete a 7-day play streak can pick this
-                          beat for free (Basic license).
+                          خریدارانی که استریک پخش ۷ روزه را کامل کنند، می‌توانند این بیت را رایگان انتخاب کنند (لایسنس بیسیک).
                         </p>
                       </div>
   
@@ -914,7 +917,7 @@
                             ? "bg-white"
                             : "bg-zinc-800"
                         }`}
-                        aria-label="Toggle free streak reward"
+                        aria-label="تغییر وضعیت جایزه‌ی رایگان استریک"
                       >
                         <span
                           className={`absolute top-1 h-4 w-4 rounded-full transition ${
@@ -934,7 +937,7 @@
                     htmlFor={`terms-${license.license_type}`}
                     className="mb-2 block text-sm text-zinc-400"
                   >
-                    License terms (one per line)
+                    شرایط لایسنس (هر شرط در یک خط)
                   </label>
   
                   <textarea
@@ -948,12 +951,12 @@
                       )
                     }
                     rows={5}
-                    placeholder={"Up to 100,000 streams\n1 music video"}
+                    placeholder={"تا ۱۰۰٬۰۰۰ استریم\n۱ موزیک ویدیو"}
                     className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 text-sm text-white outline-none transition focus:border-zinc-600"
                   />
   
                   <p className="mt-1 text-xs text-zinc-600">
-                    Max {MAX_TERMS} lines, {MAX_TERM_LENGTH} characters each.
+                    حداکثر {MAX_TERMS} خط، هر خط تا {MAX_TERM_LENGTH} کاراکتر.
                   </p>
                 </div>
   
@@ -962,11 +965,11 @@
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-medium text-zinc-200">
-                        Includes Stems
+                        شامل Stems
                       </p>
   
                       <p className="mt-1 text-xs text-zinc-600">
-                        Buyers with this license can download your Stem Pack.
+                        خریداران این لایسنس می‌توانند پک Stem تو را دانلود کنند.
                       </p>
                     </div>
   
@@ -987,7 +990,7 @@
                             ? "bg-white"
                             : "bg-zinc-800"
                       }`}
-                      aria-label={`Toggle stems for ${license.license_type}`}
+                      aria-label={`تغییر وضعیت Stems برای لایسنس ${LICENSE_LABELS[license.license_type]}`}
                     >
                       <span
                         className={`absolute top-1 h-4 w-4 rounded-full transition ${
@@ -1001,7 +1004,7 @@
   
                   {!hasStemPack && (
                     <p className="mt-3 text-xs text-zinc-700">
-                      Upload a Stem Pack above to enable this option.
+                      برای فعال شدن این گزینه، بالا یک پک Stem آپلود کن.
                     </p>
                   )}
                 </div>
@@ -1030,7 +1033,7 @@
               disabled={isSaving || isStemUploading || isStemRemoving}
               className="rounded-lg bg-white px-6 py-3 text-sm font-medium text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSaving ? "Saving..." : "Save License Settings"}
+              {isSaving ? "در حال ذخیره..." : "ذخیره‌ی تنظیمات لایسنس"}
             </button>
           </div>
         </div>

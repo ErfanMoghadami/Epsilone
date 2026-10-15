@@ -29,7 +29,7 @@ export default function ChangeEmailForm({
       } = await supabase.auth.getUser();
 
       if (error || !user) {
-        setError("Could not load your account.");
+        setError("بارگذاری حساب کاربری ممکن نشد.");
         setLoading(false);
         return;
       }
@@ -50,12 +50,12 @@ export default function ChangeEmailForm({
     const email = newEmail.trim().toLowerCase();
 
     if (!email) {
-      setError("Please enter your new email address.");
+      setError("لطفاً ایمیل جدیدت رو وارد کن.");
       return;
     }
 
     if (email === currentEmail.toLowerCase()) {
-      setError("Your new email must be different from your current email.");
+      setError("ایمیل جدید باید با ایمیل فعلی‌ت فرق داشته باشه.");
       return;
     }
 
@@ -82,7 +82,7 @@ export default function ChangeEmailForm({
     setNewEmail("");
 
     setMessage(
-      "Confirmation links have been sent to your current and new email addresses.",
+      "لینک تأیید برای ایمیل فعلی و ایمیل جدیدت ارسال شد.",
     );
 
     setSubmitting(false);
@@ -91,7 +91,7 @@ export default function ChangeEmailForm({
   if (loading) {
     return (
       <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
-        <p className="text-sm text-zinc-500">Loading email settings...</p>
+        <p className="text-sm text-zinc-500">در حال بارگذاری...</p>
       </section>
     );
   }
@@ -99,10 +99,10 @@ export default function ChangeEmailForm({
   return (
     <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
       <div className="mb-6">
-        <h2 className="text-lg font-medium">Change email</h2>
+        <h2 className="text-lg font-medium">تغییر ایمیل</h2>
 
         <p className="mt-1 text-sm text-zinc-500">
-          Update the email address you use to sign in to Epsilone.
+          ایمیلی که با اون وارد Epsilone می‌شی رو تغییر بده.
         </p>
       </div>
 
@@ -112,12 +112,13 @@ export default function ChangeEmailForm({
             htmlFor="current-email"
             className="mb-2 block text-sm font-medium text-white/80"
           >
-            Current email
+            ایمیل فعلی
           </label>
 
           <input
             id="current-email"
             type="email"
+            dir="ltr"
             value={currentEmail}
             readOnly
             className="w-full rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm text-white/50 outline-none"
@@ -129,13 +130,14 @@ export default function ChangeEmailForm({
             htmlFor="new-email"
             className="mb-2 block text-sm font-medium text-white/80"
           >
-            New email
+            ایمیل جدید
           </label>
 
           <input
             id="new-email"
             type="email"
             autoComplete="email"
+            dir="ltr"
             value={newEmail}
             onChange={(event) => setNewEmail(event.target.value)}
             placeholder="new@example.com"
@@ -160,7 +162,7 @@ export default function ChangeEmailForm({
           disabled={submitting}
           className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting ? "Sending..." : "Change email"}
+          {submitting ? "در حال ارسال..." : "تغییر ایمیل"}
         </button>
       </form>
     </section>

@@ -31,7 +31,7 @@ export default function ProducerSettingsPage() {
       } = await supabase.auth.getUser();
 
       if (error || !user) {
-        setError("Could not load your account.");
+        setError("بارگذاری حساب کاربری ممکن نشد.");
         setLoading(false);
         return;
       }
@@ -58,12 +58,12 @@ export default function ProducerSettingsPage() {
     setMessage("");
 
     if (password.length < 8) {
-      setError("Password must be at least 8 characters.");
+      setError("رمز عبور باید حداقل ۸ کاراکتر باشه.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("رمزهای عبور با هم یکی نیستن.");
       return;
     }
 
@@ -86,7 +86,7 @@ export default function ProducerSettingsPage() {
     setPassword("");
     setConfirmPassword("");
 
-    setMessage("Password updated successfully.");
+    setMessage("رمز عبور با موفقیت تغییر کرد.");
 
     setChangingPassword(false);
   }
@@ -94,9 +94,9 @@ export default function ProducerSettingsPage() {
   if (loading) {
     return (
       <div className="max-w-xl">
-        <h1 className="mb-2 text-2xl font-semibold">Account Settings</h1>
+        <h1 className="mb-2 text-2xl font-semibold">تنظیمات حساب</h1>
 
-        <p className="text-sm text-zinc-500">Loading account...</p>
+        <p className="text-sm text-zinc-500">در حال بارگذاری...</p>
       </div>
     );
   }
@@ -105,10 +105,10 @@ export default function ProducerSettingsPage() {
     <div className="max-w-xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold">Account Settings</h1>
+        <h1 className="text-2xl font-semibold">تنظیمات حساب</h1>
 
         <p className="mt-2 text-sm text-zinc-500">
-          Manage your Epsilone account.
+          حساب Epsilone خودت رو مدیریت کن.
         </p>
       </div>
       <AvatarUploader initialAvatarUrl={avatarUrl} />
@@ -119,15 +119,16 @@ export default function ProducerSettingsPage() {
         {/* User ID */}
         <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-4">
-            <h2 className="text-lg font-medium">User ID</h2>
+            <h2 className="text-lg font-medium">شناسه کاربری</h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Your account ID cannot be changed.
+              شناسه حساب شما قابل تغییر نیست.
             </p>
           </div>
 
           <input
             type="text"
+            dir="ltr"
             value={userId}
             readOnly
             className="w-full rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm text-white/50 outline-none"
@@ -140,10 +141,10 @@ export default function ProducerSettingsPage() {
         {/* Password */}
         <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
           <div className="mb-6">
-            <h2 className="text-lg font-medium">Change password</h2>
+            <h2 className="text-lg font-medium">تغییر رمز عبور</h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Update the password you use to sign in.
+              رمز عبوری که باهاش وارد می‌شی رو تغییر بده.
             </p>
           </div>
 
@@ -153,12 +154,13 @@ export default function ProducerSettingsPage() {
                 htmlFor="new-password"
                 className="mb-2 block text-sm font-medium text-white/80"
               >
-                New password
+                رمز عبور جدید
               </label>
 
               <input
                 id="new-password"
                 type="password"
+                dir="ltr"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 minLength={8}
@@ -173,12 +175,13 @@ export default function ProducerSettingsPage() {
                 htmlFor="confirm-password"
                 className="mb-2 block text-sm font-medium text-white/80"
               >
-                Confirm new password
+                تکرار رمز عبور جدید
               </label>
 
               <input
                 id="confirm-password"
                 type="password"
+                dir="ltr"
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 minLength={6}
@@ -205,7 +208,7 @@ export default function ProducerSettingsPage() {
               disabled={changingPassword}
               className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {changingPassword ? "Updating..." : "Change Password"}
+              {changingPassword ? "در حال به‌روزرسانی..." : "تغییر رمز عبور"}
             </button>
           </form>
         </section>

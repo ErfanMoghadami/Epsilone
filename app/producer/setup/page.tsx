@@ -64,7 +64,7 @@ export default async function ProducerSetupPage({
     if (!/^[a-z0-9_-]{3,20}$/.test(username)) {
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "Username must be 3-20 characters and contain only letters, numbers, underscores, or hyphens.",
+          "نام کاربری باید ۳ تا ۲۰ کاراکتر باشه و فقط شامل حروف انگلیسی، عدد، آندرلاین یا خط تیره باشه.",
         )}`,
       );
     }
@@ -72,7 +72,7 @@ export default async function ProducerSetupPage({
     if (RESERVED_USERNAMES.has(username)) {
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "This username is reserved. Please choose another one.",
+          "این نام کاربری رزرو شده. لطفاً یکی دیگه انتخاب کن.",
         )}`,
       );
     }
@@ -80,7 +80,7 @@ export default async function ProducerSetupPage({
     if (password.length < 8) {
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "Password must be at least 8 characters.",
+          "رمز عبور باید حداقل ۸ کاراکتر باشه.",
         )}`,
       );
     }
@@ -88,7 +88,7 @@ export default async function ProducerSetupPage({
     if (password !== confirmPassword) {
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "Passwords do not match.",
+          "رمزهای عبور با هم یکی نیستن.",
         )}`,
       );
     }
@@ -116,7 +116,7 @@ export default async function ProducerSetupPage({
 
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "Could not check username availability.",
+          "بررسی در دسترس بودن نام کاربری ممکن نشد.",
         )}`,
       );
     }
@@ -124,7 +124,7 @@ export default async function ProducerSetupPage({
     if (existingUsername) {
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "This username is already taken.",
+          "این نام کاربری قبلاً گرفته شده.",
         )}`,
       );
     }
@@ -139,7 +139,7 @@ export default async function ProducerSetupPage({
 
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "Could not set your password. Please try again.",
+          "تنظیم رمز عبور ممکن نشد. لطفاً دوباره تلاش کن.",
         )}`,
       );
     }
@@ -159,14 +159,14 @@ export default async function ProducerSetupPage({
       if (profileUpdateError.code === "23505") {
         redirect(
           `/producer/setup?error=${encodeURIComponent(
-            "This username is already taken.",
+            "این نام کاربری قبلاً گرفته شده.",
           )}`,
         );
       }
 
       redirect(
         `/producer/setup?error=${encodeURIComponent(
-          "Could not save your username.",
+          "ذخیره نام کاربری ممکن نشد.",
         )}`,
       );
     }
@@ -179,7 +179,7 @@ export default async function ProducerSetupPage({
   return (
     <AuthShell>
       <div className="mb-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ep-brand-text">Producer</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-ep-brand-text">آهنگساز</p>
         <h1 className="mt-3 text-3xl font-bold tracking-tight">تکمیل حساب پرودیوسر</h1>
         <p className="mt-3 text-sm leading-7 text-ep-muted">نام کاربری و رمز عبورت رو تنظیم کن تا پنلت آماده بشه.</p>
       </div>

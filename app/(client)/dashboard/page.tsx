@@ -209,11 +209,11 @@ export default async function DashboardPage() {
     return (
       <div>
         <h1 className="mb-2 text-2xl font-semibold">
-          Dashboard
+          داشبورد
         </h1>
 
         <p className="text-sm text-red-400">
-          Could not load your account data.
+          بارگذاری اطلاعات حساب کاربری ممکن نشد.
         </p>
       </div>
     );
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
     user.user_metadata?.display_name ||
     user.user_metadata?.full_name ||
     user.email?.split("@")[0] ||
-    "there";
+    "دوست عزیز";
 
   return (
     <div>
@@ -243,16 +243,15 @@ export default async function DashboardPage() {
 
       <div className="mb-8">
         <p className="mb-2 text-sm text-zinc-600">
-          Welcome back
+          خوش برگشتی
         </p>
 
         <h1 className="text-3xl font-bold tracking-tight">
-          Hey, {displayName}
+          سلام، {displayName}
         </h1>
 
         <p className="mt-2 text-sm text-zinc-500">
-          Manage your beats, purchases, favorites, and
-          activity.
+          خریدها، علاقه‌مندی‌ها و فعالیت‌هات رو از اینجا مدیریت کن.
         </p>
       </div>
 
@@ -266,16 +265,15 @@ export default async function DashboardPage() {
           className="group rounded-2xl border border-white/10 bg-zinc-950 p-5 transition hover:border-white/20 hover:bg-zinc-900"
         >
           <p className="text-sm font-semibold text-white">
-            Find a Beat
+            پیدا کردن بیت
           </p>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Describe what you are looking for and discover
-            matching beats.
+            بنویس دنبال چه حال‌وهوایی هستی تا بیت‌های مناسب رو پیدا کنی.
           </p>
 
           <span className="mt-4 inline-block text-sm text-zinc-400 transition group-hover:text-white">
-            Start searching →
+            شروع جستجو ←
           </span>
         </Link>
 
@@ -284,15 +282,15 @@ export default async function DashboardPage() {
           className="group rounded-2xl border border-white/10 bg-zinc-950 p-5 transition hover:border-white/20 hover:bg-zinc-900"
         >
           <p className="text-sm font-semibold text-white">
-            Your Favorites
+            علاقه‌مندی‌های شما
           </p>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Revisit beats you have saved.
+            بیت‌هایی که ذخیره کردی رو دوباره ببین.
           </p>
 
           <span className="mt-4 inline-block text-sm text-zinc-400 transition group-hover:text-white">
-            View favorites →
+            مشاهده علاقه‌مندی‌ها ←
           </span>
         </Link>
 
@@ -301,15 +299,15 @@ export default async function DashboardPage() {
           className="group rounded-2xl border border-white/10 bg-zinc-950 p-5 transition hover:border-white/20 hover:bg-zinc-900"
         >
           <p className="text-sm font-semibold text-white">
-            Your Purchases
+            خریدهای شما
           </p>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Access your purchased beats and licenses.
+            به بیت‌ها و لایسنس‌هایی که خریدی دسترسی داشته باش.
           </p>
 
           <span className="mt-4 inline-block text-sm text-zinc-400 transition group-hover:text-white">
-            View purchases →
+            مشاهده خریدها ←
           </span>
         </Link>
       </div>
@@ -321,7 +319,7 @@ export default async function DashboardPage() {
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-xl border border-white/10 bg-zinc-950 p-5">
           <p className="text-sm text-zinc-500">
-            Suggested
+            پیشنهادشده
           </p>
 
           <p className="mt-2 text-3xl font-bold text-white">
@@ -329,13 +327,13 @@ export default async function DashboardPage() {
           </p>
 
           <p className="mt-1 text-xs text-zinc-600">
-            Beats recommended to you
+            بیت‌های پیشنهادشده به شما
           </p>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-zinc-950 p-5">
           <p className="text-sm text-zinc-500">
-            Played
+            پخش‌شده
           </p>
 
           <p className="mt-2 text-3xl font-bold text-white">
@@ -343,13 +341,13 @@ export default async function DashboardPage() {
           </p>
 
           <p className="mt-1 text-xs text-zinc-600">
-            Beats you actually played
+            بیت‌هایی که واقعاً پخش کردی
           </p>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-zinc-950 p-5">
           <p className="text-sm text-zinc-500">
-            Favorites
+            علاقه‌مندی‌ها
           </p>
 
           <p className="mt-2 text-3xl font-bold text-white">
@@ -357,13 +355,13 @@ export default async function DashboardPage() {
           </p>
 
           <p className="mt-1 text-xs text-zinc-600">
-            Beats you saved
+            بیت‌هایی که ذخیره کردی
           </p>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-zinc-950 p-5">
           <p className="text-sm text-zinc-500">
-            Purchases
+            خریدها
           </p>
 
           <p className="mt-2 text-3xl font-bold text-white">
@@ -371,13 +369,13 @@ export default async function DashboardPage() {
           </p>
 
           <p className="mt-1 text-xs text-zinc-600">
-            Completed orders
+            سفارش‌های تکمیل‌شده
           </p>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-zinc-950 p-5">
           <p className="text-sm text-zinc-500">
-            Play Rate
+            نرخ پخش
           </p>
 
           <p className="mt-2 text-3xl font-bold text-white">
@@ -385,24 +383,24 @@ export default async function DashboardPage() {
           </p>
 
           <p className="mt-1 text-xs text-zinc-600">
-            Suggested beats that you played
+            بیت‌های پیشنهادی که پخش کردی
           </p>
         </div>
       </div>
 
       {/* ---------------------------------------------------- */}
-      {/* Recently Played */}
+      {/* اخیراً پخش‌شده */}
       {/* ---------------------------------------------------- */}
 
       <section className="mb-8 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">
-              Recently Played
+              اخیراً پخش‌شده
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Beats you played recently.
+              بیت‌هایی که اخیراً پخش کردی.
             </p>
           </div>
 
@@ -410,7 +408,7 @@ export default async function DashboardPage() {
             href="/"
             className="text-sm text-zinc-500 transition hover:text-white"
           >
-            Find more →
+            پیدا کردن بیشتر ←
           </Link>
         </div>
 
@@ -434,31 +432,31 @@ export default async function DashboardPage() {
                     {beat.cover_url ? (
                       <img
                         src={beat.cover_url}
-                        alt={`${beat.title ?? "Beat"} cover`}
+                        alt={`کاور ${beat.title ?? "بیت"}`}
                         className="h-full w-full object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xs text-zinc-600">
-                        No cover
+                        بدون کاور
                       </div>
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
                     <h3 className="truncate text-sm font-semibold">
-                      {beat.title ?? "Untitled Beat"}
+                      {beat.title ?? "بیت بدون عنوان"}
                     </h3>
 
                     <p className="mt-1 text-xs text-zinc-600">
-                      Played{" "}
+                      پخش در{" "}
                       {new Date(
                         event.created_at,
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString("fa-IR")}
                     </p>
                   </div>
 
                   <span className="text-sm text-zinc-600">
-                    →
+                    ←
                   </span>
                 </Link>
               );
@@ -467,32 +465,32 @@ export default async function DashboardPage() {
         ) : (
           <div className="rounded-xl border border-zinc-800 p-8 text-center">
             <p className="text-sm text-zinc-500">
-              You have not played any beats yet.
+              هنوز هیچ بیتی پخش نکردی.
             </p>
 
             <Link
               href="/"
               className="mt-4 inline-block text-sm font-medium text-white underline underline-offset-4"
             >
-              Find a Beat
+              پیدا کردن بیت
             </Link>
           </div>
         )}
       </section>
 
       {/* ---------------------------------------------------- */}
-      {/* Recent Purchases */}
+      {/* خریدهای اخیر */}
       {/* ---------------------------------------------------- */}
 
       <section className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">
-              Recent Purchases
+              خریدهای اخیر
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Your latest completed orders.
+              آخرین سفارش‌های تکمیل‌شده‌ت.
             </p>
           </div>
 
@@ -500,7 +498,7 @@ export default async function DashboardPage() {
             href="/dashboard/purchases"
             className="text-sm text-zinc-500 transition hover:text-white"
           >
-            View all →
+            مشاهده همه ←
           </Link>
         </div>
 
@@ -514,14 +512,14 @@ export default async function DashboardPage() {
               >
                 <div>
                   <p className="font-mono text-xs text-zinc-600">
-                    Order #{purchase.id}
+                    سفارش #{purchase.id}
                   </p>
 
                   <p className="mt-1 text-sm text-zinc-400">
                     {new Date(
                       purchase.paid_at ??
                         purchase.created_at,
-                    ).toLocaleDateString()}
+                    ).toLocaleDateString("fa-IR")}
                   </p>
                 </div>
 
@@ -534,14 +532,14 @@ export default async function DashboardPage() {
         ) : (
           <div className="rounded-xl border border-zinc-800 p-8 text-center">
             <p className="text-sm text-zinc-500">
-              You have no purchases yet.
+              هنوز خریدی نداشتی.
             </p>
 
             <Link
               href="/"
               className="mt-4 inline-block text-sm font-medium text-white underline underline-offset-4"
             >
-              Find your first beat
+              پیدا کردن اولین بیت
             </Link>
           </div>
         )}

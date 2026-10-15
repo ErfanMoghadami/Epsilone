@@ -42,7 +42,7 @@ export default function SettingsPage() {
 
         setError(
           userError?.message ||
-            "Could not load your account.",
+            "بارگذاری حساب کاربری ممکن نشد.",
         );
 
         setLoadingAccount(false);
@@ -68,7 +68,7 @@ export default function SettingsPage() {
           profileError,
         );
 
-        setError("Could not load your profile.");
+        setError("بارگذاری پروفایل ممکن نشد.");
         setLoadingAccount(false);
         return;
       }
@@ -91,7 +91,7 @@ export default function SettingsPage() {
         );
 
         setError(
-          "Could not determine your authentication method.",
+          "تشخیص روش ورود به حساب ممکن نشد.",
         );
 
         setLoadingAccount(false);
@@ -134,7 +134,7 @@ export default function SettingsPage() {
     const trimmedName = displayName.trim();
 
     if (trimmedName.length > 50) {
-      setError("Name must be 50 characters or less.");
+      setError("نام باید حداکثر ۵۰ کاراکتر باشه.");
       return;
     }
 
@@ -159,14 +159,14 @@ export default function SettingsPage() {
 
       setError(
         profileError.message ||
-          "Could not update your name.",
+          "به‌روزرسانی نام ممکن نشد.",
       );
 
       setSavingName(false);
       return;
     }
 
-    setMessage("Your name has been updated successfully.");
+    setMessage("نامت با موفقیت به‌روزرسانی شد.");
     setSavingName(false);
   }
 
@@ -184,19 +184,19 @@ export default function SettingsPage() {
 
     if (newPassword.length < 8) {
       setError(
-        "Password must be at least 8 characters.",
+        "رمز عبور باید حداقل ۸ کاراکتر باشه.",
       );
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match.");
+      setError("رمزهای عبور جدید با هم یکی نیستن.");
       return;
     }
 
     if (hasPassword && !currentPassword) {
       setError(
-        "Please enter your current password.",
+        "لطفاً رمز عبور فعلی‌ت رو وارد کن.",
       );
       return;
     }
@@ -206,7 +206,7 @@ export default function SettingsPage() {
       currentPassword === newPassword
     ) {
       setError(
-        "Your new password must be different from your current password.",
+        "رمز عبور جدید باید با رمز فعلی‌ت فرق داشته باشه.",
       );
       return;
     }
@@ -241,8 +241,8 @@ export default function SettingsPage() {
 
     setMessage(
       hasPassword
-        ? "Your password has been changed successfully."
-        : "Your password has been set successfully.",
+        ? "رمز عبورت با موفقیت تغییر کرد."
+        : "رمز عبورت با موفقیت تنظیم شد.",
     );
 
     setHasPassword(true);
@@ -258,17 +258,17 @@ export default function SettingsPage() {
       <div className="max-w-2xl">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold">
-            Settings
+            تنظیمات
           </h1>
 
           <p className="mt-2 text-sm text-zinc-500">
-            Manage your Epsilone account.
+            حساب Epsilone خودت رو مدیریت کن.
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
           <p className="text-sm text-zinc-500">
-            Loading account settings...
+            در حال بارگذاری...
           </p>
         </div>
       </div>
@@ -285,11 +285,11 @@ export default function SettingsPage() {
 
       <div className="mb-8">
         <h1 className="text-2xl font-semibold">
-          Settings
+          تنظیمات
         </h1>
 
         <p className="mt-2 text-sm text-zinc-500">
-          Manage your Epsilone account.
+          حساب Epsilone خودت رو مدیریت کن.
         </p>
       </div>
 
@@ -298,11 +298,11 @@ export default function SettingsPage() {
       <section className="mb-6 rounded-2xl border border-white/10 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-6">
           <h2 className="text-lg font-medium">
-            Account
+            حساب کاربری
           </h2>
 
           <p className="mt-1 text-sm text-zinc-500">
-            Manage your profile information.
+            اطلاعات پروفایلت رو مدیریت کن.
           </p>
         </div>
 
@@ -316,7 +316,7 @@ export default function SettingsPage() {
             htmlFor="display-name"
             className="block text-sm font-medium text-white/80"
           >
-            Name
+            نام
           </label>
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -327,7 +327,7 @@ export default function SettingsPage() {
               onChange={(event) =>
                 setDisplayName(event.target.value)
               }
-              placeholder="Enter your name"
+              placeholder="نامت رو وارد کن"
               maxLength={50}
               className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
             />
@@ -337,13 +337,12 @@ export default function SettingsPage() {
               disabled={savingName}
               className="rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {savingName ? "Saving..." : "Save"}
+              {savingName ? "در حال ذخیره..." : "ذخیره"}
             </button>
           </div>
 
           <p className="text-xs text-zinc-600">
-            This name will be used as your display name on
-            Epsilone.
+            این نام به‌عنوان نام نمایشی تو در Epsilone استفاده می‌شه.
           </p>
         </form>
 
@@ -352,11 +351,11 @@ export default function SettingsPage() {
         <div className="mt-8 border-t border-white/10 pt-6">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm text-zinc-500">
-              Email
+              ایمیل
             </span>
 
             <span className="break-all text-sm text-white">
-              {accountEmail || "Not available"}
+              <span dir="ltr">{accountEmail || "در دسترس نیست"}</span>
             </span>
           </div>
         </div>
@@ -366,7 +365,7 @@ export default function SettingsPage() {
         <div className="mt-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm text-zinc-500">
-              Sign-in method
+              روش ورود
             </span>
 
             <div className="flex flex-wrap gap-2">
@@ -381,7 +380,7 @@ export default function SettingsPage() {
                 ))
               ) : (
                 <span className="text-sm text-zinc-500">
-                  Not available
+                  در دسترس نیست
                 </span>
               )}
             </div>
@@ -395,14 +394,14 @@ export default function SettingsPage() {
         <div className="mb-6">
           <h2 className="text-lg font-medium">
             {hasPassword
-              ? "Change password"
-              : "Set a password"}
+              ? "تغییر رمز عبور"
+              : "تنظیم رمز عبور"}
           </h2>
 
           <p className="mt-1 text-sm text-zinc-500">
             {hasPassword
-              ? "Update the password you use to sign in to Epsilone."
-              : "You signed in with Google. You can create a password to also sign in with your email."}
+              ? "رمز عبوری که با اون وارد Epsilone می‌شی رو تغییر بده."
+              : "با گوگل وارد شدی. می‌تونی یه رمز عبور بسازی تا با ایمیلت هم بتونی وارد بشی."}
           </p>
         </div>
 
@@ -416,18 +415,19 @@ export default function SettingsPage() {
                 htmlFor="current-password"
                 className="mb-2 block text-sm font-medium text-white/80"
               >
-                Current password
+                رمز عبور فعلی
               </label>
 
               <input
                 id="current-password"
                 type="password"
                 autoComplete="current-password"
+                dir="ltr"
                 value={currentPassword}
                 onChange={(event) =>
                   setCurrentPassword(event.target.value)
                 }
-                placeholder="Enter your current password"
+                placeholder="رمز عبور فعلی‌ت رو وارد کن"
                 className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
               />
             </div>
@@ -439,22 +439,23 @@ export default function SettingsPage() {
               className="mb-2 block text-sm font-medium text-white/80"
             >
               {hasPassword
-                ? "New password"
-                : "Password"}
+                ? "رمز عبور جدید"
+                : "رمز عبور"}
             </label>
 
             <input
               id="new-password"
               type="password"
               autoComplete="new-password"
+              dir="ltr"
               value={newPassword}
               onChange={(event) =>
                 setNewPassword(event.target.value)
               }
               placeholder={
                 hasPassword
-                  ? "Enter your new password"
-                  : "Create a password"
+                  ? "رمز عبور جدیدت رو وارد کن"
+                  : "یه رمز عبور بساز"
               }
               className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
             />
@@ -465,18 +466,19 @@ export default function SettingsPage() {
               htmlFor="confirm-password"
               className="mb-2 block text-sm font-medium text-white/80"
             >
-              Confirm password
+              تکرار رمز عبور
             </label>
 
             <input
               id="confirm-password"
               type="password"
               autoComplete="new-password"
+              dir="ltr"
               value={confirmPassword}
               onChange={(event) =>
                 setConfirmPassword(event.target.value)
               }
-              placeholder="Confirm your password"
+              placeholder="رمز عبور رو دوباره وارد کن"
               className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-white/25 focus:bg-white/[0.06]"
             />
           </div>
@@ -488,11 +490,11 @@ export default function SettingsPage() {
           >
             {loading
               ? hasPassword
-                ? "Updating..."
-                : "Setting password..."
+                ? "در حال به‌روزرسانی..."
+                : "در حال تنظیم رمز عبور..."
               : hasPassword
-                ? "Change password"
-                : "Set password"}
+                ? "تغییر رمز عبور"
+                : "تنظیم رمز عبور"}
           </button>
         </form>
       </section>

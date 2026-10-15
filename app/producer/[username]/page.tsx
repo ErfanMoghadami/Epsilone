@@ -323,7 +323,7 @@ export default async function ProducerPanelPage({
   const producerName =
     producer.display_name?.trim() ||
     producer.username ||
-    "Producer";
+    "آهنگساز";
 
   return (
     <div>
@@ -333,7 +333,7 @@ export default async function ProducerPanelPage({
 
       <div className="mb-8">
         <p className="text-sm text-zinc-500">
-          Producer Panel
+          پنل آهنگساز
         </p>
 
         <h1 className="mt-1 text-3xl font-bold tracking-tight text-white">
@@ -352,18 +352,18 @@ export default async function ProducerPanelPage({
       <section className="mb-8">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">
-            Beat Overview
+            نمای کلی بیت‌ها
           </h2>
 
           <p className="mt-1 text-sm text-zinc-500">
-            Your beat library and analysis status.
+            کتابخانه بیت‌ها و وضعیت تحلیل اون‌ها.
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
             <p className="text-sm text-zinc-500">
-              Total Beats
+              کل بیت‌ها
             </p>
 
             <p className="mt-2 text-3xl font-bold">
@@ -373,7 +373,7 @@ export default async function ProducerPanelPage({
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
             <p className="text-sm text-zinc-500">
-              Pending
+              در انتظار
             </p>
 
             <p className="mt-2 text-3xl font-bold">
@@ -383,7 +383,7 @@ export default async function ProducerPanelPage({
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
             <p className="text-sm text-zinc-500">
-              Processing
+              در حال پردازش
             </p>
 
             <p className="mt-2 text-3xl font-bold">
@@ -393,7 +393,7 @@ export default async function ProducerPanelPage({
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
             <p className="text-sm text-zinc-500">
-              Completed
+              تکمیل‌شده
             </p>
 
             <p className="mt-2 text-3xl font-bold">
@@ -403,7 +403,7 @@ export default async function ProducerPanelPage({
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
             <p className="text-sm text-zinc-500">
-              Failed
+              ناموفق
             </p>
 
             <p className="mt-2 text-3xl font-bold">
@@ -420,25 +420,25 @@ export default async function ProducerPanelPage({
       <section className="mb-8">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">
-            Sales & Performance
+            فروش و عملکرد
           </h2>
 
           <p className="mt-1 text-sm text-zinc-500">
-            Your completed sales across Epsilone.
+            فروش‌های تکمیل‌شده‌ت در Epsilone.
           </p>
         </div>
 
         {paidOrdersError ? (
           <div className="rounded-xl border border-red-900/60 bg-red-950/20 p-5">
             <p className="text-sm text-red-400">
-              Sales data could not be loaded.
+              بارگذاری اطلاعات فروش ممکن نشد.
             </p>
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
               <p className="text-sm text-zinc-500">
-                Completed Sales
+                فروش‌های تکمیل‌شده
               </p>
 
               <p className="mt-2 text-3xl font-bold">
@@ -446,13 +446,13 @@ export default async function ProducerPanelPage({
               </p>
 
               <p className="mt-1 text-xs text-zinc-600">
-                Licenses purchased
+                لایسنس‌های خریداری‌شده
               </p>
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
               <p className="text-sm text-zinc-500">
-                Gross Revenue
+                درآمد ناخالص
               </p>
 
               <p className="mt-2 text-3xl font-bold">
@@ -460,13 +460,13 @@ export default async function ProducerPanelPage({
               </p>
 
               <p className="mt-1 text-xs text-zinc-600">
-                Before platform fees
+                قبل از کارمزد پلتفرم
               </p>
             </div>
 
             <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-5">
               <p className="text-sm text-zinc-500">
-                Average Sale
+                میانگین فروش
               </p>
 
               <p className="mt-2 text-3xl font-bold">
@@ -474,7 +474,7 @@ export default async function ProducerPanelPage({
               </p>
 
               <p className="mt-1 text-xs text-zinc-600">
-                Average license value
+                میانگین ارزش لایسنس
               </p>
             </div>
           </div>
@@ -482,18 +482,18 @@ export default async function ProducerPanelPage({
       </section>
 
       {/* -------------------------------------------------- */}
-      {/* Recent Sales */}
+      {/* فروش‌های اخیر */}
       {/* -------------------------------------------------- */}
 
       <section className="mb-8 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 sm:p-6">
         <div className="mb-5 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold">
-              Recent Sales
+              فروش‌های اخیر
             </h2>
 
             <p className="mt-1 text-sm text-zinc-500">
-              Your latest completed purchases.
+              آخرین خریدهای تکمیل‌شده.
             </p>
           </div>
 
@@ -501,7 +501,7 @@ export default async function ProducerPanelPage({
             href="/producer/beats"
             className="text-sm text-zinc-500 transition hover:text-white"
           >
-            Manage beats →
+            مدیریت بیت‌ها ←
           </Link>
         </div>
 
@@ -520,18 +520,18 @@ export default async function ProducerPanelPage({
                   <div>
                     <p className="font-semibold">
                       {sale.title_snapshot ||
-                        "Untitled Beat"}
+                        "بیت بدون عنوان"}
                     </p>
 
                     <p className="mt-1 text-sm text-zinc-500">
-                      {sale.license_type} License
+                      لایسنس {sale.license_type}
                     </p>
 
                     <p className="mt-1 text-xs text-zinc-600">
                       {new Date(
                         order?.paid_at ??
                           sale.created_at,
-                      ).toLocaleDateString()}
+                      ).toLocaleDateString("fa-IR")}
                     </p>
                   </div>
 
@@ -545,27 +545,27 @@ export default async function ProducerPanelPage({
         ) : (
           <div className="rounded-xl border border-zinc-800 p-8 text-center">
             <p className="text-sm text-zinc-500">
-              No completed sales yet.
+              هنوز فروشی ثبت نشده.
             </p>
 
             <Link
               href="/producer/upload"
               className="mt-4 inline-block text-sm font-medium text-white underline underline-offset-4"
             >
-              Upload a Beat
+              آپلود بیت
             </Link>
           </div>
         )}
       </section>
 
       {/* -------------------------------------------------- */}
-      {/* Quick Actions */}
+      {/* دسترسی سریع */}
       {/* -------------------------------------------------- */}
 
       <section>
         <div className="mb-4">
           <h2 className="text-lg font-semibold">
-            Quick Actions
+            دسترسی سریع
           </h2>
         </div>
 
@@ -575,12 +575,11 @@ export default async function ProducerPanelPage({
             className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
           >
             <p className="font-semibold">
-              My Beats
+              بیت‌های من
             </p>
 
             <p className="mt-2 text-sm text-zinc-500">
-              Edit beats, manage licenses, review analysis,
-              and delete uploads.
+              ویرایش بیت‌ها، مدیریت لایسنس‌ها، بررسی تحلیل‌ها و حذف آپلودها.
             </p>
           </Link>
 
@@ -589,11 +588,11 @@ export default async function ProducerPanelPage({
             className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
           >
             <p className="font-semibold">
-              Upload Beat
+              آپلود بیت
             </p>
 
             <p className="mt-2 text-sm text-zinc-500">
-              Add a new master, cover, and optional Stem Pack.
+              مستر، کاور و در صورت تمایل Stem Pack جدید اضافه کن.
             </p>
           </Link>
 
@@ -602,11 +601,11 @@ export default async function ProducerPanelPage({
             className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5 transition hover:border-zinc-700 hover:bg-zinc-900"
           >
             <p className="font-semibold">
-              Settings
+              تنظیمات
             </p>
 
             <p className="mt-2 text-sm text-zinc-500">
-              Manage your producer account and profile.
+              حساب و پروفایل آهنگسازت رو مدیریت کن.
             </p>
           </Link>
         </div>

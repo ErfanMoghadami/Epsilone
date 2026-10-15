@@ -53,7 +53,7 @@ function TaxonomyPicker({
           {selected.length}/{max}
         </span>
       </div>
-      <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto pr-1">
+      <div className="flex max-h-44 flex-wrap gap-2 overflow-y-auto pe-1">
         {options.map((option) => {
           const active = selected.includes(option);
           return (
@@ -141,15 +141,15 @@ function uploadWithProgress(
         return;
       }
 
-      reject(new Error(`Upload failed with status ${xhr.status}.`));
+      reject(new Error(`آپلود با خطا مواجه شد (کد ${xhr.status}).`));
     };
 
     xhr.onerror = () => {
-      reject(new Error("Network error during upload."));
+      reject(new Error("خطای شبکه در حین آپلود."));
     };
 
     xhr.onabort = () => {
-      reject(new Error("Upload was cancelled."));
+      reject(new Error("آپلود لغو شد."));
     };
 
     xhr.send(file);
@@ -236,7 +236,7 @@ export default function Page() {
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
 
     if (extension !== ".zip" && extension !== ".rar") {
-      setError("Stem Pack must be a ZIP or RAR file.");
+      setError("پک استمز باید فایل ZIP یا RAR باشه.");
 
       event.target.value = "";
 
@@ -246,7 +246,7 @@ export default function Page() {
     const maxStemSize = 1024 * 1024 * 1024;
 
     if (file.size > maxStemSize) {
-      setError("Stem Pack must be 1GB or smaller.");
+      setError("حجم پک استمز نباید بیشتر از 1GB باشه.");
 
       event.target.value = "";
 
@@ -318,7 +318,7 @@ export default function Page() {
     } catch (cropError) {
       console.error("Cover crop error:", cropError);
 
-      setError("Failed to process the cover image. Please try another image.");
+      setError("پردازش کاور ممکن نشد. لطفاً یک تصویر دیگه امتحان کن.");
     }
   }
 
@@ -372,15 +372,15 @@ export default function Page() {
     const tag = tagDraft.trim().replace(/^#/, "").replace(/\s+/g, " ");
     if (!tag) return;
     if (tag.length < 2 || tag.length > 40) {
-      setError("Each tag must be between 2 and 40 characters.");
+      setError("هر تگ باید بین 2 تا 40 کاراکتر باشه.");
       return;
     }
     if (form.tags.some((item) => item.toLowerCase() === tag.toLowerCase())) {
-      setError("That tag has already been added.");
+      setError("این تگ قبلاً اضافه شده.");
       return;
     }
     if (form.tags.length >= 3) {
-      setError("Choose no more than 3 tags.");
+      setError("حداکثر 3 تگ می‌تونی انتخاب کنی.");
       return;
     }
     setForm((previous) => ({ ...previous, tags: [...previous.tags, tag] }));
@@ -414,7 +414,7 @@ export default function Page() {
     const stemFile = form.stemFile;
 
     if (!audioFile || !coverFile) {
-      setError("Audio and cover are required.");
+      setError("فایل مستر و کاور الزامی هستن.");
       return;
     }
 
@@ -422,7 +422,7 @@ export default function Page() {
     setSuccess(false);
     setIsLoading(true);
     setUploadProgress(0);
-    setStatusMessage("Preparing upload...");
+    setStatusMessage("در حال آماده‌سازی آپلود...");
 
     let currentUploadId: string | null = null;
 
@@ -441,14 +441,14 @@ export default function Page() {
       }
 
       if (!authData.user) {
-        throw new Error("User not authenticated.");
+        throw new Error("وارد حساب کاربری نشدی.");
       }
 
       // --------------------------------------------------
       // 2. Get presigned URLs
       // --------------------------------------------------
 
-      setStatusMessage("Preparing secure upload...");
+      setStatusMessage("در حال آماده‌سازی آپلود امن...");
 
       const audioContentType = getAudioContentType(audioFile);
 
@@ -474,7 +474,7 @@ export default function Page() {
       const presignData = await presignResponse.json();
 
       if (!presignResponse.ok || !presignData.success) {
-        throw new Error(presignData?.error || "Failed to prepare R2 upload.");
+        throw new Error(presignData?.error || "آماده‌سازی آپلود ممکن نشد.");
       }
 
       currentUploadId = presignData.uploadId;
@@ -485,7 +485,7 @@ export default function Page() {
       // 3. Upload audio
       // --------------------------------------------------
 
-      setStatusMessage("Uploading audio...");
+      setStatusMessage("در حال آپلود فایل مستر...");
 
       await uploadWithProgress(
         presignData.audio.uploadUrl,
@@ -510,7 +510,7 @@ export default function Page() {
       // --------------------------------------------------
 
       if (stemFile && presignData.stem) {
-        setStatusMessage("Uploading Stem Pack...");
+        setStatusMessage("در حال آپلود پک استمز...");
 
         await uploadWithProgress(
           presignData.stem.uploadUrl,
@@ -526,7 +526,7 @@ export default function Page() {
       // 5. Finalize server-side
       // --------------------------------------------------
 
-      setStatusMessage("Creating beat...");
+      setStatusMessage("در حال ساخت بیت...");
 
       const finalizeResponse = await fetch("/api/r2/finalize", {
         method: "POST",
@@ -563,7 +563,7 @@ export default function Page() {
       const finalizeData = await finalizeResponse.json();
 
       if (!finalizeResponse.ok || !finalizeData.success) {
-        throw new Error(finalizeData?.error || "Failed to finalize beat.");
+        throw new Error(finalizeData?.error || "نهایی‌کردن بیت ممکن نشد.");
       }
 
       // --------------------------------------------------
@@ -572,7 +572,7 @@ export default function Page() {
 
       setSuccess(true);
 
-      setStatusMessage("Beat uploaded successfully.");
+      setStatusMessage("بیت با موفقیت آپلود شد.");
 
       setForm({
         ...initialState,
@@ -607,7 +607,7 @@ export default function Page() {
       setError(
         uploadError instanceof Error
           ? uploadError.message
-          : "Something went wrong during upload.",
+          : "در حین آپلود مشکلی پیش اومد.",
       );
 
       setStatusMessage("");
@@ -632,7 +632,7 @@ export default function Page() {
 
       {success && (
         <p className="mb-4 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400">
-          Beat uploaded successfully.
+          بیت با موفقیت آپلود شد.
         </p>
       )}
 
@@ -665,27 +665,28 @@ export default function Page() {
       >
         <div className="mb-2">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
-            Beat metadata
+            اطلاعات بیت
           </p>
           <h2 className="mt-2 text-xl font-semibold tracking-tight text-white">
-            Classify your beat
+            بیتت رو دسته‌بندی کن
           </h2>
           <p className="mt-1 text-sm leading-6 text-zinc-500">
-            Use consistent labels so artists can discover your beat through
-            genre, mood, sound, and tags.
+            از برچسب‌های یکدست استفاده کن تا هنرمندها بتونن بیتت رو از طریق
+            ژانر، حال‌وهوا، صدا و تگ‌ها پیدا کنن.
           </p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="flex flex-col gap-2 text-sm text-zinc-200 sm:col-span-2">
-            Title{" "}
+            عنوان{" "}
             <span className="text-xs font-normal text-zinc-500">
-              Required · max 150 characters
+              الزامی · حداکثر 150 کاراکتر
             </span>
             <input
               required
               disabled={isLoading}
               maxLength={150}
+              dir="auto"
               value={form.title}
               onChange={(event) =>
                 setForm((previous) => ({
@@ -693,7 +694,7 @@ export default function Page() {
                   title: event.target.value,
                 }))
               }
-              placeholder="e.g. Coffe Player"
+              placeholder="مثلاً Coffe Player"
               className="rounded-lg border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-violet-600"
             />
           </label>
@@ -701,12 +702,13 @@ export default function Page() {
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
             BPM{" "}
             <span className="text-xs font-normal text-zinc-500">
-              50–250 · whole number
+              50 تا 250 · عدد صحیح
             </span>
             <input
               required
               disabled={isLoading}
               type="number"
+              dir="ltr"
               min={50}
               max={250}
               step={1}
@@ -723,10 +725,10 @@ export default function Page() {
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            Key{" "}
-            <span className="text-xs font-normal text-zinc-500">Required</span>
+            گام{" "}
+            <span className="text-xs font-normal text-zinc-500">الزامی</span>
             <Select
-              ariaLabel="Key"
+              ariaLabel="گام"
               disabled={isLoading}
               value={form.key}
               onChange={(value) =>
@@ -740,15 +742,15 @@ export default function Page() {
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            Genre{" "}
+            ژانر{" "}
             <span className="text-xs font-normal text-zinc-500">
-              Required · choose one
+              الزامی · یکی رو انتخاب کن
             </span>
             <Select
-              ariaLabel="Genre"
+              ariaLabel="ژانر"
               disabled={isLoading}
               value={form.genre}
-              placeholder="Select a genre"
+              placeholder="یک ژانر انتخاب کن"
               onChange={(value) =>
                 setForm((previous) => ({
                   ...previous,
@@ -765,19 +767,19 @@ export default function Page() {
           </label>
 
           <label className="flex flex-col gap-2 text-sm text-zinc-200">
-            Subgenre{" "}
+            زیرژانر{" "}
             <span className="text-xs font-normal text-zinc-500">
-              Optional · depends on genre
+              اختیاری · بسته به ژانر
             </span>
             <Select
-              ariaLabel="Subgenre"
+              ariaLabel="زیرژانر"
               disabled={!form.genre || isLoading}
               value={form.subgenre}
               onChange={(value) =>
                 setForm((previous) => ({ ...previous, subgenre: value }))
               }
               options={[
-                { value: "", label: "No subgenre selected" },
+                { value: "", label: "بدون زیرژانر" },
                 ...(form.genre
                   ? GENRE_TAXONOMY[form.genre as keyof typeof GENRE_TAXONOMY]
                   : []
@@ -799,17 +801,17 @@ export default function Page() {
         <div className="my-1 border-t border-zinc-800" />
         <div>
           <h2 className="text-base font-semibold text-zinc-100">
-            Sound & context
+            صدا و فضا
           </h2>
           <p className="mt-1 text-sm leading-6 text-zinc-500">
-            These are optional. Pick only values that genuinely describe the
-            beat.
+            این بخش اختیاریه. فقط مواردی رو انتخاب کن که واقعاً به بیتت
+            می‌خوره.
           </p>
         </div>
 
         <TaxonomyPicker
-          label="Mood"
-          description="Emotion or feeling · choose up to 5"
+          label="حال‌وهوا"
+          description="احساس یا حس‌وحال بیت · حداکثر 5 مورد"
           options={MOODS}
           selected={form.moods}
           max={5}
@@ -817,8 +819,8 @@ export default function Page() {
           onToggle={(value) => toggleTaxonomyValue("moods", value, 5)}
         />
         <TaxonomyPicker
-          label="Atmosphere"
-          description="The texture or space of the production · choose up to 4"
+          label="فضا"
+          description="بافت یا فضای ساخت بیت · حداکثر 4 مورد"
           options={ATMOSPHERES}
           selected={form.atmosphere}
           max={4}
@@ -826,8 +828,8 @@ export default function Page() {
           onToggle={(value) => toggleTaxonomyValue("atmosphere", value, 4)}
         />
         <TaxonomyPicker
-          label="Instruments & sounds"
-          description="Select sounds that are clearly present · choose up to 8"
+          label="سازها و صداها"
+          description="صداهایی که به‌وضوح تو بیت هستن · حداکثر 8 مورد"
           options={INSTRUMENTS}
           selected={form.instruments}
           max={8}
@@ -835,8 +837,8 @@ export default function Page() {
           onToggle={(value) => toggleTaxonomyValue("instruments", value, 8)}
         />
         <TaxonomyPicker
-          label="Scenes / use cases"
-          description="When or where the beat fits · choose up to 3"
+          label="موقعیت‌ها / کاربردها"
+          description="بیت به چه موقع یا کجا می‌خوره · حداکثر 3 مورد"
           options={SCENES}
           selected={form.scenes}
           max={3}
@@ -847,10 +849,10 @@ export default function Page() {
         <section className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-sm font-medium text-zinc-100">Tags</h3>
+              <h3 className="text-sm font-medium text-zinc-100">تگ‌ها</h3>
               <p className="mt-1 text-xs leading-5 text-zinc-500">
-                Up to 3 search phrases, such as an artist influence, production
-                style, or intended use.
+                حداکثر 3 عبارت جستجو، مثل هنرمند الهام‌بخش، سبک ساخت یا
+                کاربرد بیت.
               </p>
             </div>
             <span className="shrink-0 rounded-full border border-zinc-800 px-2 py-1 text-xs tabular-nums text-zinc-400">
@@ -864,8 +866,9 @@ export default function Page() {
               disabled={isLoading || form.tags.length >= 3}
               onChange={(event) => setTagDraft(event.target.value)}
               onKeyDown={handleTagKeyDown}
-              placeholder="e.g. underground, dark synths"
-              aria-label="Add a search tag"
+              dir="auto"
+              placeholder="مثلاً underground, dark synths"
+              aria-label="افزودن تگ جستجو"
               className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-violet-600 disabled:opacity-40"
             />
             <button
@@ -874,7 +877,7 @@ export default function Page() {
               disabled={isLoading || form.tags.length >= 3 || !tagDraft.trim()}
               className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-200 transition hover:border-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Add tag
+              افزودن تگ
             </button>
           </div>
           {form.tags.length > 0 && (
@@ -890,7 +893,7 @@ export default function Page() {
                       tags: previous.tags.filter((item) => item !== tag),
                     }))
                   }
-                  aria-label={`Remove tag ${tag}`}
+                  aria-label={`حذف تگ ${tag}`}
                   className="rounded-full border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs text-violet-200 transition hover:border-red-500/50 hover:text-red-300 disabled:opacity-40"
                 >
                   {tag} <span aria-hidden="true">×</span>
@@ -899,19 +902,19 @@ export default function Page() {
             </div>
           )}
           <p className="mt-2 text-[11px] text-zinc-600">
-            Press Enter or comma to add a tag. Duplicate tags are not allowed.
+            برای افزودن تگ، Enter یا کاما بزن. تگ تکراری مجاز نیست.
           </p>
         </section>
 
         <div className="my-1 border-t border-zinc-800" />
         <div>
-          <h2 className="text-base font-semibold text-zinc-100">Files</h2>
+          <h2 className="text-base font-semibold text-zinc-100">فایل‌ها</h2>
           <p className="mt-1 text-sm leading-6 text-zinc-500">
-            Upload the master audio and square cover. A Stem Pack is optional.
+            فایل مستر و کاور مربعی رو آپلود کن. پک استمز اختیاریه.
           </p>
         </div>
 
-        <label className="text-zinc-100">Audio File</label>
+        <label className="text-zinc-100">فایل مستر</label>
 
         <input
           ref={audioInputRef}
@@ -922,7 +925,7 @@ export default function Page() {
           className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400"
         />
 
-        <label className="text-zinc-100">Cover File</label>
+        <label className="text-zinc-100">فایل کاور</label>
 
         <input
           ref={coverInputRef}
@@ -934,9 +937,9 @@ export default function Page() {
           className="mt-1 block rounded-lg border border-dashed border-zinc-700 bg-zinc-900 px-4 py-2.5 text-sm text-zinc-400"
         />
         <label className="text-zinc-100">
-          Stem Pack
-          <span className="ml-2 text-xs text-zinc-500">
-            Optional — ZIP / RAR
+          پک استمز
+          <span className="ms-2 text-xs text-zinc-500">
+            اختیاری — ZIP / RAR
           </span>
         </label>
 
@@ -951,7 +954,7 @@ export default function Page() {
 
         {form.stemFile && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3">
-            <p className="text-sm text-zinc-200">{form.stemFile.name}</p>
+            <p dir="auto" className="text-sm text-zinc-200">{form.stemFile.name}</p>
 
             <p className="mt-1 text-xs text-zinc-500">
               {(form.stemFile.size / (1024 * 1024)).toFixed(2)} MB
@@ -972,18 +975,18 @@ export default function Page() {
               }}
               className="mt-2 text-xs text-zinc-600 transition hover:text-red-400"
             >
-              Remove Stem Pack
+              حذف پک استمز
             </button>
           </div>
         )}
         <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-zinc-100">AI Beat Analysis</p>
+              <p className="font-medium text-zinc-100">تحلیل هوشمند بیت</p>
 
               <p className="mt-1 text-xs leading-5 text-zinc-500">
-                Let Epsilone analyze the audio. Your manual selections will be
-                kept and combined with AI findings.
+                بذار Epsilone صدا رو تحلیل کنه. انتخاب‌های دستی خودت حفظ می‌شن
+                و با نتایج هوش مصنوعی ترکیب می‌شن.
               </p>
             </div>
 
@@ -991,6 +994,7 @@ export default function Page() {
               type="button"
               role="switch"
               aria-checked={aiAnalysisEnabled}
+              aria-label="تحلیل هوشمند بیت"
               onClick={() => setAiAnalysisEnabled((previous) => !previous)}
               disabled={isLoading}
               className={`relative h-7 w-12 shrink-0 rounded-full transition ${
@@ -999,7 +1003,7 @@ export default function Page() {
             >
               <span
                 className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-                  aiAnalysisEnabled ? "left-6" : "left-1"
+                  aiAnalysisEnabled ? "start-6" : "start-1"
                 }`}
               />
             </button>
@@ -1007,14 +1011,14 @@ export default function Page() {
 
           <p className="mt-3 text-xs text-zinc-600">
             {aiAnalysisEnabled
-              ? "AI analysis is enabled. Epsilone adds audio-based findings without discarding your selected taxonomy."
-              : "AI analysis is disabled. Your selected genre, mood, sound, scene, and tag metadata will still be saved."}
+              ? "تحلیل هوشمند فعاله. Epsilone نتایج حاصل از تحلیل صدا رو بدون حذف انتخاب‌های خودت اضافه می‌کنه."
+              : "تحلیل هوشمند غیرفعاله. ژانر، حال‌وهوا، صدا، موقعیت و تگ‌هایی که انتخاب کردی همچنان ذخیره می‌شن."}
           </p>
         </div>
         {coverPreviewUrl && (
           <img
             src={coverPreviewUrl}
-            alt="Cover preview"
+            alt="پیش‌نمایش کاور"
             className="h-32 w-32 rounded-lg object-cover"
           />
         )}
@@ -1024,7 +1028,7 @@ export default function Page() {
           disabled={isLoading}
           className="mt-2 rounded-lg bg-amber-500 px-4 py-2.5 font-medium text-white transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isLoading ? "Uploading..." : "Upload"}
+          {isLoading ? "در حال آپلود..." : "آپلود"}
         </button>
       </form>
 
@@ -1048,6 +1052,7 @@ export default function Page() {
             max={3}
             step={0.1}
             value={zoom}
+            aria-label="بزرگ‌نمایی"
             onChange={(event) => setZoom(Number(event.target.value))}
             className="mt-4 w-full max-w-64"
           />
@@ -1058,7 +1063,7 @@ export default function Page() {
               onClick={handleCancelCrop}
               className="rounded-lg border border-zinc-600 px-4 py-2 text-zinc-300"
             >
-              Cancel
+              انصراف
             </button>
 
             <button
@@ -1066,7 +1071,7 @@ export default function Page() {
               onClick={handleConfirmCrop}
               className="rounded-lg bg-amber-400 px-4 py-2 font-medium text-white hover:bg-amber-400"
             >
-              Confirm Crop
+              تأیید برش
             </button>
           </div>
         </div>

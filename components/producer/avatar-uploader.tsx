@@ -46,12 +46,12 @@ export default function AvatarUploader({
     setMessage("");
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Only JPEG, PNG, or WebP images are supported.");
+      setError("فقط تصویر JPEG، PNG یا WebP پشتیبانی می‌شود.");
       return;
     }
 
     if (file.size > MAX_RAW_SIZE) {
-      setError("Image must be 10MB or smaller.");
+      setError("حجم تصویر باید حداکثر ۱۰ مگابایت باشد.");
       return;
     }
 
@@ -89,7 +89,7 @@ export default function AvatarUploader({
       const presign = await presignRes.json();
 
       if (!presignRes.ok || !presign.success) {
-        throw new Error(presign?.error || "Failed to prepare upload.");
+        throw new Error(presign?.error || "آماده‌سازی آپلود انجام نشد.");
       }
 
       // 3. Upload directly to R2
@@ -100,7 +100,7 @@ export default function AvatarUploader({
       });
 
       if (!putRes.ok) {
-        throw new Error(`Upload failed (${putRes.status}).`);
+        throw new Error(`آپلود ناموفق بود (${putRes.status}).`);
       }
 
       // 4. Save in DB
@@ -113,16 +113,16 @@ export default function AvatarUploader({
       const finalize = await finalizeRes.json();
 
       if (!finalizeRes.ok || !finalize.success) {
-        throw new Error(finalize?.error || "Failed to save profile photo.");
+        throw new Error(finalize?.error || "ذخیره عکس پروفایل انجام نشد.");
       }
 
       setAvatarUrl(finalize.avatarUrl);
-      setMessage("Profile photo updated.");
+      setMessage("عکس پروفایل به‌روز شد.");
       closeCropper();
       router.refresh();
     } catch (err) {
       console.error("Avatar upload error:", err);
-      setError(err instanceof Error ? err.message : "Upload failed.");
+      setError(err instanceof Error ? err.message : "آپلود ناموفق بود.");
     } finally {
       setUploading(false);
     }
@@ -131,9 +131,9 @@ export default function AvatarUploader({
   return (
     <section className="rounded-2xl border border-white/10 bg-zinc-950 p-6">
       <div className="mb-4">
-        <h2 className="text-lg font-medium">Profile photo</h2>
+        <h2 className="text-lg font-medium">عکس پروفایل</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          Shown on your public producer page and next to your beats.
+          روی صفحهٔ عمومی آهنگساز و کنار بیت‌هایت نمایش داده می‌شود.
         </p>
       </div>
 
@@ -143,12 +143,12 @@ export default function AvatarUploader({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={avatarUrl}
-              alt="Profile photo"
+              alt="عکس پروفایل"
               className="h-full w-full object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-zinc-600">
-              No photo
+              بدون عکس
             </div>
           )}
         </div>
@@ -168,11 +168,11 @@ export default function AvatarUploader({
             disabled={uploading}
             className="rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-50"
           >
-            {avatarUrl ? "Change photo" : "Upload photo"}
+            {avatarUrl ? "تغییر عکس" : "آپلود عکس"}
           </button>
 
           <p className="mt-2 text-xs text-zinc-500">
-            JPEG, PNG or WebP · up to 10MB
+            JPEG، PNG یا WebP · حداکثر ۱۰ مگابایت
           </p>
         </div>
       </div>
@@ -222,7 +222,7 @@ export default function AvatarUploader({
               disabled={uploading}
               className="rounded-lg border border-zinc-600 px-4 py-2 text-zinc-300 disabled:opacity-50"
             >
-              Cancel
+              انصراف
             </button>
 
             <button
@@ -231,7 +231,7 @@ export default function AvatarUploader({
               disabled={uploading || !croppedArea}
               className="rounded-lg bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-500 disabled:opacity-50"
             >
-              {uploading ? "Uploading..." : "Save"}
+              {uploading ? "در حال آپلود..." : "ذخیره"}
             </button>
           </div>
         </div>

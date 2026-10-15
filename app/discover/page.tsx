@@ -141,26 +141,14 @@ export default function DiscoverPage() {
           </div>
         </div>
 
-        {/* Result header */}
-        <div className="mb-8 flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">
-              {loading ? "در حال بارگذاری…" : selectedTitle}
-            </h2>
-
-            {!loading && (
-              <p className="mt-1 text-sm text-zinc-600">
-                {displayedBeats.length} بیت در این دسته
-              </p>
-            )}
+        {/* Active mood filter count */}
+        {filters.moods.length > 0 && (
+          <div className="mb-8">
+            <span className="text-xs text-zinc-700">
+              {`${filters.moods.length} فیلتر مود`}
+            </span>
           </div>
-
-          <span className="text-xs text-zinc-700">
-            {filters.moods.length > 0
-              ? `${filters.moods.length} فیلتر مود`
-              : ""}
-          </span>
-        </div>
+        )}
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-3 text-sm text-red-400">

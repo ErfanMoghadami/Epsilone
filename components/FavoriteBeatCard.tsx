@@ -48,7 +48,7 @@ export default function FavoriteBeatCard({
         {beat.cover_url ? (
           <img
             src={beat.cover_url}
-            alt={beat.title ?? "Beat cover"}
+            alt={beat.title ?? "کاور بیت"}
             className="h-24 w-24 shrink-0 rounded-xl object-cover"
           />
         ) : (
@@ -59,7 +59,7 @@ export default function FavoriteBeatCard({
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="font-semibold text-white">
-                {beat.title ?? "Untitled Beat"}
+                {beat.title ?? "بیت بدون عنوان"}
               </h2>
 
               <p className="mt-1 text-xs text-zinc-500">
@@ -67,7 +67,7 @@ export default function FavoriteBeatCard({
                 {" · "}
                 {beat.key ?? "-"}
                 {" · "}
-                {beat.genre ?? "Unknown genre"}
+                {beat.genre ?? "ژانر نامشخص"}
               </p>
             </div>
 
@@ -83,7 +83,7 @@ export default function FavoriteBeatCard({
         <div className="mt-4">
           <WaveformPlayer
             url={beat.preview_url ?? beat.audio_url ?? ""}
-            title={beat.title ?? "Untitled Beat"}
+            title={beat.title ?? "بیت بدون عنوان"}
             waveformStyle="line"
           />
         </div>

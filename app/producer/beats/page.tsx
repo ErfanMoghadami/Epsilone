@@ -28,7 +28,7 @@ type Analytics = {
 };
 function getFriendlyAnalysisError(error: string | null): string {
   if (!error) {
-    return "The model is temporarily unavailable. Please try again in a little while.";
+    return "مدل موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کن.";
   }
 
   const normalizedError = error.toLowerCase();
@@ -38,10 +38,10 @@ function getFriendlyAnalysisError(error: string | null): string {
     normalizedError.includes("resource_exhausted") ||
     normalizedError.includes("quota exceeded")
   ) {
-    return "The model is temporarily unavailable right now. Please try again in a little while.";
+    return "مدل موقتاً در دسترس نیست. لطفاً کمی بعد دوباره تلاش کن.";
   }
 
-  return "Something went wrong while analyzing this beat. Please try again in a little while.";
+  return "هنگام تحلیل این بیت مشکلی پیش آمد. لطفاً کمی بعد دوباره تلاش کن.";
 }
 export default function Page() {
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ const router = useRouter();
     }
 
     if (!data.user) {
-      setError("User not authenticated");
+      setError("وارد حساب کاربری نشده‌ای.");
       setIsLoading(false);
       return;
     }
@@ -149,10 +149,10 @@ const router = useRouter();
   }, [user]);
 
   async function handleDeleteBeat(beat: Beat) {
-    const beatTitle = beat.title ?? "Untitled Beat";
+    const beatTitle = beat.title ?? "بیت بدون عنوان";
 
     const confirmed = window.confirm(
-      `Delete "${beatTitle}" permanently?\n\nThis will remove the beat from your beats list and delete its R2 media files.`,
+      `«${beatTitle}» برای همیشه حذف شود؟\n\nبیت از فهرست بیت‌هایت پاک می‌شود و فایل‌های رسانه‌اش هم حذف می‌شوند.`,
     );
 
     if (!confirmed) {
@@ -215,10 +215,10 @@ const router = useRouter();
         return nextAnalytics;
       });
 
-      setSuccess(result.message ?? "Beat deleted successfully.");
+      setSuccess(result.message ?? "بیت با موفقیت حذف شد.");
     } catch (deleteError) {
       console.error("Delete beat error:", deleteError);
-      setError("Something went wrong while deleting this beat.");
+      setError("هنگام حذف این بیت مشکلی پیش آمد.");
     } finally {
       setDeletingBeatId(null);
     }
@@ -226,11 +226,11 @@ const router = useRouter();
 
   async function handleTogglePublishing(beat: Beat) {
     const nextIsPublished = !beat.is_published;
-    const title = beat.title ?? "Untitled Beat";
+    const title = beat.title ?? "بیت بدون عنوان";
 
     if (nextIsPublished === false) {
       const confirmed = window.confirm(
-        `Turn OFF "${title}"?\n\nIt will be hidden from Discover, Trending, recommendations and new purchases. Existing orders and media files will remain unchanged.`,
+        `«${title}» خاموش شود؟\n\nاین بیت از بخش کشف، ترندها، پیشنهادها و خریدهای جدید پنهان می‌شود. سفارش‌های قبلی و فایل‌های رسانه تغییری نمی‌کنند.`,
       );
       if (!confirmed) return;
     }
@@ -257,7 +257,7 @@ const router = useRouter();
       router.refresh();
     } catch (toggleError) {
       console.error("Publishing toggle error:", toggleError);
-      setError("Something went wrong while changing publishing status.");
+      setError("هنگام تغییر وضعیت انتشار مشکلی پیش آمد.");
     } finally {
       setTogglingBeatId(null);
     }
@@ -295,7 +295,7 @@ const router = useRouter();
       setSuccess(result.message);
     } catch (retryError) {
       console.error("Retry analysis error:", retryError);
-      setError("Something went wrong while retrying the analysis.");
+      setError("هنگام تحلیل دوباره مشکلی پیش آمد.");
     } finally {
       setRetryingBeatId(null);
     }
@@ -304,15 +304,17 @@ const router = useRouter();
   function getAnalysisStatusLabel(status: string | null): string {
     switch (status) {
       case "pending":
-        return "Pending";
+        return "در انتظار";
       case "processing":
-        return "Processing";
+        return "در حال تحلیل";
       case "completed":
-        return "Completed";
+        return "تکمیل شد";
       case "failed":
-        return "Failed";
+        return "ناموفق";
+      case "skipped":
+        return "رد شد";
       default:
-        return status ?? "Unknown";
+        return status ?? "نامشخص";
     }
   }
 
@@ -345,7 +347,7 @@ const router = useRouter();
 
   return (
     <div className="min-h-screen bg-black p-0 text-white sm:p-4 md:p-8">
-      <h1 className="mb-6 text-2xl font-bold">My Beats</h1>
+      <h1 className="mb-6 text-2xl font-bold">بیت‌های من</h1>
 
       {success && (
         <p className="mb-4 rounded-lg border border-emerald-900 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-400">
@@ -353,7 +355,7 @@ const router = useRouter();
         </p>
       )}
 
-      {isLoading && <p className="text-sm text-zinc-400">Loading beats...</p>}
+      {isLoading && <p className="text-sm text-zinc-400">در حال بارگذاری بیت‌ها...</p>}
 
       {error && (
         <p className="rounded-lg border border-red-900 bg-red-950/40 px-4 py-3 text-sm text-red-400">
@@ -384,14 +386,14 @@ const router = useRouter();
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <div className="min-w-0">
                     <p className="font-medium">
-                      {beat.title ?? "Untitled Beat"}
+                      {beat.title ?? "بیت بدون عنوان"}
                     </p>
 
                     <p className="mt-1 text-xs text-zinc-500">
-                      {beat.bpm ?? "-"} BPM &nbsp;&middot;&nbsp;
+                      <span dir="ltr">{beat.bpm ?? "-"} BPM</span> &nbsp;&middot;&nbsp;
                       {beat.key ?? "-"}
                       &nbsp;&middot;&nbsp;
-                      {beat.genre ?? "Unknown genre"}
+                      {beat.genre ?? "ژانر نامشخص"}
                     </p>
                   </div>
 
@@ -412,13 +414,13 @@ const router = useRouter();
                       }`}
                       title={
                         beat.analysis_status === "completed" || beat.analysis_status === "skipped"
-                          ? beat.is_published ? "Visible in marketplace" : "Hidden from marketplace"
-                          : "Available after analysis is completed or skipped"
+                          ? beat.is_published ? "در فروشگاه نمایش داده می‌شود" : "از فروشگاه پنهان است"
+                          : "پس از تکمیل یا رد شدن تحلیل فعال می‌شود"
                       }
                     >
                       {beat.analysis_status === "completed" || beat.analysis_status === "skipped"
-                        ? beat.is_published ? "ON · Published" : "OFF · Hidden"
-                        : "Not ready"}
+                        ? beat.is_published ? "روشن · منتشر شده" : "خاموش · پنهان"
+                        : "آماده نیست"}
                     </span>
 
                     <button
@@ -437,8 +439,8 @@ const router = useRouter();
                       }`}
                     >
                       {togglingBeatId === beat.id
-                        ? "Saving..."
-                        : beat.is_published ? "Turn OFF" : "Turn ON"}
+                        ? "در حال ذخیره..."
+                        : beat.is_published ? "غیر فعال کردن" : "فعال کردن"}
                     </button>
 
                     {beat.analysis_status === "failed" && (
@@ -449,8 +451,8 @@ const router = useRouter();
                         className="rounded-lg border border-amber-900/70 px-3 py-1.5 text-xs font-medium text-amber-400 transition hover:bg-amber-950/50 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {retryingBeatId === beat.id
-                          ? "Retrying..."
-                          : "Retry Analysis"}
+                          ? "در حال تلاش دوباره..."
+                          : "تحلیل دوباره"}
                       </button>
                     )}
 
@@ -458,7 +460,7 @@ const router = useRouter();
                       href={`/producer/beats/${beat.id}/edit`}
                       className="rounded-lg border border-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
                     >
-                      Edit
+                      ویرایش
                     </Link>
 
                     <button
@@ -469,7 +471,7 @@ const router = useRouter();
                       }
                       className="rounded-lg border border-red-900/70 px-3 py-1.5 text-xs font-medium text-red-400 transition hover:bg-red-950/50 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      {isDeleting ? "Deleting..." : "Delete"}
+                      {isDeleting ? "در حال حذف..." : "حذف"}
                     </button>
                     <button
                       type="button"
@@ -478,7 +480,7 @@ const router = useRouter();
                       }
                       className="rounded-lg border border-zinc-800 px-4 py-2 text-sm text-zinc-300 transition hover:bg-zinc-900 hover:text-white"
                     >
-                      Licenses
+                      لایسنس‌ها
                     </button>
                   </div>
                 </div>
@@ -486,7 +488,7 @@ const router = useRouter();
                 {beat.analysis_status === "failed" && beat.analysis_error && (
                   <div className="mt-4 rounded-lg border border-red-900/60 bg-red-950/20 px-4 py-3">
                     <p className="text-xs font-medium text-red-400">
-                      Analysis error
+                      خطای تحلیل
                     </p>
                     <p className="mt-1 break-words text-xs leading-5 text-red-300/80">
                       {getFriendlyAnalysisError(beat.analysis_error)}
@@ -498,7 +500,7 @@ const router = useRouter();
                   <div className="mt-4">
                     <WaveformPlayer
                       url={beat.preview_url ?? beat.audio_url ?? ""}
-                      title={beat.title ?? "Untitled Beat"}
+                      title={beat.title ?? "بیت بدون عنوان"}
                       waveformStyle="line"
                     />
                   </div>
@@ -506,7 +508,7 @@ const router = useRouter();
 
                 <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4 sm:grid-cols-4">
                   <div>
-                    <p className="text-xs text-zinc-500">Suggested</p>
+                    <p className="text-xs text-zinc-500">پیشنهادشده</p>
 
                     <p className="mt-1 text-lg font-semibold">
                       {stats.suggested}
@@ -514,13 +516,13 @@ const router = useRouter();
                   </div>
 
                   <div>
-                    <p className="text-xs text-zinc-500">Played</p>
+                    <p className="text-xs text-zinc-500">پخش‌شده</p>
 
                     <p className="mt-1 text-lg font-semibold">{stats.played}</p>
                   </div>
 
                   <div>
-                    <p className="text-xs text-zinc-500">Favorites</p>
+                    <p className="text-xs text-zinc-500">علاقه‌مندی‌ها</p>
 
                     <p className="mt-1 text-lg font-semibold">
                       {stats.favorites}
@@ -528,7 +530,7 @@ const router = useRouter();
                   </div>
 
                   <div>
-                    <p className="text-xs text-zinc-500">Play Rate</p>
+                    <p className="text-xs text-zinc-500">نرخ پخش</p>
 
                     <p className="mt-1 text-lg font-semibold">
                       {getPlayRate(beat.id)}

@@ -29,9 +29,9 @@ export default function GlobalNav() {
     return null;
   }
 
-  // Keep the top bar to the right of the panel sidebar on desktop.
+  // Keep the top bar clear of the panel sidebar (which sits on the right, RTL) on desktop.
   return (
-    <div className={hasPanelSidebar(pathname) ? "md:pl-64" : undefined}>
+    <div className={hasPanelSidebar(pathname) ? "md:pr-64" : undefined}>
       <HomeMenu />
     </div>
   );

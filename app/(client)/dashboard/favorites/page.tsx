@@ -41,10 +41,10 @@ export default async function FavoritesPage() {
   if (favoritesError) {
     return (
       <div>
-        <h1 className="mb-2 text-2xl font-semibold">Favorites</h1>
+        <h1 className="mb-2 text-2xl font-semibold">علاقه‌مندی‌ها</h1>
 
         <p className="text-sm text-red-400">
-          Could not load your favorites.
+          بارگذاری علاقه‌مندی‌ها ممکن نشد.
         </p>
       </div>
     );
@@ -67,10 +67,10 @@ export default async function FavoritesPage() {
     if (beatsError) {
       return (
         <div>
-          <h1 className="mb-2 text-2xl font-semibold">Favorites</h1>
+          <h1 className="mb-2 text-2xl font-semibold">علاقه‌مندی‌ها</h1>
 
           <p className="text-sm text-red-400">
-            Could not load favorite beats.
+            بارگذاری بیت‌های مورد علاقه ممکن نشد.
           </p>
         </div>
       );
@@ -119,11 +119,11 @@ export default async function FavoritesPage() {
     <div>
       <div className="mb-8">
         <h1 className="mb-2 text-2xl font-semibold">
-          Favorites
+          علاقه‌مندی‌ها
         </h1>
 
         <p className="text-sm text-zinc-500">
-          Beats you saved.
+          بیت‌هایی که ذخیره کردی.
         </p>
       </div>
 

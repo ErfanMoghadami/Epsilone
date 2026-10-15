@@ -28,7 +28,7 @@ export default function ProducerBeatCard({
   beat: ProducerBeatCardData;
 }) {
   const router = useRouter();
-  const title = beat.title ?? "Untitled Beat";
+  const title = beat.title ?? "بیت بدون عنوان";
   const hasDiscount = beat.discountPercent > 0 && beat.originalPrice !== null;
 
   function handleCardClick(event: MouseEvent<HTMLElement>) {
@@ -58,7 +58,7 @@ export default function ProducerBeatCard({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={beat.coverUrl}
-          alt={`${title} cover`}
+          alt={`کاور ${title}`}
           className="aspect-square w-full rounded-xl object-cover"
           loading="lazy"
         />

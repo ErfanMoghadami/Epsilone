@@ -36,24 +36,24 @@ export default async function ProducerLayout({
       ? [
           {
             href: `/producer/${encodeURIComponent(username)}`,
-            label: "Dashboard",
+            label: "داشبورد",
             icon: "overview" as const,
             exact: true,
           },
         ]
       : []),
-    { href: "/producer/beats", label: "My Beats", icon: "beats" },
-    { href: "/producer/upload", label: "Upload Beat", icon: "upload" },
+    { href: "/producer/beats", label: "بیت‌های من", icon: "beats" },
+    { href: "/producer/upload", label: "آپلود بیت", icon: "upload" },
   ];
 
   return (
     <PanelShell
-      title="Producer Panel"
+      title="پنل آهنگساز"
       subtitle={username ? `@${username}` : null}
       items={items}
       settings={{
         href: "/producer/settings",
-        label: "Settings",
+        label: "تنظیمات",
         icon: "settings",
       }}
       signOut={<ProducerSignOutButton />}

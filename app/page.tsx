@@ -56,7 +56,6 @@ export default function Page() {
   const [error, setError] = useState("");
   const [restored, setRestored] = useState(false);
   const [searched, setSearched] = useState(false);
-  const [shownQuery, setShownQuery] = useState("");
 
   // ------------------------------------------------------
   // Restore previous search
@@ -74,7 +73,6 @@ export default function Page() {
 
         if (typeof parsed.query === "string") {
           setQuery(parsed.query);
-          setShownQuery(parsed.query);
         }
 
         const savedResults: Beat[] = Array.isArray(parsed.results)
@@ -212,7 +210,6 @@ export default function Page() {
     setResults([]);
     setAlternatives([]);
     setAlternativeReason(null);
-    setShownQuery(searchQuery);
 
     try {
       const response = await fetch("/api/recommend", {
@@ -267,6 +264,7 @@ export default function Page() {
   // Exact matches always take priority over alternatives.
   const displayedBeats = results.length > 0 ? results : alternatives;
   const showingAlternatives = results.length === 0 && alternatives.length > 0;
+  const hasVisibleResults = restored && !loading && displayedBeats.length > 0;
 
   return (
     <main
@@ -347,11 +345,13 @@ export default function Page() {
           </div>
         </form>
 
-        <p className="mt-6 text-sm leading-8 text-white/90">
-          حس فضا یا داستانی که توی ذهنت داری رو توصیف کن
-          <br />
-          اپسیلون با هوش مصنوعی اونو پیدا میکنه برات
-        </p>
+        {!hasVisibleResults && (
+          <p className="mt-6 text-sm leading-8 text-white/90">
+            حس فضا یا داستانی که توی ذهنت داری رو توصیف کن
+            <br />
+            اپسیلون با هوش مصنوعی اونو پیدا میکنه برات
+          </p>
+        )}
       </section>
 
       {/* Results */}
@@ -397,13 +397,7 @@ export default function Page() {
                   {getAlternativeMessage(alternativeReason)}
                 </p>
               </div>
-            ) : (
-              shownQuery && (
-                <h2 className="mb-6 text-center text-lg font-medium text-white">
-                  {shownQuery}
-                </h2>
-              )
-            )}
+            ) : null}
 
             <div className="space-y-4">
               {displayedBeats.map((beat) => {

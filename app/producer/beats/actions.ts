@@ -19,7 +19,7 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
   if (!beatId || typeof beatId !== "string") {
     return {
       success: false,
-      error: "Invalid beat ID.",
+      error: "شناسهٔ بیت نامعتبر است.",
     };
   }
 
@@ -33,7 +33,7 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
   if (authError || !user) {
     return {
       success: false,
-      error: "You must be logged in as a producer.",
+      error: "برای این کار باید با حساب آهنگساز وارد شده باشی.",
     };
   }
 
@@ -51,7 +51,7 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
 
     return {
       success: false,
-      error: "Beat not found or you do not have access to it.",
+      error: "بیت پیدا نشد یا به آن دسترسی نداری.",
     };
   }
 
@@ -59,7 +59,7 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
     return {
       success: false,
       error:
-        "This beat is currently being analyzed. Please wait until the analysis finishes before deleting it.",
+        "این بیت در حال تحلیل است. لطفاً تا پایان تحلیل صبر کن و بعد حذفش کن.",
     };
   }
 
@@ -80,7 +80,7 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
     return {
       success: false,
       error:
-        "Failed to delete this beat. It may be linked to existing marketplace data such as an order.",
+        "حذف بیت انجام نشد. ممکن است به اطلاعات فروشگاه، مثل یک سفارش، وابسته باشد.",
     };
   }
 
@@ -93,7 +93,7 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
     return {
       success: false,
       error:
-        "The beat was not removed from the database. Check the Supabase DELETE policy; its media files were left untouched.",
+        "بیت از پایگاه داده حذف نشد و فایل‌های رسانه‌اش دست‌نخورده ماندند. سیاست DELETE در Supabase را بررسی کن.",
     };
   }
 
@@ -133,8 +133,8 @@ export async function deleteBeat(beatId: string): Promise<DeleteBeatResult> {
     success: true,
     storageCleanupFailed,
     message: storageCleanupFailed
-      ? "Beat deleted, but some storage files could not be cleaned up automatically."
-      : "Beat deleted successfully.",
+      ? "بیت حذف شد، اما پاک‌سازی خودکار بعضی از فایل‌های ذخیره‌سازی انجام نشد."
+      : "بیت با موفقیت حذف شد.",
   };
 }
 
@@ -154,7 +154,7 @@ export async function retryAnalysis(
   if (!beatId || typeof beatId !== "string") {
     return {
       success: false,
-      error: "Invalid beat ID.",
+      error: "شناسهٔ بیت نامعتبر است.",
     };
   }
 
@@ -168,7 +168,7 @@ export async function retryAnalysis(
   if (authError || !user) {
     return {
       success: false,
-      error: "You must be logged in as a producer.",
+      error: "برای این کار باید با حساب آهنگساز وارد شده باشی.",
     };
   }
 
@@ -184,14 +184,14 @@ export async function retryAnalysis(
 
     return {
       success: false,
-      error: "Beat not found or you do not have access to it.",
+      error: "بیت پیدا نشد یا به آن دسترسی نداری.",
     };
   }
 
   if (beat.analysis_status !== "failed") {
     return {
       success: false,
-      error: "Only failed beats can be retried manually.",
+      error: "فقط بیت‌های ناموفق را می‌شود دستی دوباره تحلیل کرد.",
     };
   }
 
@@ -213,7 +213,7 @@ export async function retryAnalysis(
 
     return {
       success: false,
-      error: "Failed to prepare the beat for analysis retry.",
+      error: "آماده‌سازی بیت برای تحلیل دوباره انجام نشد.",
     };
   }
 
@@ -234,7 +234,7 @@ export async function retryAnalysis(
 
     return {
       success: false,
-      error: configurationError,
+      error: "سرور تحلیل پیکربندی نشده است.",
     };
   }
 
@@ -282,7 +282,7 @@ export async function retryAnalysis(
 
     return {
       success: true,
-      message: "Analysis retry started.",
+      message: "تحلیل دوباره شروع شد.",
     };
   } catch (error) {
     console.error("Failed to contact analysis worker:", error);
@@ -290,7 +290,7 @@ export async function retryAnalysis(
     const message =
       error instanceof Error
         ? error.message
-        : "Failed to contact the analysis worker.";
+        : "ارتباط با سرور تحلیل برقرار نشد.";
 
     await supabase
       .from("beats")
@@ -318,7 +318,7 @@ export async function toggleBeatPublishing(
   isPublished: boolean,
 ): Promise<ToggleBeatPublishingResult> {
   if (!beatId || typeof beatId !== "string" || typeof isPublished !== "boolean") {
-    return { success: false, error: "Invalid publishing request." };
+    return { success: false, error: "درخواست انتشار نامعتبر است." };
   }
 
   const supabase = await createClient();
@@ -328,7 +328,7 @@ export async function toggleBeatPublishing(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { success: false, error: "You must be logged in as a producer." };
+    return { success: false, error: "برای این کار باید با حساب آهنگساز وارد شده باشی." };
   }
 
   const { data: beat, error: beatError } = await supabase
@@ -340,13 +340,13 @@ export async function toggleBeatPublishing(
 
   if (beatError || !beat) {
     console.error("Failed to load beat for publishing toggle:", beatError);
-    return { success: false, error: "Beat not found or you do not have access to it." };
+    return { success: false, error: "بیت پیدا نشد یا به آن دسترسی نداری." };
   }
 
   if (!["completed", "skipped"].includes(beat.analysis_status ?? "")) {
     return {
       success: false,
-      error: "A beat can only be published after analysis is completed or skipped.",
+      error: "بیت فقط بعد از تکمیل یا رد شدن تحلیل قابل انتشار است.",
     };
   }
 
@@ -354,7 +354,7 @@ export async function toggleBeatPublishing(
     return {
       success: true,
       isPublished,
-      message: isPublished ? "Beat is already ON." : "Beat is already OFF.",
+      message: isPublished ? "بیت از قبل روشن (منتشرشده) است." : "بیت از قبل خاموش (پنهان) است.",
     };
   }
 
@@ -370,7 +370,7 @@ export async function toggleBeatPublishing(
     console.error("Failed to change beat publishing status:", updateError);
     return {
       success: false,
-      error: "Could not update publishing status. Check the beats UPDATE policy.",
+      error: "تغییر وضعیت انتشار انجام نشد. سیاست UPDATE جدول beats را بررسی کن.",
     };
   }
 
@@ -389,7 +389,7 @@ export async function toggleBeatPublishing(
     success: true,
     isPublished,
     message: isPublished
-      ? "Beat is ON and visible in the marketplace."
-      : "Beat is OFF and hidden from the marketplace. Existing orders are unchanged.",
+      ? "بیت روشن شد و در فروشگاه نمایش داده می‌شود."
+      : "بیت خاموش شد و از فروشگاه پنهان است. سفارش‌های قبلی تغییری نمی‌کنند.",
   };
 }

@@ -5,9 +5,9 @@ import PanelShell from "@/components/panel/PanelShell";
 import type { PanelNavItem } from "@/components/panel/PanelNav";
 
 const ITEMS: PanelNavItem[] = [
-  { href: "/dashboard", label: "Overview", icon: "overview", exact: true },
-  { href: "/dashboard/favorites", label: "Favorites", icon: "heart" },
-  { href: "/dashboard/purchases", label: "Purchases", icon: "bag" },
+  { href: "/dashboard", label: "نمای کلی", icon: "overview", exact: true },
+  { href: "/dashboard/favorites", label: "علاقه‌مندی‌ها", icon: "heart" },
+  { href: "/dashboard/purchases", label: "خریدها", icon: "bag" },
 ];
 
 export default function DashboardLayout({
@@ -17,11 +17,11 @@ export default function DashboardLayout({
 }) {
   return (
     <PanelShell
-      title="Your account"
+      title="حساب کاربری شما"
       items={ITEMS}
       settings={{
         href: "/dashboard/settings",
-        label: "Settings",
+        label: "تنظیمات",
         icon: "settings",
       }}
       signOut={<SignOutButton />}

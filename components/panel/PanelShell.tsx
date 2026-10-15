@@ -9,7 +9,7 @@ import {
 } from "@/components/panel/PanelNav";
 
 type PanelShellProps = {
-  /** e.g. "Producer Panel" / "Your account" */
+  /** e.g. "پنل آهنگساز" / "حساب کاربری شما" */
   title: string;
   /** e.g. "@username" */
   subtitle?: string | null;
@@ -32,7 +32,7 @@ export default function PanelShell({
   children,
 }: PanelShellProps) {
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div dir="rtl" className="font-fa min-h-screen bg-black text-white">
       {/* Mobile: tabs */}
       <div className="border-b border-white/10 bg-zinc-950 md:hidden">
         <PanelTabs items={[...items, settings]} trailing={signOut} />
@@ -40,7 +40,7 @@ export default function PanelShell({
 
       {/* Desktop: full-height glass sidebar, pinned to the left edge and
           above the global top bar (which is offset by GlobalNav). */}
-      <aside className="fixed inset-y-0 left-0 z-[60] hidden w-64 flex-col border-r border-white/10 bg-zinc-950/70 shadow-[inset_-1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-xl md:flex">
+      <aside className="fixed inset-y-0 right-0 z-[60] hidden w-64 flex-col border-l border-white/10 bg-zinc-950/70 shadow-[inset_1px_0_0_rgba(255,255,255,0.04)] backdrop-blur-xl md:flex">
         <div className="p-5 pb-4">
           <Link href="/" aria-label="Epsilone" className="block w-32">
             <EpsiloneLogo />
@@ -69,7 +69,7 @@ export default function PanelShell({
       </aside>
 
       {/* Content */}
-      <main className="min-w-0 p-4 sm:p-6 md:ml-64 md:p-8">{children}</main>
+      <main className="min-w-0 p-4 sm:p-6 md:mr-64 md:p-8">{children}</main>
     </div>
   );
 }
