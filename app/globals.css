@@ -658,3 +658,25 @@ body {
         transform: translateX(50%);
     }
 }
+
+/* بنر پیشنهاد نصب وب‌اپ (components/InstallPrompt.tsx) */
+@keyframes install-drop {
+    from {
+        opacity: 0;
+        transform: translateY(-16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.install-prompt {
+    animation: install-drop 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .install-prompt {
+        animation: none;
+    }
+}
