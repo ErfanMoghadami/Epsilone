@@ -147,6 +147,12 @@ body {
     min-height: 36px;
 }
 
+/* پلیر برای حالت bars دکمه رو پایین‌چین می‌کنه و ۵px margin-bottom می‌ده؛
+   همین باعث می‌شد دکمه بالاتر از میله‌های waveform بشینه. */
+.beat-player .waveform-track.waveform-align-bottom .waveform-btn {
+    margin-bottom: 0;
+}
+
 /* موج تمام عرض بگیره */
 .beat-player,
 .beat-player .waveform-player,
@@ -478,5 +484,177 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .select-menu {
         animation: none;
+    }
+}
+/* ------------------------------------------------------------------
+   Loading / error screens (components/BrandLoader.tsx, StatusScreen.tsx)
+   ------------------------------------------------------------------ */
+.l-mark-animated {
+    overflow: visible;
+    animation: l-glow 2.6s ease-in-out infinite;
+}
+
+.l-mark-stroke {
+    fill: none;
+    stroke: #eb875d;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: l-draw 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.l-mark-fill {
+    fill: #eb875d;
+    fill-opacity: 0;
+    animation: l-fill 2.6s ease-in-out infinite;
+}
+
+/* خط L کشیده می‌شه، بعد پر می‌شه و می‌درخشه، بعد دوباره از اول */
+@keyframes l-draw {
+    0% {
+        stroke-dashoffset: 1;
+        opacity: 1;
+    }
+    55% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+    80% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+    92%,
+    100% {
+        stroke-dashoffset: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes l-fill {
+    0%,
+    45% {
+        fill-opacity: 0;
+    }
+    70%,
+    88% {
+        fill-opacity: 1;
+    }
+    100% {
+        fill-opacity: 0;
+    }
+}
+
+@keyframes l-glow {
+    0%,
+    50% {
+        filter: drop-shadow(0 0 0 rgba(255, 127, 92, 0));
+    }
+    72%,
+    88% {
+        filter: drop-shadow(0 0 10px rgba(255, 127, 92, 0.55))
+            drop-shadow(0 0 28px rgba(255, 127, 92, 0.3));
+    }
+    100% {
+        filter: drop-shadow(0 0 0 rgba(255, 127, 92, 0));
+    }
+}
+
+.loader-halo {
+    background: radial-gradient(
+        circle,
+        rgba(255, 127, 92, 0.2) 0%,
+        rgba(255, 127, 92, 0) 70%
+    );
+    animation: loader-halo 2.6s ease-in-out infinite;
+}
+
+@keyframes loader-halo {
+    0%,
+    100% {
+        opacity: 0.55;
+        transform: translate(-50%, -62%) scale(0.92);
+    }
+    75% {
+        opacity: 1;
+        transform: translate(-50%, -62%) scale(1.06);
+    }
+}
+
+/* کاشی پشت لوگو: بدون hover-lift کارت‌های عادی */
+.loader-tile.glass-card:hover {
+    transform: none;
+}
+
+.loader-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+:root:not(.dark) .loader-track {
+    background: rgba(22, 26, 36, 0.1);
+}
+
+.loader-bar {
+    background: linear-gradient(90deg, rgba(255, 127, 92, 0), #ff7f5c, rgba(255, 127, 92, 0));
+    animation: loader-slide 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes loader-slide {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(200%);
+    }
+}
+
+/* صفحه‌ی خطا / ۴۰۴: میله‌های waveform که یکی‌شون افتاده */
+.status-bar {
+    fill: currentColor;
+    opacity: 0.28;
+}
+
+.status-bar-hot {
+    fill: #ff7f5c;
+    opacity: 1;
+}
+
+@keyframes status-rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.status-rise {
+    animation: status-rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .l-mark-animated,
+    .loader-halo,
+    .status-rise {
+        animation: none;
+    }
+
+    .l-mark-stroke {
+        animation: none;
+        stroke-dashoffset: 0;
+        opacity: 0;
+    }
+
+    .l-mark-fill {
+        animation: none;
+        fill-opacity: 1;
+    }
+
+    .loader-bar {
+        animation: none;
+        transform: translateX(50%);
     }
 }
