@@ -8,8 +8,8 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const DISMISS_KEY = "epsilone-install-dismissed-at";
-const DISMISS_DAYS = 7;
+// Set the first time the banner is actually shown; after that it never returns.
+const SEEN_KEY = "epsilone-install-prompt-seen";
 
 function isStandalone() {
   return (
@@ -19,12 +19,20 @@ function isStandalone() {
   );
 }
 
-function recentlyDismissed() {
+function alreadySeen() {
   try {
-    const at = Number(localStorage.getItem(DISMISS_KEY));
-    return Boolean(at) && Date.now() - at < DISMISS_DAYS * 86_400_000;
+    return localStorage.getItem(SEEN_KEY) !== null;
   } catch {
-    return false;
+    // storage blocked: we can't remember anything, so don't nag at all
+    return true;
+  }
+}
+
+function markSeen() {
+  try {
+    localStorage.setItem(SEEN_KEY, "1");
+  } catch {
+    // ignore
   }
 }
 
@@ -36,10 +44,12 @@ function isIosSafari() {
 }
 
 /**
- * Top banner that suggests installing the web app.
+ * Bottom banner that suggests installing the web app.
  * - Android (Chrome/Edge/Samsung): uses the native `beforeinstallprompt` flow.
  * - iOS Safari has no install event, so it shows a short "Add to Home Screen" hint.
- * Hidden when already installed, and for 7 days after the user closes it.
+ * Shown only once per browser: the first time it appears it is flagged as seen,
+ * so it never comes back (close, install, or just ignoring it all count).
+ * It sits at the bottom (above the mobile bottom nav) so it never covers the navbar.
  * Only works over HTTPS with the manifest + service worker (production build).
  */
 export default function InstallPrompt() {
@@ -49,7 +59,7 @@ export default function InstallPrompt() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (isStandalone() || recentlyDismissed()) return;
+    if (isStandalone() || alreadySeen()) return;
 
     function onBeforeInstall(event: Event) {
       // keep the browser's own mini-infobar from showing; we show ours
@@ -81,13 +91,13 @@ export default function InstallPrompt() {
     };
   }, []);
 
+  // First real appearance = the one and only time the user gets it.
+  useEffect(() => {
+    if (visible) markSeen();
+  }, [visible]);
+
   function dismiss() {
     setVisible(false);
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    } catch {
-      // storage can be blocked; the banner just won't be remembered
-    }
   }
 
   async function install() {
@@ -109,8 +119,7 @@ export default function InstallPrompt() {
       dir="rtl"
       role="dialog"
       aria-label="نصب Epsilone"
-      className="install-prompt font-fa fixed inset-x-0 top-0 z-[60] px-3"
-      style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
+      className="install-prompt font-fa fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] px-3 md:bottom-4"
     >
       <div className="glass-bar glass-card mx-auto flex max-w-xl items-center gap-3 rounded-2xl p-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
