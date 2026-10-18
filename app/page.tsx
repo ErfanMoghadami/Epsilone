@@ -84,11 +84,13 @@ export default function Page() {
 
         let visibleResults = savedResults;
         let visibleAlternatives = savedAlternatives;
-        const ids = [...new Set(
-          [...savedResults, ...savedAlternatives]
-            .map((beat) => beat?.id)
-            .filter((id): id is string => typeof id === "string"),
-        )];
+        const ids = [
+          ...new Set(
+            [...savedResults, ...savedAlternatives]
+              .map((beat) => beat?.id)
+              .filter((id): id is string => typeof id === "string"),
+          ),
+        ];
 
         // Do not restore a cached player for a beat the producer has since
         // turned OFF (or deleted). This check uses the same published-only
@@ -104,7 +106,9 @@ export default function Page() {
             const data = await response.json();
 
             if (!response.ok || !data.success || !Array.isArray(data.beats)) {
-              throw new Error(data.error || "Could not verify cached beat availability.");
+              throw new Error(
+                data.error || "Could not verify cached beat availability.",
+              );
             }
 
             const visibleIds = new Set<string>(
@@ -112,10 +116,17 @@ export default function Page() {
                 .map((beat: { id?: unknown }) => beat?.id)
                 .filter((id: unknown): id is string => typeof id === "string"),
             );
-            visibleResults = savedResults.filter((beat) => visibleIds.has(beat.id));
-            visibleAlternatives = savedAlternatives.filter((beat) => visibleIds.has(beat.id));
+            visibleResults = savedResults.filter((beat) =>
+              visibleIds.has(beat.id),
+            );
+            visibleAlternatives = savedAlternatives.filter((beat) =>
+              visibleIds.has(beat.id),
+            );
           } catch (visibilityError) {
-            console.warn("Could not verify cached beat visibility:", visibilityError);
+            console.warn(
+              "Could not verify cached beat visibility:",
+              visibilityError,
+            );
             visibleResults = [];
             visibleAlternatives = [];
           }
@@ -275,13 +286,11 @@ export default function Page() {
     >
       {/* Top bar */}
 
-      <HomeMenu showMobileLogo={false} />
-
-    
+      <HomeMenu showMobileLogo={false} homeLayout />
 
       {/* Hero */}
       <section
-        className={`relative z-10 mx-auto flex max-w-2xl flex-col items-center px-5 text-center transition-all ${
+        className={`relative z-10 mx-auto flex w-full max-w-2xl flex-col items-center px-5 text-center transition-all ${
           hasActivity ? "pt-12 pb-8" : "flex-1 justify-center pb-24"
         }`}
       >
@@ -290,12 +299,12 @@ export default function Page() {
           className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-64 w-[34rem] max-w-full -translate-x-1/2 rounded-full blur-3xl"
         />
 
-        <div className="mb-20 mt-2 w-60 sm:mb-14 sm:w-72 md:w-120">
+        <div className="mb-20 mt-2 w-60 sm:mb-14 sm:w-72 md:w-110">
           <EpsiloneLogo />
         </div>
 
         <form onSubmit={handleSubmit} className="w-full">
-          <div className="glass-bar flex h-12 items-center gap-3 rounded-full py-1 pr-5 pl-1">
+          <div className="glass-bar flex h-12 items-center gap-3 rounded-full py-2 pr-3 pl-1  md:h-12 md:gap-5 md:pr-5 ">
             <svg
               width="18"
               height="18"
@@ -315,7 +324,7 @@ export default function Page() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="مثلا : یه بیت غمگین که از شدت غم سرمو بکوبم تو دیوار"
-              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+              className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-zinc-500 md:text-base"
             />
 
             <button

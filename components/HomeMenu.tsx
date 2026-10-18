@@ -68,8 +68,14 @@ function CartIcon() {
 
 export default function HomeMenu({
   showMobileLogo = true,
+  homeLayout = false,
 }: {
   showMobileLogo?: boolean;
+  /**
+   * Main (home) page layout. Before login the desktop bar has no "L" logo and
+   * the theme toggle + cart sit on the right; after login it is unchanged.
+   */
+  homeLayout?: boolean;
 }) {
   const pathname = usePathname();
 
@@ -183,6 +189,10 @@ export default function HomeMenu({
   const initial = name.charAt(0).toUpperCase() || "E";
   const panelHref = getPanelHref(profile);
 
+  // Home page only: logged-out visitors get theme + cart on the right, no logo.
+  const guestHome = homeLayout && ready && !loggedIn;
+  const pendingHome = homeLayout && !ready;
+
   const cartBadge =
     cartCount > 0 ? (
       <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-[10px] font-bold text-ink">
@@ -260,10 +270,34 @@ export default function HomeMenu({
           )}
         </div>
 
-        <Link href="/" aria-label="Epsilone" className="hidden md:block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/l.svg" alt="Epsilone" className="h-10 w-auto" />
-        </Link>
+        {!(guestHome || pendingHome) && (
+          <Link href="/" aria-label="Epsilone" className="hidden md:block">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/l.svg" alt="Epsilone" className="h-10 w-auto" />
+          </Link>
+        )}
+
+        {(guestHome || pendingHome) && (
+          <div
+            className={`hidden items-center gap-2 md:flex ${
+              pendingHome ? "invisible" : ""
+            }`}
+          >
+            <ThemeToggle />
+
+            <Link
+              href="/cart"
+              aria-label="سبد خرید"
+              className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:text-brand"
+            >
+              <CartIcon />
+
+              {cartCount > 0 && (
+                <span className="absolute -right-0.5 -top-0.5">{cartBadge}</span>
+              )}
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Center: logo on mobile, navigation links on desktop */}
@@ -293,7 +327,9 @@ export default function HomeMenu({
         <Link
           href="/cart"
           aria-label="سبد خرید"
-          className="relative hidden h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:text-brand md:flex"
+          className={`relative hidden h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition hover:text-brand ${
+            guestHome || pendingHome ? "md:hidden" : "md:flex"
+          }`}
         >
           <CartIcon />
 
@@ -302,7 +338,9 @@ export default function HomeMenu({
           )}
         </Link>
 
-        <ThemeToggle />
+        <ThemeToggle
+          className={guestHome || pendingHome ? "md:hidden" : ""}
+        />
 
         {!ready ? (
           <span className="block h-10 w-10 shrink-0" aria-hidden="true" />

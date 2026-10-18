@@ -496,7 +496,7 @@ body {
 
 .l-mark-stroke {
     fill: none;
-    stroke: #eb875d;
+    stroke: #f79a73;
     stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -506,7 +506,7 @@ body {
 }
 
 .l-mark-fill {
-    fill: #eb875d;
+    fill: #f79a73;
     fill-opacity: 0;
     animation: l-fill 2.6s ease-in-out infinite;
 }
@@ -678,5 +678,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .install-prompt {
         animation: none;
+    }
+}
+
+/* Main page: desktop is shown 10% larger (mobile unchanged).
+   The matching h-/min-h- calc(100svh/1.1) on <main> keeps it exactly one screen tall. */
+@media (min-width: 768px) {
+    .home-zoom {
+        zoom: 1.1;
     }
 }
