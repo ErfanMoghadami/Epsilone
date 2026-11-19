@@ -1,4 +1,3 @@
-
 type BotApiResponse = {
   ok: boolean;
   status: string;
@@ -18,15 +17,11 @@ function getBotConfig() {
   const secret = process.env.TELEGRAM_INTERNAL_API_SECRET;
 
   if (!baseUrl || !secret) {
-    throw new Error(
-      "Telegram Bot internal API configuration is missing."
-    );
+    throw new Error("Telegram Bot internal API configuration is missing.");
   }
 
   if (!baseUrl.startsWith("https://")) {
-    throw new Error(
-      "Telegram Bot internal API must use HTTPS."
-    );
+    throw new Error("Telegram Bot internal API must use HTTPS.");
   }
 
   return {
@@ -35,24 +30,19 @@ function getBotConfig() {
   };
 }
 
-async function botPost<T>(
-  path: string,
-  body: unknown
-): Promise<T> {
+async function botPost<T>(path: string, body: unknown): Promise<T> {
   const config = getBotConfig();
 
-  const response = await fetch(
-    `${config.baseUrl}${path}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.secret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    }
-  );
+  const response = await fetch(`${config.baseUrl}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${config.secret}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
+  });
 
   const payload = await response.json().catch(() => null);
 
@@ -60,28 +50,24 @@ async function botPost<T>(
     throw new Error(
       `Telegram Bot API failed (${response.status}): ${
         payload?.status ?? "unknown_error"
-      }`
+      }`,
     );
   }
 
   return payload as T;
 }
-
 // ----------------------------------------
 // CLAIM PRODUCER TELEGRAM CONNECTION
 // ----------------------------------------
 
 export async function claimProducerTelegramLink(
   producerId: string,
-  code: string
+  code: string,
 ): Promise<BotApiResponse> {
-  return botPost<BotApiResponse>(
-    "/internal/v1/producer-links/claim",
-    {
-      producer_id: producerId,
-      code,
-    }
-  );
+  return botPost<BotApiResponse>("/internal/v1/producer-links/claim", {
+    producer_id: producerId,
+    code,
+  });
 }
 
 // ----------------------------------------
@@ -89,10 +75,7 @@ export async function claimProducerTelegramLink(
 // ----------------------------------------
 
 export async function sendProducerTelegramNotification(
-  notification: ProducerNotification
+  notification: ProducerNotification,
 ): Promise<BotApiResponse> {
-  return botPost<BotApiResponse>(
-    "/internal/v1/notifications",
-    notification
-  );
+  return botPost<BotApiResponse>("/internal/v1/notifications", notification);
 }
