@@ -10,6 +10,7 @@
     cleanTerms,
     type LicenseType,
   } from "@/lib/licenses";
+import { APP_CURRENCY } from "@/lib/currency";
   
   const supabase = createClient();
   
@@ -35,20 +36,20 @@
   const DEFAULT_LICENSES = [
     {
       license_type: "Basic" as const,
-      price: 10,
-      currency: "USD",
+      price: 2_600_000,
+      currency: APP_CURRENCY,
       is_active: true,
     },
     {
       license_type: "Premium" as const,
-      price: 25,
-      currency: "USD",
+      price: 6_500_000,
+      currency: APP_CURRENCY,
       is_active: true,
     },
     {
       license_type: "Exclusive" as const,
-      price: 50,
-      currency: "USD",
+      price: 13_000_000,
+      currency: APP_CURRENCY,
       is_active: true,
     },
   ];
@@ -223,7 +224,7 @@ function formatFileSize(bytes: number | null) {
   
             price: Number(existing.price),
   
-            currency: existing.currency ?? "USD",
+            currency: APP_CURRENCY,
   
             is_active: Boolean(existing.is_active),
   
@@ -546,7 +547,7 @@ function formatFileSize(bytes: number | null) {
   
           price: Number(license.price.toFixed(2)),
   
-          currency: "USD",
+          currency: APP_CURRENCY,
   
           is_active: license.is_active,
   
@@ -874,8 +875,8 @@ function formatFileSize(bytes: number | null) {
                     <input
                       id={`price-${license.license_type}`}
                       type="number"
-                      min={0.01}
-                      step={0.01}
+                      min={1}
+                      step={1}
                       value={license.price}
                       onChange={(event) =>
                         updateLicense(
@@ -884,7 +885,7 @@ function formatFileSize(bytes: number | null) {
                           Number(event.target.value),
                         )
                       }
-                      className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 ps-8 text-white outline-none transition focus:border-zinc-600"
+                      className="w-full rounded-lg border border-zinc-800 bg-black px-4 py-3 ps-16 text-white outline-none transition focus:border-zinc-600"
                     />
                   </div>
                 </div>

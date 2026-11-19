@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
+import { formatMoney } from "@/lib/currency";
 
 type PageProps = {
   params: Promise<{ orderId: string }>;
@@ -178,8 +179,9 @@ export default async function OrderLicenseSheetPage({
                 Stems: {item.includesStems ? "Included" : "Not included"}
               </p>
               <p>
-                Price: {item.currency}{" "}
-                {Number(item.price).toFixed(2)}
+                <p>
+                  قیمت: {formatMoney(item.price, item.currency)}
+                </p>
               </p>
             </div>
 

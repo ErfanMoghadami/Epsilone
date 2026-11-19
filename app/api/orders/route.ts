@@ -10,6 +10,7 @@ import {
   resolveTerms,
 } from "@/lib/licenses";
 
+import { APP_CURRENCY } from "@/lib/currency";
 
 type CartItem = {
   beatId: string;
@@ -446,6 +447,17 @@ export async function POST(request: Request) {
     }
 
     const currency = verifiedItems[0].currency;
+
+    if (currency !== APP_CURRENCY) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Epsilone currently supports Toman (TOMAN) orders only. Please update the selected Beat license.",
+        },
+        { status: 400 },
+      );
+    }
 
     const subtotal = Number(
       verifiedItems

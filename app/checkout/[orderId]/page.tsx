@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import CheckoutPaymentButton from "@/components/CheckoutPaymentButton";
-
+import { formatMoney } from "@/lib/currency";
 type CheckoutPageProps = {
   params: Promise<{
     orderId: string;
@@ -201,10 +201,7 @@ export default async function CheckoutPage({
               </div>
 
               <span className="font-medium">
-                {order.currency === "USD"
-                  ? "$"
-                  : `${order.currency} `}
-                {Number(item.unit_price).toFixed(2)}
+                {formatMoney(item.unit_price, order.currency)}
               </span>
             </div>
 
@@ -230,10 +227,7 @@ export default async function CheckoutPage({
           <span className="text-zinc-500">Subtotal</span>
 
           <span>
-            {order.currency === "USD"
-              ? "$"
-              : `${order.currency} `}
-            {Number(order.subtotal).toFixed(2)}
+            {formatMoney(order.subtotal, order.currency)}
           </span>
         </div>
 
@@ -241,10 +235,7 @@ export default async function CheckoutPage({
           <span className="text-lg font-semibold">Total</span>
 
           <span className="text-2xl font-bold">
-            {order.currency === "USD"
-              ? "$"
-              : `${order.currency} `}
-            {Number(order.total).toFixed(2)}
+           {formatMoney(order.total, order.currency)}
           </span>
         </div>
 
