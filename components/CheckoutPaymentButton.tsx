@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -5,6 +6,15 @@ import { useState } from "react";
 
 type CheckoutPaymentButtonProps = {
   orderId: string;
+};
+
+type PaymentResponse = {
+  success?: boolean;
+  payment?: {
+    id?: string;
+  };
+  paymentUrl?: string;
+  error?: string;
 };
 
 export default function CheckoutPaymentButton({
@@ -21,6 +31,7 @@ export default function CheckoutPaymentButton({
     setError("");
 
     try {
+      // Step 1: Record License Sheet acceptance.
       const acceptanceResponse = await fetch(
         `/api/orders/${encodeURIComponent(orderId)}/accept-license`,
         {
@@ -44,6 +55,7 @@ export default function CheckoutPaymentButton({
         );
       }
 
+      // Step 2: Create a real ZarinPal payment.
       const paymentResponse = await fetch("/api/payments", {
         method: "POST",
         headers: {
@@ -51,25 +63,38 @@ export default function CheckoutPaymentButton({
         },
         body: JSON.stringify({
           orderId,
-          gateway: "test",
+          gateway: "zarinpal",
         }),
       });
 
-      const paymentData = await paymentResponse.json();
+      const paymentData =
+        (await paymentResponse.json()) as PaymentResponse;
 
       if (
         !paymentResponse.ok ||
         !paymentData.success ||
-        !paymentData.payment?.id
+        !paymentData.payment?.id ||
+        !paymentData.paymentUrl
       ) {
         throw new Error(
           paymentData.error ||
-            "Failed to create payment.",
+            "Failed to create ZarinPal payment.",
         );
       }
 
-      window.location.href =
-        `/payment/${paymentData.payment.id}`;
+      // Step 3: Validate the redirect destination.
+      const paymentUrl = new URL(paymentData.paymentUrl);
+
+      if (
+        paymentUrl.protocol !== "https:" ||
+        paymentUrl.hostname !== "www.zarinpal.com" ||
+        !paymentUrl.pathname.startsWith("/pg/StartPay/")
+      ) {
+        throw new Error("Invalid ZarinPal payment URL.");
+      }
+
+      // Step 4: Redirect the buyer to ZarinPal.
+      window.location.assign(paymentUrl.toString());
     } catch (cause) {
       console.error("Checkout error:", cause);
 
@@ -78,7 +103,7 @@ export default function CheckoutPaymentButton({
           ? cause.message
           : "Something went wrong. Please try again.",
       );
-    } finally {
+
       setLoading(false);
     }
   }
@@ -142,8 +167,8 @@ export default function CheckoutPaymentButton({
         className="w-full rounded-xl bg-white px-5 py-3 font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {loading
-          ? "در حال ثبت قرارداد… / Recording acceptance…"
-          : "پذیرش قرارداد و ادامه / Accept & Continue"}
+          ? "در حال انتقال به درگاه… / Redirecting to ZarinPal…"
+          : "پرداخت با زرین‌پال / Pay with ZarinPal"}
       </button>
     </div>
   );

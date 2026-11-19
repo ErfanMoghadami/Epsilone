@@ -10,9 +10,7 @@ type PaymentPageProps = {
   }>;
 };
 
-export default async function PaymentPage({
-  params,
-}: PaymentPageProps) {
+export default async function PaymentPage({ params }: PaymentPageProps) {
   const { paymentId } = await params;
 
   const supabase = await createClient();
@@ -67,9 +65,7 @@ export default async function PaymentPage({
   return (
     <main className="mx-auto max-w-2xl px-6 py-16 text-white">
       <div className="mb-8">
-        <p className="mb-2 text-sm text-zinc-500">
-          Order #{order.id}
-        </p>
+        <p className="mb-2 text-sm text-zinc-500">Order #{order.id}</p>
 
         <h1 className="text-3xl font-bold">Payment</h1>
 
@@ -82,9 +78,7 @@ export default async function PaymentPage({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-zinc-500">Payment ID</span>
-            <span className="max-w-[260px] truncate text-sm">
-              {payment.id}
-            </span>
+            <span className="max-w-[260px] truncate text-sm">{payment.id}</span>
           </div>
 
           <div className="flex items-center justify-between">
@@ -94,9 +88,7 @@ export default async function PaymentPage({
 
           <div className="flex items-center justify-between">
             <span className="text-zinc-500">Status</span>
-            <span className="font-medium capitalize">
-              {payment.status}
-            </span>
+            <span className="font-medium capitalize">{payment.status}</span>
           </div>
 
           <div className="border-t border-zinc-800 pt-4">
@@ -110,15 +102,16 @@ export default async function PaymentPage({
           </div>
         </div>
 
-        {payment.status === "pending" ? (
+        {payment.status === "pending" &&
+        payment.gateway === "test" &&
+        (process.env.NODE_ENV !== "production" ||
+          process.env.ALLOW_TEST_PAYMENTS === "true") ? (
           <PaymentTestControls paymentId={payment.id} />
         ) : (
           <div className="mt-6 rounded-xl border border-zinc-800 p-4 text-center">
             <p className="text-sm text-zinc-400">
               Payment status:{" "}
-              <span className="font-medium text-white">
-                {payment.status}
-              </span>
+              <span className="font-medium text-white">{payment.status}</span>
             </p>
           </div>
         )}
